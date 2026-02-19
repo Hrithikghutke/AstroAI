@@ -1,0 +1,158 @@
+{
+  "theme": "dark",
+  "primaryColor": "#ff6b00",
+  "branding": {
+    "logoText": "Gympulse Fitness",
+    "primaryColor": "#ff6b00",
+    "secondaryColor": "#333333",
+    "fontStyle": "bold"
+  },
+  "sections": [
+    {
+      "type": "hero",
+      "headline": "UNLEASH YOUR INNER PULSE – TRANSFORM YOUR BODY WITH IRONPULSE FITNESS!",
+      "subtext": "Elevate your strength, ignite your energy, and redefine your limits. Our cutting-edge gym is built for those who dare to push beyond.",
+      "cta": {
+        "text": "Start Your Transformation",
+        "color": "#ff6b00",
+        "style": {
+          "background": "#ff6b00",
+          "textColor": "#ffffff",
+          "borderRadius": "50px",
+          "fontWeight": "bold",
+          "hoverEffect": {
+            "background": "#ffffff",
+            "textColor": "#ff6b00"
+          }
+        }
+      }
+    },
+    {
+      "type": "features",
+      "headline": "WHY CHOOSE GYMPULSE FITNESS?",
+      "features": [
+        {
+          "title": "24/7 Unlimited Access",
+          "description": "Work out whenever inspiration strikes—day or night. Our state-of-the-art facilities are always open for you."
+        },
+        {
+          "title": "Certified Personal Trainers",
+          "description": "World-class coaches dedicated to your transformation. Get tailored plans for explosive strength and conditioning."
+        },
+        {
+          "title": "Dedicated Strength & Cardio Zones",
+          "description": "Push iron or cardio, all under one roof. High-tech zones designed for maximum performance."
+        },
+        {
+          "title": "Intense Group HIIT Classes",
+          "description": "Sweat, burn, and crush your goals in our high-energy HIIT sessions led by expert trainers."
+        },
+        {
+          "title": "Nutrition & Supplements Guidance",
+          "description": "Fuel like a champion with expert-approved dietary and supplement advice to accelerate your results."
+        },
+        {
+          "title": "Premium Locker Rooms & Amenities",
+          "description": "Luxury showers, private cabins, and premium relaxation spaces to make your gym journey seamless."
+        }
+      ]
+    },
+    {
+      "type": "pricing",
+      "headline": "FLEXIBLE MEMBERSHIP PLANS",
+      "pricingOptions": [
+        {
+          "name": "Basic Plan",
+          "price": "₹999/month",
+          "description": "Gym access only. Perfect for those who prefer self-driven training in a top-tier facility.",
+          "features": ["Gym Access", "Equipment Usage", "Clean Facilities"],
+          "style": {
+            "borderColor": "#ff6b00"
+          }
+        },
+        {
+          "name": "Pro Plan",
+          "price": "₹1999/month",
+          "description": "Gym + group classes. Ideal for high-energy individuals seeking discipline, motivation, and results.",
+          "features": [
+            "Gym Access",
+            "Group HIIT Classes",
+            "Nutrition Guidance",
+            "Locker Amenities"
+          ],
+          "style": {
+            "background": "#333333",
+            "fontWeight": "bold"
+          }
+        },
+        {
+          "name": "Elite Plan",
+          "price": "₹3499/month",
+          "description": "All Access + personal trainer. Unlimited potential with a coach guiding your every step toward greatness.",
+          "features": [
+            "Gym Access",
+            "Personal Training",
+            "Group HIIT Classes",
+            "Nutrition Guidance",
+            "Premium Locker Amenities"
+          ],
+          "style": {
+            "background": "#ff6b00",
+            "textColor": "#ffffff"
+          }
+        }
+      ]
+    },
+    {
+      "type": "testimonials",
+      "headline": "SUCCESS STORIES",
+      "testimonials": [
+        {
+          "name": "Rajesh Singh",
+          "review": "\"Gympulse transformed my approach to fitness. The trainers pushed me beyond my limits, and I’ve never felt this strong!\"",
+          "style": {
+            "accentColor": "#ff6b00"
+          }
+        },
+        {
+          "name": "Priya Desai",
+          "review": "\"The group HIIT classes are a game-changer. I lost 12 kg in 3 months without feeling deprived—just energized!\"",
+          "style": {
+            "accentColor": "#ff6b00"
+          }
+        },
+        {
+          "name": "Avinash Patel",
+          "review": "\"From nutrition guidance to elite training, Gympulse’s holistic approach delivered results I didn’t know were possible. Worth every penny!\"",
+          "style": {
+            "accentColor": "#ff6b00"
+          }
+        }
+      ]
+    },
+    {
+      "type": "contact",
+      "headline": "JOIN GYMPULSE FITNESS TODAY!",
+      "contactDetails": {
+        "phone": "+91 12345 67890",
+        "email": "info@gympulse.in",
+        "address": "456/7, Nehru Road, Mumbai, Maharashtra 400001",
+        "hours": {
+          "open": "6:00 AM",
+          "close": "11:00 PM",
+          "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        }
+      },
+      "cta": {
+        "text": "Contact Us",
+        "color": "#ff6b00",
+        "style": {
+          "background": "#ff6b00",
+          "textColor": "#ffffff",
+          "borderRadius": "50px",
+          "fontWeight": "bold"
+        }
+      }
+    }
+  ]
+}

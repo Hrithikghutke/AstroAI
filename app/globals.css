@@ -1,8 +1,32 @@
 @import "tailwindcss";
+@plugin "tailwind-scrollbar";
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+@layer base {
+  textarea {
+    /* Chrome, Safari, and Edge */
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+      background: theme("colors.black");
+    }
+    &::-webkit-scrollbar-thumb {
+      background: theme("colors.blue.500");
+      border-radius: 100px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: theme("colors.blue.600");
+    }
+
+    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: theme("colors.blue.500") theme("colors.black");
+  }
 }
 
 @theme inline {
