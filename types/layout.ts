@@ -4,8 +4,18 @@
    Root Layout
 ============================ */
 
+// ADD this new type above the Layout interface
+export type ThemeStyle =
+  | "minimal"
+  | "bold"
+  | "glassmorphism"
+  | "elegant"
+  | "corporate";
+
+// REPLACE the existing Layout interface with this:
 export interface Layout {
   theme: "light" | "dark";
+  themeStyle: ThemeStyle; // <-- NEW
   primaryColor: string;
   branding: Branding;
   sections: Section[];
@@ -104,8 +114,10 @@ export interface TestimonialsSection extends BaseSection {
   testimonials: TestimonialItem[];
 }
 
+// REPLACE the existing TestimonialItem interface:
 export interface TestimonialItem {
   name: string;
+  role?: string; // <-- NEW: e.g. "Founder @ Acme"
   review: string;
   style?: {
     accentColor?: string;
