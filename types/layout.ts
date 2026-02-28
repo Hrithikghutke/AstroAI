@@ -30,6 +30,7 @@ export interface Branding {
   primaryColor: string;
   secondaryColor?: string;
   fontStyle?: "normal" | "bold" | "italic";
+  logo?: string; // ← NEW: raw SVG string
 }
 
 /* ============================

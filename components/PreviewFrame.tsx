@@ -26,6 +26,7 @@ export default function PreviewFrame({ layout }: { layout: Layout | null }) {
     ...layout.branding,
     theme: layout.theme,
     themeStyle: layout.themeStyle,
+    logo: layout.branding?.logo ?? undefined,
   };
 
   return (

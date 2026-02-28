@@ -40,6 +40,7 @@ function normalizeBranding(raw: any) {
       raw?.fontStyle === "bold" || raw?.fontStyle === "italic"
         ? raw.fontStyle
         : "normal",
+    logo: raw?.logo ?? null,
   };
 }
 

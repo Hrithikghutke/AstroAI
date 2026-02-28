@@ -22,8 +22,28 @@ export default function Hero({ data }: any) {
 
       <div className="relative z-10 max-w-4xl mx-auto space-y-6">
         {/* Badge */}
-        <span className={`inline-block mb-2 ${theme.badgeClass}`}>
-          ✦ {brand.logoText}
+        {/* Badge — show SVG logo if available */}
+        <span
+          className={`inline-flex items-center gap-2 mb-2 ${theme.badgeClass}`}
+        >
+          {brand.logo && brand.logo.startsWith("<svg") ? (
+            <span
+              style={{
+                width: 20,
+                height: 20,
+                display: "inline-flex",
+                flexShrink: 0,
+              }}
+              dangerouslySetInnerHTML={{
+                __html: brand.logo
+                  .replace(/width="48"/, 'width="20"')
+                  .replace(/height="48"/, 'height="20"'),
+              }}
+            />
+          ) : (
+            <span>✦</span>
+          )}
+          {brand.logoText}
         </span>
 
         {/* Headline */}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserCredits, deductCredit } from "@/lib/firestore";
+import { generateLogo } from "@/lib/generateLogo"; // ← NEW
 
 export async function POST(req: Request) {
   try {
@@ -17,17 +18,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const { prompt, themeStyle, currentLayout } = await req.json(); // ← currentLayout
+    const { prompt, themeStyle, currentLayout } = await req.json();
 
-    // If there's an existing layout, tell the AI to modify it
     const systemContext = currentLayout
       ? `The user currently has this website layout JSON:
 ${JSON.stringify(currentLayout, null, 2)}
-
-The user wants to modify it. Apply ONLY the changes they request. Keep everything else exactly the same — same brand name, same sections, same content — unless they explicitly ask to change it.`
+The user wants to modify it. Apply ONLY the changes they request. Keep everything else exactly the same unless explicitly asked to change it.`
       : `You are generating a brand new website from scratch.`;
 
-    const response = await fetch(
+    // ── Call Haiku for layout JSON ──
+    const layoutResponse = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
@@ -36,7 +36,7 @@ The user wants to modify it. Apply ONLY the changes they request. Keep everythin
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
+          model: "anthropic/claude-3-haiku",
           max_tokens: 3000,
           messages: [
             {
@@ -108,7 +108,7 @@ OUTPUT this exact JSON shape (fill every field with real content):
       "pricingOptions": [
         {
           "name": "<plan name>",
-          "price": "<price with currency>",
+          "price": "<price with currency and period>",
           "description": "<1-sentence pitch>",
           "features": ["<feature 1>", "<feature 2>", "<feature 3>"],
           "style": { "borderColor": "<primaryColor>" }
@@ -134,9 +134,9 @@ OUTPUT this exact JSON shape (fill every field with real content):
       "type": "testimonials",
       "headline": "<testimonials section headline>",
       "testimonials": [
-        { "name": "<full name>", "role": "<job title>", "review": "<2-3 sentence review>", "style": { "accentColor": "<primaryColor>" } },
-        { "name": "<full name>", "role": "<job title>", "review": "<2-3 sentence review>", "style": { "accentColor": "<primaryColor>" } },
-        { "name": "<full name>", "role": "<job title>", "review": "<2-3 sentence review>", "style": { "accentColor": "<primaryColor>" } }
+        { "name": "<realistic full name>", "role": "<job title>", "review": "<genuine 2-3 sentence review>", "style": { "accentColor": "<primaryColor>" } },
+        { "name": "<realistic full name>", "role": "<job title>", "review": "<2-3 sentence review>", "style": { "accentColor": "<primaryColor>" } },
+        { "name": "<realistic full name>", "role": "<job title>", "review": "<2-3 sentence review>", "style": { "accentColor": "<primaryColor>" } }
       ]
     },
     {
@@ -144,13 +144,22 @@ OUTPUT this exact JSON shape (fill every field with real content):
       "headline": "<contact section headline>",
       "contactDetails": {
         "phone": "<realistic phone number>",
-        "email": "<realistic email>",
-        "address": "<realistic address>",
-        "hours": { "open": "9:00 AM", "close": "6:00 PM", "days": ["Mon","Tue","Wed","Thu","Fri"] }
+        "email": "<realistic email address>",
+        "address": "<realistic street address>",
+        "hours": {
+          "open": "9:00 AM",
+          "close": "6:00 PM",
+          "days": ["Mon", "Tue", "Wed", "Thu", "Fri"]
+        }
       },
       "cta": {
-        "text": "<contact CTA text>",
-        "style": { "background": "<primaryColor>", "textColor": "#ffffff", "borderRadius": "12px", "fontWeight": "bold" }
+        "text": "<contact CTA button text>",
+        "style": {
+          "background": "<primaryColor>",
+          "textColor": "#ffffff",
+          "borderRadius": "12px",
+          "fontWeight": "bold"
+        }
       }
     }
   ]
@@ -166,26 +175,49 @@ OUTPUT this exact JSON shape (fill every field with real content):
       },
     );
 
-    const data = await response.json();
+    const layoutData = await layoutResponse.json();
 
-    if (!response.ok) {
-      console.error("OpenRouter error:", data);
+    if (!layoutResponse.ok) {
+      console.error("Haiku error:", layoutData);
       return NextResponse.json(
-        { error: "OpenRouter request failed" },
+        { error: "Layout generation failed" },
         { status: 500 },
       );
     }
 
-    const raw = data.choices[0].message.content;
+    const raw = layoutData.choices[0].message.content;
     const cleaned = raw
       .replace(/^```json\s*/i, "")
       .replace(/^```\s*/i, "")
       .replace(/```\s*$/i, "")
       .trim();
 
+    const parsedLayout = JSON.parse(cleaned);
+
+    // ── Call Sonnet for SVG logo directly (no internal fetch) ──
+    const logoSvg = await generateLogo({
+      brandName: parsedLayout?.branding?.logoText ?? "Brand",
+      primaryColor: parsedLayout?.branding?.primaryColor ?? "#6366f1",
+      secondaryColor: parsedLayout?.branding?.secondaryColor ?? "#ffffff",
+      themeStyle: themeStyle ?? "corporate",
+    });
+
+    if (logoSvg) {
+      parsedLayout.branding.logo = logoSvg;
+      console.log("✅ Logo generated for:", parsedLayout.branding.logoText);
+    } else {
+      console.warn("⚠️ Logo generation failed, using dot fallback");
+    }
+
+    // ── Deduct credit after successful generation ──
     await deductCredit(userId);
 
-    return NextResponse.json({ layout: JSON.parse(cleaned) });
+    console.log(
+      "Logo in final layout:",
+      parsedLayout.branding?.logo?.slice(0, 50),
+    );
+
+    return NextResponse.json({ layout: parsedLayout });
   } catch (error) {
     console.error("Generate route error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

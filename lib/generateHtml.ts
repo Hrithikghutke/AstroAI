@@ -11,7 +11,6 @@ export function generateHtml(layout: Layout): string {
   const navBg = isDark ? "rgba(0,0,0,0.95)" : "rgba(255,255,255,0.95)";
 
   const sections = layout.sections ?? [];
-
   const heroSection = sections.find((s) => s.type === "hero") as any;
   const featuresSection = sections.find((s) => s.type === "features") as any;
   const pricingSection = sections.find((s) => s.type === "pricing") as any;
@@ -19,6 +18,17 @@ export function generateHtml(layout: Layout): string {
     (s) => s.type === "testimonials",
   ) as any;
   const contactSection = sections.find((s) => s.type === "contact") as any;
+
+  // Helper: resize SVG to given px
+  const resizeSvg = (svg: string, size: number) =>
+    svg
+      .replace(/width="48"/, `width="${size}"`)
+      .replace(/height="48"/, `height="${size}"`);
+
+  const logoHtml = (size: number) =>
+    layout.branding?.logo
+      ? `<span style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${resizeSvg(layout.branding.logo, size)}</span>`
+      : `<span style="width:${size * 0.33}px;height:${size * 0.33}px;border-radius:50%;background:${primary};display:inline-block;flex-shrink:0;"></span>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -51,7 +61,9 @@ export function generateHtml(layout: Layout): string {
       padding: 28px;
     }
     .section-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       font-size: 12px;
       font-weight: 600;
       padding: 4px 12px;
@@ -71,15 +83,15 @@ export function generateHtml(layout: Layout): string {
 <body>
 
 <!-- Navbar -->
-<nav style="background:${navBg}; border-bottom: 1px solid ${borderColor}; padding: 18px 32px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; backdrop-filter:blur(12px);">
+<nav style="background:${navBg}; border-bottom:1px solid ${borderColor}; padding:18px 32px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; backdrop-filter:blur(12px);">
   <div style="display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px;">
-    <span style="width:12px;height:12px;border-radius:50%;background:${primary};display:inline-block;"></span>
+    ${logoHtml(36)}
     ${layout.branding?.logoText ?? "Brand"}
   </div>
   <div style="display:flex; gap:28px; font-size:14px; font-weight:500; opacity:0.75;">
-    <a href="#features">Features</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#contact">Contact</a>
+    <a href="#features" style="color:${text};">Features</a>
+    <a href="#pricing" style="color:${text};">Pricing</a>
+    <a href="#contact" style="color:${text};">Contact</a>
   </div>
   <a href="#contact" class="primary-btn" style="padding:8px 20px; border-radius:10px; font-size:14px;">Get Started</a>
 </nav>
@@ -91,7 +103,10 @@ ${
 <section style="min-height:90vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:80px 24px; background:${bg}; position:relative; overflow:hidden;">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%, ${primary}18, transparent);pointer-events:none;"></div>
   <div style="position:relative; max-width:800px; margin:0 auto;">
-    <span class="section-badge">✦ ${layout.branding?.logoText}</span>
+    <span class="section-badge">
+      ${logoHtml(18)}
+      ${layout.branding?.logoText}
+    </span>
     <h1 style="font-size:clamp(36px,7vw,72px); font-weight:800; line-height:1.1; margin-bottom:24px; color:${text};">
       ${heroSection.headline}
     </h1>
@@ -228,7 +243,7 @@ ${
 <!-- Footer -->
 <footer style="border-top:1px solid ${borderColor};padding:36px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
   <div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;">
-    <span style="width:10px;height:10px;border-radius:50%;background:${primary};display:inline-block;"></span>
+    ${logoHtml(28)}
     ${layout.branding?.logoText ?? "Brand"}
   </div>
   <p style="font-size:12px;color:${subtextColor};">© ${new Date().getFullYear()} ${layout.branding?.logoText ?? "Brand"}. All rights reserved.</p>
