@@ -7,6 +7,7 @@ import { normalizeLayout } from "@/lib/normalizeLayout";
 import { THEME_STYLES, getThemeLabel } from "@/lib/themeConfig";
 import { ThemeStyle } from "@/types/layout";
 import { useCredits } from "@/context/CreditsContext";
+import Logo from "@/assets/logo_light.svg";
 
 const useTypewriter = (
   words: string[],
@@ -218,12 +219,15 @@ export default function LandingPrompt() {
           >
             {loading ? (
               <>
-                <LoaderCircle className="w-4 h-4 animate-spin" />
-                <span>Generating…</span>
+                <img
+                  src={Logo.src}
+                  alt="Loading"
+                  className="w-4 h-4 animate-spin"
+                />
+                {/* <LoaderCircle className="w-4 h-4 animate-spin" /> */}
               </>
             ) : (
               <>
-                <span>Generate</span>
                 <MoveRight className="w-4 h-4" />
               </>
             )}

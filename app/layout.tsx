@@ -11,7 +11,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Astro Web — AI Website Builder",
+  title: "CrawlCube — AI Website Builder",
   description: "Generate professional websites in seconds with AI",
 };
 

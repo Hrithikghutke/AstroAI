@@ -5,8 +5,16 @@ import {
   updateDoc,
   increment,
   serverTimestamp,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { generateShareId } from "@/lib/generateId";
 
 const STARTING_CREDITS = 5;
 
@@ -69,5 +77,110 @@ export async function addCredits(
   const userRef = doc(db, "users", clerkUserId);
   await updateDoc(userRef, {
     credits: increment(amount),
+  });
+}
+
+/* -------------------------------------------------------
+   Save a generated website to Firestore.
+   Returns the new document id and shareId.
+------------------------------------------------------- */
+export async function saveGeneration(
+  clerkUserId: string,
+  prompt: string,
+  layout: any,
+): Promise<{ id: string; shareId: string }> {
+  const shareId = generateShareId();
+
+  const docRef = await addDoc(collection(db, "generations"), {
+    clerkUserId,
+    prompt,
+    layout,
+    shareId,
+    siteName: layout?.branding?.logoText ?? "Untitled",
+    themeStyle: layout?.themeStyle ?? "corporate",
+    createdAt: serverTimestamp(),
+  });
+
+  return { id: docRef.id, shareId };
+}
+
+/* -------------------------------------------------------
+   Get all saved sites for a user, newest first.
+------------------------------------------------------- */
+export async function getUserGenerations(clerkUserId: string) {
+  const q = query(
+    collection(db, "generations"),
+    where("clerkUserId", "==", clerkUserId),
+    orderBy("createdAt", "desc"),
+  );
+
+  const snap = await getDocs(q);
+
+  return snap.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+    // Convert Firestore timestamp to ISO string for JSON serialization
+    createdAt: doc.data().createdAt?.toDate?.()?.toISOString() ?? null,
+  }));
+}
+
+/* -------------------------------------------------------
+   Get a single generation by shareId (public — no auth).
+------------------------------------------------------- */
+export async function getGenerationByShareId(shareId: string) {
+  const q = query(
+    collection(db, "generations"),
+    where("shareId", "==", shareId),
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+
+  const doc = snap.docs[0];
+  return {
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toDate?.()?.toISOString() ?? null,
+  };
+}
+
+/* -------------------------------------------------------
+   Delete a generation — only if it belongs to the user.
+------------------------------------------------------- */
+export async function deleteGeneration(
+  docId: string,
+  clerkUserId: string,
+): Promise<void> {
+  const ref = doc(db, "generations", docId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) throw new Error("Not found");
+  if (snap.data().clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+
+  await deleteDoc(ref);
+}
+
+/* -------------------------------------------------------
+  Update a generation with new layout and prompt — only if it belongs to the user.
+------------------------------------------------------- */
+
+export async function updateGeneration(
+  docId: string,
+  clerkUserId: string,
+  layout: any,
+  prompt: string,
+): Promise<void> {
+  const ref = doc(db, "generations", docId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) throw new Error("Not found");
+  if (snap.data().clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+
+  await updateDoc(ref, {
+    layout,
+    prompt,
+    siteName: layout?.branding?.logoText ?? "Untitled",
+    themeStyle: layout?.themeStyle ?? "corporate",
+    updatedAt: serverTimestamp(),
   });
 }

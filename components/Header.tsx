@@ -4,7 +4,9 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { Zap } from "lucide-react";
 import { useCredits } from "@/context/CreditsContext";
 import Logo from "@/assets/logo.svg";
+import cname from "@/assets/cname.svg";
 import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 
 export default function Header() {
   const { isSignedIn } = useUser();
@@ -13,12 +15,13 @@ export default function Header() {
   return (
     <header className="flex items-center justify-between px-6 lg:px-10 bg-neutral-950 py-4 border-b border-neutral-900">
       {/* Logo */}
-      <Link href="/" className="flex items-center">
-        <img src={Logo.src} className="w-7 h-7 mr-3" alt="Astro Web logo" />
-        <h1 className="text-xl font-normal tracking-tight">
-          Astro
-          <span className="font-black pl-0.5 text-neutral-600">web</span>
-        </h1>
+      <Link href="/" className="flex items-center ml-7">
+        <img src={Logo.src} className="w-10 mr-3" alt="Astro Web logo" />
+        <img
+          src={cname.src}
+          className="w-30 ml-1 opacity-90"
+          alt="Astro Web logo"
+        />
       </Link>
 
       {/* Right side */}
@@ -31,6 +34,17 @@ export default function Header() {
             </span>
           </div>
         )}
+
+        {isSignedIn && (
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+        )}
+
         <UserButton afterSignOutUrl="/sign-in" />
       </div>
     </header>

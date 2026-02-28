@@ -6,6 +6,7 @@ import { normalizeLayout } from "@/lib/normalizeLayout";
 import { THEME_STYLES, getThemeLabel } from "@/lib/themeConfig";
 import { ThemeStyle } from "@/types/layout";
 import { useCredits } from "@/context/CreditsContext";
+import Logo from "@/assets/logo.svg";
 
 interface Message {
   id: string;
@@ -36,12 +37,14 @@ export default function ChatPanel({
   initialPrompt,
   onShowPreview,
   hasLayout,
+  onNewChat,
 }: {
-  setLayout: (layout: any) => void;
+  setLayout: (layout: any, prompt?: string) => void;
   initialLayout?: any;
   initialPrompt?: string;
   onShowPreview?: () => void;
   hasLayout?: boolean;
+  onNewChat?: () => void; // ← NEW
 }) {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (initialLayout && initialPrompt) {
@@ -77,6 +80,9 @@ export default function ChatPanel({
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { deductCredit, refreshCredits } = useCredits();
+  const [currentLayout, setCurrentLayout] = useState<any>(
+    initialLayout ?? null,
+  );
 
   // Auto scroll to bottom on new message
   useEffect(() => {
@@ -123,7 +129,11 @@ export default function ChatPanel({
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, themeStyle: selectedTheme }),
+        body: JSON.stringify({
+          prompt,
+          themeStyle: selectedTheme,
+          currentLayout: currentLayout ?? null, // ← send current layout as context
+        }),
       });
 
       const data = await res.json();
@@ -136,8 +146,11 @@ export default function ChatPanel({
       }
 
       const normalized = normalizeLayout(data.layout);
+
+      setCurrentLayout(normalized); // ← keep track of latest layout
+      setLayout(normalized, prompt);
       normalized.themeStyle = selectedTheme;
-      setLayout(normalized);
+      setLayout(normalized, prompt);
 
       // Sync real credit value from server
       await refreshCredits();
@@ -185,13 +198,15 @@ export default function ChatPanel({
     setMessages([
       {
         id: "welcome",
-        role: "assistant",
+        role: "assistant" as const,
         content:
-          "Hi! I'm Astroweb AI. Describe the website you want to build and I'll generate it instantly.",
+          "Hi! I'm crawlcube. Describe the website you want to build and I'll generate it instantly.",
       },
     ]);
+    setCurrentLayout(null);
     setLayout(null);
     setError(null);
+    onNewChat?.(); // ← notify BuildPage to clear savedId
   };
 
   return (
@@ -199,9 +214,9 @@ export default function ChatPanel({
       {/* Chat Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+          <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
           <span className="text-sm font-medium text-neutral-300">
-            Astroweb AI
+            crawlcube.ai
           </span>
         </div>
 
@@ -255,8 +270,13 @@ export default function ChatPanel({
           >
             {/* AI Avatar */}
             {message.role === "assistant" && (
-              <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <div className="w-7 h-7 rounded-full  flex items-center justify-center shrink-0 mt-0.5">
+                {/* <Sparkles className="w-3.5 h-3.5 text-purple-400" /> */}
+                <img
+                  src={Logo.src}
+                  alt="Astro Web logo"
+                  className="w-6 h-6 animate-bounce"
+                />
               </div>
             )}
 

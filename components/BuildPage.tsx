@@ -10,10 +10,11 @@ export default function BuildPage() {
   const router = useRouter();
   const [layout, setLayout] = useState<any>(null);
   const [initialPrompt, setInitialPrompt] = useState<string>("");
+  const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [mobileView, setMobileView] = useState<"chat" | "preview">("preview");
   const [ready, setReady] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null); // persists across modifications
 
-  // On mount — restore layout from sessionStorage
   useEffect(() => {
     const stored = sessionStorage.getItem("astroweb_layout");
     const storedPrompt = sessionStorage.getItem("astroweb_prompt");
@@ -22,21 +23,29 @@ export default function BuildPage() {
       try {
         setLayout(JSON.parse(stored));
         setInitialPrompt(storedPrompt ?? "");
+        setCurrentPrompt(storedPrompt ?? "");
       } catch {
-        // corrupted data — go back home
         router.replace("/");
         return;
       }
     }
-    // No layout = fresh /build visit, still allow empty chat
     setReady(true);
   }, [router]);
 
-  const handleChatGenerate = (generatedLayout: any) => {
+  const handleChatGenerate = (generatedLayout: any, prompt?: string) => {
     setLayout(generatedLayout);
-    // Keep session up to date
+    if (prompt) setCurrentPrompt(prompt);
     sessionStorage.setItem("astroweb_layout", JSON.stringify(generatedLayout));
     setMobileView("preview");
+    // ✅ Do NOT clear savedId — modifications update the same entry
+  };
+
+  const handleNewChat = () => {
+    setSavedId(null); // new chat = fresh save entry
+    setLayout(null);
+    setCurrentPrompt("");
+    sessionStorage.removeItem("astroweb_layout");
+    sessionStorage.removeItem("astroweb_prompt");
   };
 
   if (!ready) {
@@ -54,20 +63,26 @@ export default function BuildPage() {
       <Header />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* ── DESKTOP: side by side ── */}
+        {/* DESKTOP */}
         <div className="hidden md:flex w-[38%] shrink-0 border-r border-neutral-800 flex-col">
           <ChatPanel
             setLayout={handleChatGenerate}
             initialLayout={layout}
             initialPrompt={initialPrompt}
+            onNewChat={handleNewChat}
           />
         </div>
 
         <div className="hidden md:flex flex-1 flex-col">
-          <PreviewPanel layout={layout} />
+          <PreviewPanel
+            layout={layout}
+            prompt={currentPrompt}
+            savedId={savedId}
+            onSaved={(id) => setSavedId(id)}
+          />
         </div>
 
-        {/* ── MOBILE: toggle ── */}
+        {/* MOBILE */}
         <div className="flex md:hidden flex-1 flex-col overflow-hidden">
           {mobileView === "chat" ? (
             <ChatPanel
@@ -76,6 +91,7 @@ export default function BuildPage() {
               initialPrompt={initialPrompt}
               onShowPreview={() => setMobileView("preview")}
               hasLayout={!!layout}
+              onNewChat={handleNewChat}
             />
           ) : (
             <div className="flex flex-col flex-1 overflow-hidden">
@@ -104,7 +120,12 @@ export default function BuildPage() {
                 </span>
                 <div className="w-16" />
               </div>
-              <PreviewPanel layout={layout} />
+              <PreviewPanel
+                layout={layout}
+                prompt={currentPrompt}
+                savedId={savedId}
+                onSaved={(id) => setSavedId(id)}
+              />
             </div>
           )}
         </div>
