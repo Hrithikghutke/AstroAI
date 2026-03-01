@@ -11,7 +11,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "CrawlCube — AI Website Builder",
+  title: "CrawlCube",
   description: "Generate professional websites in seconds with AI",
 };
 
