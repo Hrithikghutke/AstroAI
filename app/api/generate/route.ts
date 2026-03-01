@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserCredits, deductCredit } from "@/lib/firestore";
-import { generateLogo } from "@/lib/generateLogo"; // ← NEW
+import { generateLogo } from "@/lib/generateLogo";
+import { fetchUnsplashImage } from "@/lib/fetchUnsplash"; // ← NEW
 
 export async function POST(req: Request) {
   try {
@@ -76,6 +77,7 @@ OUTPUT this exact JSON shape (fill every field with real content):
       "type": "hero",
       "headline": "<powerful, specific headline — at least 8 words>",
       "subtext": "<compelling subtitle — 1-2 sentences>",
+      "imageQuery": "<3-5 word Unsplash search query for a REAL photo that fits this business — e.g. 'italian restaurant interior night', 'modern gym workout', 'startup office team', 'luxury hotel lobby'>",
       "cta": {
         "text": "<action-oriented button text>",
         "style": {
@@ -194,14 +196,25 @@ OUTPUT this exact JSON shape (fill every field with real content):
 
     const parsedLayout = JSON.parse(cleaned);
 
-    // ── Call Sonnet for SVG logo directly (no internal fetch) ──
-    const logoSvg = await generateLogo({
-      brandName: parsedLayout?.branding?.logoText ?? "Brand",
-      primaryColor: parsedLayout?.branding?.primaryColor ?? "#6366f1",
-      secondaryColor: parsedLayout?.branding?.secondaryColor ?? "#ffffff",
-      themeStyle: themeStyle ?? "corporate",
-    });
+    // ── Run logo + image fetch in PARALLEL ──
+    const heroSection = parsedLayout.sections?.find(
+      (s: any) => s.type === "hero",
+    );
+    const imageQuery = heroSection?.imageQuery ?? null;
 
+    const [logoSvg, imageUrl] = await Promise.all([
+      // Call 1: Sonnet generates SVG logo
+      generateLogo({
+        brandName: parsedLayout?.branding?.logoText ?? "Brand",
+        primaryColor: parsedLayout?.branding?.primaryColor ?? "#6366f1",
+        secondaryColor: parsedLayout?.branding?.secondaryColor ?? "#ffffff",
+        themeStyle: themeStyle ?? "corporate",
+      }),
+      // Call 2: Unsplash fetches hero image
+      imageQuery ? fetchUnsplashImage(imageQuery) : Promise.resolve(null),
+    ]);
+
+    // ── Attach logo ──
     if (logoSvg) {
       parsedLayout.branding.logo = logoSvg;
       console.log("✅ Logo generated for:", parsedLayout.branding.logoText);
@@ -209,13 +222,16 @@ OUTPUT this exact JSON shape (fill every field with real content):
       console.warn("⚠️ Logo generation failed, using dot fallback");
     }
 
-    // ── Deduct credit after successful generation ──
-    await deductCredit(userId);
+    // ── Attach image URL to hero section ──
+    if (imageUrl && heroSection) {
+      heroSection.imageUrl = imageUrl;
+      console.log("✅ Hero image fetched:", imageUrl.slice(0, 60));
+    } else {
+      console.warn("⚠️ Hero image fetch failed, using gradient fallback");
+    }
 
-    console.log(
-      "Logo in final layout:",
-      parsedLayout.branding?.logo?.slice(0, 50),
-    );
+    // ── Deduct credit ──
+    await deductCredit(userId);
 
     return NextResponse.json({ layout: parsedLayout });
   } catch (error) {

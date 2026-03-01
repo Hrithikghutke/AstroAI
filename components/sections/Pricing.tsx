@@ -2,67 +2,79 @@
 
 import { useBrand } from "@/context/BrandContext";
 import { getThemeClasses } from "@/lib/themeConfig";
+import EditableText from "@/components/ui/EditableText";
 
-export default function Pricing({ data }: any) {
+export default function Pricing({
+  data,
+  editable = false,
+  onUpdate,
+  onUpdateItem,
+  onUpdateFeature,
+}: {
+  data: any;
+  editable?: boolean;
+  onUpdate?: (field: string, value: string) => void;
+  onUpdateItem?: (index: number, field: string, value: string) => void;
+  onUpdateFeature?: (
+    planIndex: number,
+    featureIndex: number,
+    value: string,
+  ) => void;
+}) {
   const brand = useBrand();
   const theme = getThemeClasses(brand.themeStyle, brand.theme === "dark");
 
   return (
-    <section className={`py-24 px-6 ${theme.sectionBg}`}>
+    <section className={`py-16 @md:py-24 px-4 @md:px-6 ${theme.sectionBg}`}>
       <div className="max-w-6xl mx-auto">
-        {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 @md:mb-16">
           <span className={`inline-block mb-4 ${theme.badgeClass}`}>
             Pricing
           </span>
           <h2
-            className={`text-3xl md:text-5xl ${theme.headlineClass}`}
+            className={`text-2xl @md:text-3xl @lg:text-5xl ${theme.headlineClass}`}
             style={{ color: brand.theme === "dark" ? "#ffffff" : "#0a0a0a" }}
           >
-            {data.headline}
+            {editable ? (
+              <EditableText
+                value={data.headline}
+                onSave={(v) => onUpdate?.("headline", v)}
+              />
+            ) : (
+              data.headline
+            )}
           </h2>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+        {/* Single column on mobile, 3-col on @md+ */}
+        <div className="grid grid-cols-1 @md:grid-cols-3 gap-4 @md:gap-6 items-start">
           {data.pricingOptions?.map((plan: any, i: number) => {
             const isHighlighted = !!plan.highlight;
-
             return (
               <div
                 key={i}
-                className={`relative flex flex-col rounded-2xl p-8 border transition-all duration-200 ${theme.cardHover}`}
+                className={`relative flex flex-col rounded-2xl p-6 @md:p-8 border transition-all duration-200 ${theme.cardHover}`}
                 style={{
-                  background: plan.style?.background
-                    ? plan.style.background
+                  background: isHighlighted
+                    ? brand.primaryColor
                     : brand.theme === "dark"
-                      ? isHighlighted
-                        ? brand.primaryColor
-                        : "#111111"
-                      : isHighlighted
-                        ? brand.primaryColor
-                        : "#ffffff",
-                  color: plan.style?.textColor
-                    ? plan.style.textColor
-                    : isHighlighted
+                      ? "#111111"
+                      : "#ffffff",
+                  color: isHighlighted
+                    ? "#ffffff"
+                    : brand.theme === "dark"
                       ? "#ffffff"
-                      : brand.theme === "dark"
-                        ? "#ffffff"
-                        : "#0a0a0a",
-                  borderColor: plan.style?.borderColor
-                    ? plan.style.borderColor
-                    : isHighlighted
-                      ? "transparent"
-                      : brand.theme === "dark"
-                        ? "#2a2a2a"
-                        : "#e5e7eb",
+                      : "#0a0a0a",
+                  borderColor: isHighlighted
+                    ? "transparent"
+                    : brand.theme === "dark"
+                      ? "#2a2a2a"
+                      : "#e5e7eb",
                   boxShadow: isHighlighted
                     ? `0 20px 60px ${brand.primaryColor}44`
                     : "none",
-                  transform: isHighlighted ? "scale(1.03)" : "scale(1)",
                 }}
               >
-                {/* Most Popular Badge */}
                 {plan.highlight && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span
@@ -77,35 +89,54 @@ export default function Pricing({ data }: any) {
                   </div>
                 )}
 
-                {/* Plan Name */}
-                <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                <h3 className="text-lg @md:text-xl font-bold mb-1">
+                  {editable ? (
+                    <EditableText
+                      value={plan.name}
+                      onSave={(v) => onUpdateItem?.(i, "name", v)}
+                    />
+                  ) : (
+                    plan.name
+                  )}
+                </h3>
 
-                {/* Price */}
                 <div className="mb-3">
-                  <span className="text-4xl font-extrabold tracking-tight">
-                    {plan.price}
+                  <span className="text-3xl @md:text-4xl font-extrabold tracking-tight">
+                    {editable ? (
+                      <EditableText
+                        value={plan.price}
+                        onSave={(v) => onUpdateItem?.(i, "price", v)}
+                      />
+                    ) : (
+                      plan.price
+                    )}
                   </span>
                 </div>
 
-                {/* Description */}
                 {plan.description && (
-                  <p className="text-sm opacity-70 mb-6 leading-relaxed">
-                    {plan.description}
-                  </p>
+                  <div className="text-sm opacity-70 mb-5 leading-relaxed">
+                    {editable ? (
+                      <EditableText
+                        value={plan.description}
+                        onSave={(v) => onUpdateItem?.(i, "description", v)}
+                        multiline
+                      />
+                    ) : (
+                      plan.description
+                    )}
+                  </div>
                 )}
 
-                {/* Divider */}
                 <div
-                  className="h-px mb-6 opacity-20"
+                  className="h-px mb-5 opacity-20"
                   style={{
                     background: isHighlighted ? "#ffffff" : brand.primaryColor,
                   }}
                 />
 
-                {/* Features List */}
-                <ul className="space-y-3 flex-1 mb-8">
-                  {plan.features?.map((f: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-sm">
+                <ul className="space-y-2.5 flex-1 mb-6">
+                  {plan.features?.map((f: string, j: number) => (
+                    <li key={j} className="flex items-start gap-2.5 text-sm">
                       <span
                         className="mt-0.5 shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
                         style={{
@@ -117,20 +148,33 @@ export default function Pricing({ data }: any) {
                       >
                         ✓
                       </span>
-                      {f}
+                      {editable ? (
+                        <EditableText
+                          value={f}
+                          onSave={(v) => onUpdateFeature?.(i, j, v)}
+                        />
+                      ) : (
+                        f
+                      )}
                     </li>
                   ))}
                 </ul>
 
-                {/* CTA Button */}
                 <button
-                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90 hover:scale-[1.02]"
+                  className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90"
                   style={{
                     background: isHighlighted ? "#ffffff" : brand.primaryColor,
                     color: isHighlighted ? brand.primaryColor : "#ffffff",
                   }}
                 >
-                  Get Started
+                  {editable ? (
+                    <EditableText
+                      value={plan.ctaText ?? "Get Started"}
+                      onSave={(v) => onUpdateItem?.(i, "ctaText", v)}
+                    />
+                  ) : (
+                    (plan.ctaText ?? "Get Started")
+                  )}
                 </button>
               </div>
             );

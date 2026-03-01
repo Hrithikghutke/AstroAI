@@ -71,9 +71,11 @@ function normalizeHero(raw: any): HeroSection {
     type: "hero",
     headline: raw?.headline ?? "Welcome",
     subtext: raw?.subtext ?? "",
+    imageUrl: raw?.imageUrl ?? null, // ← NEW
+    imageQuery: raw?.imageQuery ?? null, // ← NEW
     cta: raw?.cta
       ? normalizeCTA(raw.cta)
-      : raw?.callToAction // some models return a plain string
+      : raw?.callToAction
         ? {
             text: raw.callToAction,
             style: {

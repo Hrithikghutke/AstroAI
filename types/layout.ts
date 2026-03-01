@@ -68,6 +68,8 @@ export interface HeroSection extends BaseSection {
   type: "hero";
   subtext?: string;
   cta?: CTAButton;
+  imageUrl?: string; // ← NEW: Unsplash photo URL
+  imageQuery?: string; // ← NEW: search keyword AI generated
 }
 
 /* ============================

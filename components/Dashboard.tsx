@@ -31,7 +31,7 @@ const THEME_COLORS: Record<string, string> = {
   corporate: "#3b82f6",
 };
 
-export default function Dashboard() {
+export default function Dashboard({ data }: any) {
   const router = useRouter();
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);

@@ -10,6 +10,7 @@ import {
   Share2,
   Download,
   Check,
+  Pencil,
 } from "lucide-react";
 import { generateHtml } from "@/lib/generateHtml";
 
@@ -18,71 +19,72 @@ export default function PreviewPanel({
   prompt,
   savedId,
   onSaved,
+  onLayoutChange,
 }: {
   layout: Layout | null;
   prompt?: string;
   savedId?: string | null;
   onSaved?: (id: string) => void;
+  onLayoutChange?: (updated: Layout) => void;
 }) {
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState(false); // ← NEW
 
-  // When layout changes (new generation or modification):
-  // - reset the saved indicator so user can save again
-  // - keep shareId if we already have savedId (so Share still works)
+  // When layout changes:
+  // - If never saved: reset saved so POST can happen
+  // - If already saved: mark pending changes so PATCH happens on next save
   useEffect(() => {
-    setSaved(false);
+    if (savedId) {
+      setPendingChanges(true); // inline edit — will PATCH on save
+    } else {
+      setSaved(false); // new generation — will POST on save
+    }
     setCopied(false);
-    // Don't clear shareId here — it's managed by save/share handlers
   }, [layout]);
 
-  // If savedId is cleared from outside (new chat), reset everything
+  // New chat → clear everything
   useEffect(() => {
     if (!savedId) {
       setShareId(null);
       setSaved(false);
+      setPendingChanges(false);
     }
   }, [savedId]);
 
   const handleSave = async () => {
-    if (!layout || saving || saved) return;
+    if (!layout || saving) return;
+    if (saved && !pendingChanges) return; // nothing changed since last save
     setSaving(true);
 
     try {
       if (savedId) {
-        // ✅ Already saved this session — PATCH to update existing
+        // ✅ Already exists — always PATCH
         const res = await fetch("/api/generations/save", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: savedId,
-            layout,
-            prompt: prompt ?? "",
-          }),
+          body: JSON.stringify({ id: savedId, layout, prompt: prompt ?? "" }),
         });
-
         if (res.ok) {
           setSaved(true);
+          setPendingChanges(false); // ← clear pending after successful PATCH
         }
       } else {
-        // ✅ First save — POST to create new
+        // ✅ First save — POST
         const res = await fetch("/api/generations/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            layout,
-            prompt: prompt ?? "",
-          }),
+          body: JSON.stringify({ layout, prompt: prompt ?? "" }),
         });
-
         const data = await res.json();
         if (data.id && data.shareId) {
           setShareId(data.shareId);
-          onSaved?.(data.id); // ← tell BuildPage the doc ID
+          onSaved?.(data.id);
           setSaved(true);
+          setPendingChanges(false);
         }
       }
     } catch {
@@ -95,7 +97,6 @@ export default function PreviewPanel({
   const handleShare = async () => {
     if (saving) return;
 
-    // Already have shareId — just copy
     if (shareId) {
       const url = `${window.location.origin}/preview/${shareId}`;
       await navigator.clipboard.writeText(url);
@@ -104,23 +105,19 @@ export default function PreviewPanel({
       return;
     }
 
-    // Need to save first to get a shareId
     setSaving(true);
     try {
       let sid: string | null = null;
 
       if (savedId) {
-        // Fetch the existing shareId from Firestore
         const res = await fetch(`/api/generations/${savedId}/share`);
         if (res.ok) {
           const data = await res.json();
           sid = data.shareId;
           setShareId(sid);
-          setSaved(true);
         }
       }
 
-      // Still no shareId — create a new save
       if (!sid) {
         const res = await fetch("/api/generations/save", {
           method: "POST",
@@ -133,6 +130,7 @@ export default function PreviewPanel({
           setShareId(sid);
           onSaved?.(data.id);
           setSaved(true);
+          setPendingChanges(false);
         }
       }
 
@@ -160,6 +158,16 @@ export default function PreviewPanel({
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  // Save button label logic
+  const saveLabel = () => {
+    if (saving) return "Saving…";
+    if (saved && !pendingChanges) return savedId ? "Saved!" : "Saved!";
+    if (saved && pendingChanges) return "Save changes";
+    return "Save";
+  };
+
+  const saveDisabled = saving || (saved && !pendingChanges);
 
   if (!layout) {
     return (
@@ -204,28 +212,30 @@ export default function PreviewPanel({
           {/* Save */}
           <button
             onClick={handleSave}
-            disabled={saving || saved}
+            disabled={saveDisabled}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              background: saved ? "#16a34a22" : "#ffffff11",
-              color: saved ? "#4ade80" : "#a3a3a3",
-              border: `1px solid ${saved ? "#16a34a44" : "#2a2a2a"}`,
+              background:
+                saved && !pendingChanges
+                  ? "#16a34a22"
+                  : pendingChanges
+                    ? "#7c3aed22"
+                    : "#ffffff11",
+              color:
+                saved && !pendingChanges
+                  ? "#4ade80"
+                  : pendingChanges
+                    ? "#a78bfa"
+                    : "#a3a3a3",
+              border: `1px solid ${saved && !pendingChanges ? "#16a34a44" : pendingChanges ? "#7c3aed44" : "#2a2a2a"}`,
             }}
           >
-            {saved ? (
+            {saved && !pendingChanges ? (
               <Check className="w-3.5 h-3.5" />
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
-            <span className="hidden sm:inline">
-              {saved
-                ? savedId
-                  ? "Updated!"
-                  : "Saved!"
-                : saving
-                  ? "Saving…"
-                  : "Save"}
-            </span>
+            <span className="hidden sm:inline">{saveLabel()}</span>
           </button>
 
           {/* Share */}
@@ -272,16 +282,27 @@ export default function PreviewPanel({
         </div>
       </div>
 
+      {/* Edit hint bar */}
+      <div className="flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border-b border-purple-500/20 text-xs text-purple-400">
+        <Pencil className="w-3 h-3 shrink-0" />
+        <span>Click any text in the preview to edit it directly</span>
+      </div>
+
       {/* Preview area */}
       <div className="flex-1 overflow-auto bg-neutral-800 flex items-start justify-center p-4">
         <div
-          className="bg-white rounded-lg overflow-auto shadow-2xl transition-all duration-300 origin-top"
+          className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto"
           style={{
             width: viewport === "mobile" ? "390px" : "100%",
             minHeight: "100%",
+            background: "white",
           }}
         >
-          <PreviewFrame layout={layout} />
+          <PreviewFrame
+            layout={layout}
+            editable={true}
+            onLayoutChange={onLayoutChange}
+          />
         </div>
       </div>
     </div>

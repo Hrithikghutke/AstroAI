@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import ChatPanel from "@/components/ChatPanel";
 import PreviewPanel from "@/components/PreviewPanel";
+import { Layout } from "@/types/layout";
 
 export default function BuildPage() {
   const router = useRouter();
@@ -48,6 +49,11 @@ export default function BuildPage() {
     sessionStorage.removeItem("astroweb_prompt");
   };
 
+  const handleLayoutChange = (updated: Layout) => {
+    setLayout(updated);
+    sessionStorage.setItem("astroweb_layout", JSON.stringify(updated));
+  };
+
   if (!ready) {
     return (
       <div className="h-screen flex flex-col bg-neutral-950">
@@ -79,6 +85,7 @@ export default function BuildPage() {
             prompt={currentPrompt}
             savedId={savedId}
             onSaved={(id) => setSavedId(id)}
+            onLayoutChange={handleLayoutChange} // ← NEW
           />
         </div>
 
@@ -125,6 +132,7 @@ export default function BuildPage() {
                 prompt={currentPrompt}
                 savedId={savedId}
                 onSaved={(id) => setSavedId(id)}
+                onLayoutChange={handleLayoutChange} // ← NEW
               />
             </div>
           )}
