@@ -1,10 +1,5 @@
 // types/layout.ts
 
-/* ============================
-   Root Layout
-============================ */
-
-// ADD this new type above the Layout interface
 export type ThemeStyle =
   | "minimal"
   | "bold"
@@ -12,84 +7,88 @@ export type ThemeStyle =
   | "elegant"
   | "corporate";
 
-// REPLACE the existing Layout interface with this:
 export interface Layout {
   theme: "light" | "dark";
-  themeStyle: ThemeStyle; // <-- NEW
+  themeStyle: ThemeStyle;
   primaryColor: string;
   branding: Branding;
   sections: Section[];
 }
-
-/* ============================
-   Branding
-============================ */
 
 export interface Branding {
   logoText: string;
   primaryColor: string;
   secondaryColor?: string;
   fontStyle?: "normal" | "bold" | "italic";
-  logo?: string; // ← NEW: raw SVG string
+  logo?: string;
+  socialLinks?: {
+    // ← NEW
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    youtube?: string;
+    linkedin?: string;
+  };
 }
-
-/* ============================
-   Base Section
-============================ */
 
 export interface BaseSection {
   type: SectionType;
   headline: string;
 }
 
-/* ============================
-   Section Union
-============================ */
-
 export type Section =
   | HeroSection
+  | StatsSection
   | FeaturesSection
   | PricingSection
   | TestimonialsSection
+  | CtaBannerSection
   | ContactSection;
 
 export type SectionType =
   | "hero"
+  | "stats"
   | "features"
   | "pricing"
   | "testimonials"
+  | "cta_banner"
   | "contact";
-
-/* ============================
-   Hero Section
-============================ */
 
 export interface HeroSection extends BaseSection {
   type: "hero";
   subtext?: string;
   cta?: CTAButton;
-  imageUrl?: string; // ← NEW: Unsplash photo URL
-  imageQuery?: string; // ← NEW: search keyword AI generated
+  secondaryCta?: CTAButton; // ← NEW
+  variant?: "centered" | "split" | "minimal";
+  imageUrl?: string;
+  imageQuery?: string;
 }
 
-/* ============================
-   Features Section
-============================ */
+// ← NEW: Stats bar section
+export interface StatsSection {
+  type: "stats";
+  headline?: string;
+  stats: StatItem[];
+}
+
+export interface StatItem {
+  value: string; // e.g. "10,000+"
+  label: string; // e.g. "Sq Ft Space"
+  icon?: string; // optional emoji
+}
 
 export interface FeaturesSection extends BaseSection {
   type: "features";
   features: FeatureItem[];
+  variant?: "grid" | "alternating" | "list";
 }
 
 export interface FeatureItem {
   title: string;
   description: string;
   icon?: string;
+  imageUrl?: string;
 }
-
-/* ============================
-   Pricing Section
-============================ */
 
 export interface PricingSection extends BaseSection {
   type: "pricing";
@@ -101,6 +100,7 @@ export interface PricingPlan {
   price: string;
   description?: string;
   features: string[];
+  ctaText?: string;
   style?: StyleObject;
   highlight?: {
     text: string;
@@ -108,31 +108,32 @@ export interface PricingPlan {
   };
 }
 
-/* ============================
-   Testimonials Section
-============================ */
-
 export interface TestimonialsSection extends BaseSection {
   type: "testimonials";
   testimonials: TestimonialItem[];
 }
 
-// REPLACE the existing TestimonialItem interface:
 export interface TestimonialItem {
   name: string;
-  role?: string; // <-- NEW: e.g. "Founder @ Acme"
+  role?: string;
   review: string;
   style?: {
     accentColor?: string;
   };
 }
 
-/* ============================
-   Contact Section
-============================ */
+// ← NEW: CTA Banner section
+export interface CtaBannerSection {
+  type: "cta_banner";
+  headline: string;
+  subtext?: string;
+  primaryCta?: CTAButton;
+  secondaryCta?: CTAButton;
+}
 
 export interface ContactSection extends BaseSection {
   type: "contact";
+  subtext?: string;
   contactDetails: ContactDetails;
   cta?: CTAButton;
 }
@@ -148,19 +149,11 @@ export interface ContactDetails {
   };
 }
 
-/* ============================
-   CTA
-============================ */
-
 export interface CTAButton {
   text: string;
   color?: string;
   style?: StyleObject;
 }
-
-/* ============================
-   Reusable Style Object
-============================ */
 
 export interface StyleObject {
   background?: string;

@@ -23,17 +23,22 @@ export default function Pricing({
 }) {
   const brand = useBrand();
   const theme = getThemeClasses(brand.themeStyle, brand.theme === "dark");
+  const isDark = brand.theme === "dark";
 
   return (
-    <section className={`py-16 @md:py-24 px-4 @md:px-6 ${theme.sectionBg}`}>
+    <section
+      id="pricing"
+      className={`py-16 @md:py-24 px-4 @md:px-6 ${theme.sectionBg}`}
+    >
       <div className="max-w-6xl mx-auto">
+        {/* Section header */}
         <div className="text-center mb-10 @md:mb-16">
           <span className={`inline-block mb-4 ${theme.badgeClass}`}>
             Pricing
           </span>
           <h2
             className={`text-2xl @md:text-3xl @lg:text-5xl ${theme.headlineClass}`}
-            style={{ color: brand.theme === "dark" ? "#ffffff" : "#0a0a0a" }}
+            style={{ color: isDark ? "#ffffff" : "#0a0a0a" }}
           >
             {editable ? (
               <EditableText
@@ -46,28 +51,36 @@ export default function Pricing({
           </h2>
         </div>
 
-        {/* Single column on mobile, 3-col on @md+ */}
-        <div className="grid grid-cols-1 @md:grid-cols-3 gap-4 @md:gap-6 items-start">
+        {/*
+          FIX 1 — Grid breakpoints:
+            @sm (2-col) fills the tablet gap between 1-col mobile and 3-col desktop
+          FIX 2 — items-stretch:
+            All cards stretch to equal height so CTA buttons align at the bottom
+          FIX 3 — pt-6:
+            Gives the absolute -top-4 "Most Popular" badge room to breathe above the card
+        */}
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-4 @lg:gap-6 items-stretch pt-6">
           {data.pricingOptions?.map((plan: any, i: number) => {
             const isHighlighted = !!plan.highlight;
+
             return (
               <div
                 key={i}
-                className={`relative flex flex-col rounded-2xl p-6 @md:p-8 border transition-all duration-200 ${theme.cardHover}`}
+                className={`relative flex flex-col rounded-2xl p-5 @md:p-7 border transition-all duration-200 ${theme.cardHover}`}
                 style={{
                   background: isHighlighted
                     ? brand.primaryColor
-                    : brand.theme === "dark"
+                    : isDark
                       ? "#111111"
                       : "#ffffff",
                   color: isHighlighted
                     ? "#ffffff"
-                    : brand.theme === "dark"
+                    : isDark
                       ? "#ffffff"
                       : "#0a0a0a",
                   borderColor: isHighlighted
                     ? "transparent"
-                    : brand.theme === "dark"
+                    : isDark
                       ? "#2a2a2a"
                       : "#e5e7eb",
                   boxShadow: isHighlighted
@@ -75,6 +88,7 @@ export default function Pricing({
                     : "none",
                 }}
               >
+                {/* "Most Popular" badge */}
                 {plan.highlight && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span
@@ -89,7 +103,8 @@ export default function Pricing({
                   </div>
                 )}
 
-                <h3 className="text-lg @md:text-xl font-bold mb-1">
+                {/* Plan name */}
+                <h3 className="text-base @md:text-lg font-bold mb-1">
                   {editable ? (
                     <EditableText
                       value={plan.name}
@@ -100,8 +115,13 @@ export default function Pricing({
                   )}
                 </h3>
 
+                {/*
+                  FIX 4 — Price font size:
+                    Reduced from text-3xl @md:text-4xl → text-2xl @md:text-3xl
+                    + break-words prevents long prices like "$1,999/month" from overflowing
+                */}
                 <div className="mb-3">
-                  <span className="text-3xl @md:text-4xl font-extrabold tracking-tight">
+                  <span className="text-2xl @md:text-3xl font-extrabold tracking-tight wrap-break-word">
                     {editable ? (
                       <EditableText
                         value={plan.price}
@@ -113,6 +133,7 @@ export default function Pricing({
                   </span>
                 </div>
 
+                {/* Plan description */}
                 {plan.description && (
                   <div className="text-sm opacity-70 mb-5 leading-relaxed">
                     {editable ? (
@@ -127,6 +148,7 @@ export default function Pricing({
                   </div>
                 )}
 
+                {/* Divider */}
                 <div
                   className="h-px mb-5 opacity-20"
                   style={{
@@ -134,6 +156,7 @@ export default function Pricing({
                   }}
                 />
 
+                {/* Feature list — flex-1 pushes CTA to bottom */}
                 <ul className="space-y-2.5 flex-1 mb-6">
                   {plan.features?.map((f: string, j: number) => (
                     <li key={j} className="flex items-start gap-2.5 text-sm">
@@ -160,6 +183,7 @@ export default function Pricing({
                   ))}
                 </ul>
 
+                {/* CTA button */}
                 <button
                   className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 hover:opacity-90"
                   style={{

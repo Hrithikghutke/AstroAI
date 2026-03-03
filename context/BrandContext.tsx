@@ -4,7 +4,8 @@ import { Branding, ThemeStyle } from "@/types/layout";
 interface BrandContextValue extends Branding {
   theme: "light" | "dark";
   themeStyle: ThemeStyle;
-  logo?: string; // ← NEW
+  logo?: string;
+  // socialLinks is already on Branding type — no need to re-declare
 }
 
 export const BrandContext = createContext<BrandContextValue | null>(null);
@@ -19,7 +20,8 @@ export const useBrand = (): BrandContextValue => {
       fontStyle: "normal",
       theme: "dark",
       themeStyle: "corporate",
-      logo: undefined, // ← NEW
+      logo: undefined,
+      socialLinks: undefined,
     };
   }
   return ctx;

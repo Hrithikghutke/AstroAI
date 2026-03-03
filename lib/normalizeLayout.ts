@@ -2,9 +2,11 @@ import {
   Layout,
   Section,
   HeroSection,
+  StatsSection,
   FeaturesSection,
   PricingSection,
   TestimonialsSection,
+  CtaBannerSection,
   ContactSection,
   CTAButton,
   StyleObject,
@@ -41,6 +43,15 @@ function normalizeBranding(raw: any) {
         ? raw.fontStyle
         : "normal",
     logo: raw?.logo ?? null,
+    socialLinks: raw?.socialLinks
+      ? {
+          instagram: raw.socialLinks.instagram ?? undefined,
+          facebook: raw.socialLinks.facebook ?? undefined,
+          twitter: raw.socialLinks.twitter ?? undefined,
+          youtube: raw.socialLinks.youtube ?? undefined,
+          linkedin: raw.socialLinks.linkedin ?? undefined,
+        }
+      : undefined,
   };
 }
 
@@ -53,12 +64,16 @@ function normalizeSection(section: any): Section | null {
   switch (section?.type?.toLowerCase()) {
     case "hero":
       return normalizeHero(section);
+    case "stats":
+      return normalizeStats(section);
     case "features":
       return normalizeFeatures(section);
     case "pricing":
       return normalizePricing(section);
     case "testimonials":
       return normalizeTestimonials(section);
+    case "cta_banner":
+      return normalizeCtaBanner(section);
     case "contact":
       return normalizeContact(section);
     default:
@@ -69,54 +84,57 @@ function normalizeSection(section: any): Section | null {
 function normalizeHero(raw: any): HeroSection {
   return {
     type: "hero",
+    variant: raw?.variant ?? "centered",
     headline: raw?.headline ?? "Welcome",
     subtext: raw?.subtext ?? "",
-    imageUrl: raw?.imageUrl ?? null, // ← NEW
-    imageQuery: raw?.imageQuery ?? null, // ← NEW
-    cta: raw?.cta
-      ? normalizeCTA(raw.cta)
-      : raw?.callToAction
-        ? {
-            text: raw.callToAction,
-            style: {
-              background: raw.primaryColor ?? "#6366f1",
-              textColor: "#ffffff",
-              borderRadius: "50px",
-              fontWeight: "bold",
-            },
-          }
-        : undefined,
+    imageUrl: raw?.imageUrl ?? null,
+    imageQuery: raw?.imageQuery ?? null,
+    cta: raw?.cta ? normalizeCTA(raw.cta) : undefined,
+    secondaryCta: raw?.secondaryCta
+      ? normalizeCTA(raw.secondaryCta)
+      : undefined,
+  };
+}
+
+function normalizeStats(raw: any): StatsSection {
+  return {
+    type: "stats",
+    headline: raw?.headline ?? null,
+    stats: Array.isArray(raw?.stats)
+      ? raw.stats.map((s: any) => ({
+          value: s?.value ?? "0",
+          label: s?.label ?? "",
+          icon: s?.icon ?? null,
+        }))
+      : [],
   };
 }
 
 function normalizeFeatures(raw: any): FeaturesSection {
   let featuresArray: any[] = [];
-
   if (Array.isArray(raw?.features)) {
     featuresArray = raw.features.map((f: any) => {
       if (typeof f === "string") {
-        // model returned plain string array
         return { title: f, description: "", icon: "✦" };
       }
       return {
         title: f?.title ?? "",
         description: f?.description ?? "",
         icon: f?.icon ?? "✦",
+        imageUrl: f?.imageUrl ?? null,
       };
     });
   }
-
   return {
     type: "features",
+    variant: raw?.variant ?? "grid",
     headline: raw?.headline ?? "Features",
     features: featuresArray,
   };
 }
 
 function normalizePricing(raw: any): PricingSection {
-  // Support pricingOptions, plans, or tiers — whichever the model returns
   const rawPlans = raw?.pricingOptions ?? raw?.plans ?? raw?.tiers ?? [];
-
   return {
     type: "pricing",
     headline: raw?.headline ?? "Pricing",
@@ -125,6 +143,7 @@ function normalizePricing(raw: any): PricingSection {
       price: p?.price ?? "",
       description: p?.description ?? "",
       features: Array.isArray(p?.features) ? p.features : [],
+      ctaText: p?.ctaText ?? "Get Started",
       style: p?.style ? normalizeStyle(p.style) : undefined,
       highlight: p?.highlight,
     })),
@@ -138,7 +157,7 @@ function normalizeTestimonials(raw: any): TestimonialsSection {
     testimonials: Array.isArray(raw?.testimonials)
       ? raw.testimonials.map((t: any) => ({
           name: t?.name ?? "",
-          role: t?.role ?? t?.title ?? "", // NEW: role field
+          role: t?.role ?? t?.title ?? "",
           review: t?.review ?? t?.text ?? t?.quote ?? "",
           style: { accentColor: t?.style?.accentColor ?? t?.color },
         }))
@@ -146,13 +165,24 @@ function normalizeTestimonials(raw: any): TestimonialsSection {
   };
 }
 
-function normalizeContact(raw: any): ContactSection {
-  // Support contactDetails, contactInfo, or contact
-  const source = raw?.contactDetails ?? raw?.contactInfo ?? raw?.contact ?? {};
+function normalizeCtaBanner(raw: any): CtaBannerSection {
+  return {
+    type: "cta_banner",
+    headline: raw?.headline ?? "Ready to Get Started?",
+    subtext: raw?.subtext ?? "",
+    primaryCta: raw?.primaryCta ? normalizeCTA(raw.primaryCta) : undefined,
+    secondaryCta: raw?.secondaryCta
+      ? normalizeCTA(raw.secondaryCta)
+      : undefined,
+  };
+}
 
+function normalizeContact(raw: any): ContactSection {
+  const source = raw?.contactDetails ?? raw?.contactInfo ?? raw?.contact ?? {};
   return {
     type: "contact",
     headline: raw?.headline ?? "Get In Touch",
+    subtext: raw?.subtext ?? "",
     contactDetails: {
       phone: source?.phone ?? "",
       email: source?.email ?? "",
@@ -184,12 +214,5 @@ function normalizeStyle(raw: any): StyleObject {
     borderRadius: raw?.borderRadius,
     fontWeight: raw?.fontWeight,
     borderColor: raw?.borderColor,
-    hoverEffect: raw?.hoverEffect
-      ? {
-          background:
-            raw.hoverEffect.background ?? raw.hoverEffect.backgroundColor,
-          textColor: raw.hoverEffect.textColor,
-        }
-      : undefined,
   };
 }
