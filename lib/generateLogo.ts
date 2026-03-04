@@ -20,7 +20,7 @@ export async function generateLogo({
         },
         body: JSON.stringify({
           model: "anthropic/claude-sonnet-4-5",
-          max_tokens: 1500,
+          max_tokens: 2000,
           messages: [
             {
               role: "system",

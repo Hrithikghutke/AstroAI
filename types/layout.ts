@@ -13,6 +13,13 @@ export interface Layout {
   primaryColor: string;
   branding: Branding;
   sections: Section[];
+  customCss?: string; // ← Developer Agent output
+  customJs?: string; // ← Developer Agent output
+  customFont?: {
+    url: string; // Google Fonts CSS URL
+    displayFamily: string; // For headings h1-h4, hero text, section headlines
+    bodyFamily: string; // For navbar, footer, body text, buttons, badges
+  };
 }
 
 export interface Branding {

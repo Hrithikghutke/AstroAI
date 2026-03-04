@@ -2,15 +2,77 @@ import { Layout } from "@/types/layout";
 
 export function generateHtml(layout: Layout): string {
   const isDark = layout.theme === "dark";
+  const themeStyle = layout.themeStyle ?? "corporate";
   const primary = layout.branding?.primaryColor ?? "#6366f1";
   const bg = isDark ? "#0a0a0a" : "#ffffff";
   const text = isDark ? "#ffffff" : "#0a0a0a";
   const subtextColor = isDark ? "#a3a3a3" : "#525252";
-  const cardBg = isDark ? "#111111" : "#f9f9f9";
-  const borderColor = isDark ? "#2a2a2a" : "#e5e7eb";
   const navBg = isDark ? "rgba(0,0,0,0.95)" : "rgba(255,255,255,0.98)";
-  const altBg = isDark ? "#0f0f0f" : "#f9fafb";
   const inputBg = isDark ? "#0a0a0a" : "#f9fafb";
+
+  // Theme-aware variables — these change based on themeStyle
+  const cardBg =
+    themeStyle === "glassmorphism"
+      ? isDark
+        ? "rgba(255,255,255,0.05)"
+        : "rgba(255,255,255,0.6)"
+      : themeStyle === "bold"
+        ? isDark
+          ? "#1a1a1a"
+          : "#ffffff"
+        : themeStyle === "elegant"
+          ? isDark
+            ? "#111111"
+            : "#ffffff"
+          : isDark
+            ? "#111111"
+            : "#f9f9f9";
+
+  const borderColor =
+    themeStyle === "bold"
+      ? isDark
+        ? "#404040"
+        : "#0a0a0a"
+      : themeStyle === "glassmorphism"
+        ? isDark
+          ? "rgba(255,255,255,0.1)"
+          : "rgba(255,255,255,0.4)"
+        : themeStyle === "elegant"
+          ? isDark
+            ? "#2a2a2a"
+            : "#d6d3d1"
+          : isDark
+            ? "#2a2a2a"
+            : "#e5e7eb";
+
+  const altBg =
+    themeStyle === "glassmorphism"
+      ? isDark
+        ? "#0d0d1a"
+        : "#f0f4ff"
+      : themeStyle === "bold"
+        ? isDark
+          ? "#111111"
+          : "#f3f4f6"
+        : themeStyle === "elegant"
+          ? isDark
+            ? "#0f0f0f"
+            : "#f5f5f0"
+          : isDark
+            ? "#0f0f0f"
+            : "#f9fafb";
+
+  // Theme-aware card CSS string — injected into .feature-card, .pricing-card etc.
+  const cardStyles =
+    themeStyle === "bold"
+      ? `border-radius:16px; padding:24px; background:${cardBg}; border:2px solid ${borderColor}; box-shadow: ${isDark ? "none" : "4px 4px 0px #000"};`
+      : themeStyle === "glassmorphism"
+        ? `border-radius:16px; padding:24px; background:${cardBg}; border:1px solid ${borderColor}; backdrop-filter:blur(12px); box-shadow:0 8px 32px rgba(0,0,0,0.2);`
+        : themeStyle === "minimal"
+          ? `border-radius:8px; padding:24px; background:${cardBg}; border:1px solid ${borderColor};`
+          : themeStyle === "elegant"
+            ? `border-radius:4px; padding:32px; background:${cardBg}; border:1px solid ${borderColor}; box-shadow:0 4px 16px rgba(0,0,0,0.08);`
+            : `border-radius:16px; padding:24px; background:${cardBg}; border:1px solid ${borderColor}; box-shadow:0 2px 12px rgba(0,0,0,0.06);`;
 
   const sections = layout.sections ?? [];
   const heroSection = sections.find((s) => s.type === "hero") as any;
@@ -48,19 +110,21 @@ export function generateHtml(layout: Layout): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${layout.branding?.logoText ?? "Website"}</title>
+  ${layout.customFont?.url ? `<link rel="preconnect" href="https://fonts.googleapis.com" />\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n  <link rel="stylesheet" href="${layout.customFont.url}" />` : ""}
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body { background:${bg}; color:${text}; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; overflow-x:hidden; }
+    
 
     /* Utilities */
     .container { width:100%; max-width:1100px; margin:0 auto; padding:0 16px; }
     .section-badge { display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; padding:4px 12px; border-radius:999px; background:${primary}22; color:${primary}; margin-bottom:16px; letter-spacing:.06em; text-transform:uppercase; width:fit-content; align-self:center; }
-    .card { background:${cardBg}; border:1px solid ${borderColor}; border-radius:16px; padding:24px; }
+    .card { ${cardStyles} }
     .primary-btn { display:inline-block; background:${primary}; color:#fff; padding:12px 28px; border-radius:50px; font-weight:700; font-size:15px; border:none; cursor:pointer; text-decoration:none; transition:opacity .2s,transform .2s,box-shadow .2s; }
     .primary-btn:hover { opacity:.88; transform:translateY(-2px); box-shadow:0 8px 28px ${primary}55; }
     h1,h2,h3,h4 { color:${text}; line-height:1.2; }
-    p { color:${subtextColor}; line-height:1.7; }
+    p { color:${subtextColor}; line-height:1.7; ${themeStyle === "elegant" ? "font-style:italic;" : ""} }
     a { color:${subtextColor}; text-decoration:none; }
     a:hover { color:${text}; }
 
@@ -97,14 +161,14 @@ export function generateHtml(layout: Layout): string {
     .hero-content p { font-size:clamp(15px,2.5vw,18px); max-width:560px; margin:0 auto 32px; }
     /* Split hero */
     .hero-split { display:grid; grid-template-columns:1fr; align-items:center; padding:60px 16px; position:relative; background-size:cover; background-position:center; }
-.hero-split.has-image::before { content:''; position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,0.5),rgba(0,0,0,0.75)); z-index:0; }
-.hero-split .text-side { display:flex; flex-direction:column; gap:20px; align-items:center; text-align:center; position:relative; z-index:1; }
-.hero-split h1 { font-size:clamp(28px,5vw,60px); font-weight:800; margin:0; color:${text}; }
-.hero-split.has-image h1 { color:#ffffff; }
-.hero-split.has-image p { color:rgba(255,255,255,0.85); }
-.hero-split.has-image .section-badge { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2); }
-.hero-split p { margin:0; color:${subtextColor}; font-size:clamp(15px,2vw,18px); max-width:480px; }
-.hero-visual { display:none; }
+    .hero-split.has-image::before { content:''; position:absolute; inset:0; background:linear-gradient(to bottom,rgba(0,0,0,0.5),rgba(0,0,0,0.75)); z-index:0; }
+    .hero-split .text-side { display:flex; flex-direction:column; gap:20px; align-items:center; text-align:center; position:relative; z-index:1; }
+    .hero-split h1 { font-size:clamp(28px,5vw,60px); font-weight:800; margin:0; color:${text}; }
+    .hero-split.has-image h1 { color:#ffffff; }
+    .hero-split.has-image p { color:rgba(255,255,255,0.85); }
+    .hero-split.has-image .section-badge { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+    .hero-split p { margin:0; color:${subtextColor}; font-size:clamp(15px,2vw,18px); max-width:480px; }
+    .hero-visual { display:none; }
     .hero-visual-inner { width:100%; aspect-ratio:4/3; border-radius:20px; overflow:hidden; position:relative; box-shadow:0 40px 80px ${primary}33; }
     .hero-visual-inner img { width:100%; height:100%; object-fit:cover; }
     .hero-orb { width:100%; aspect-ratio:1; max-width:360px; position:relative; }
@@ -125,7 +189,7 @@ export function generateHtml(layout: Layout): string {
     .section-header { text-align:center; margin-bottom:48px; }
     .section-header h2 { font-size:clamp(22px,4vw,44px); font-weight:700; }
     .features-grid { display:grid; grid-template-columns:1fr; gap:16px; }
-    .feature-card { background:${cardBg}; border:1px solid ${borderColor}; border-radius:16px; padding:24px; transition:transform .2s,box-shadow .2s; }
+    .feature-card { ${cardStyles} transition:transform .2s,box-shadow .2s; }
     .feature-card:hover { transform:translateY(-4px); box-shadow:0 12px 40px ${primary}22; }
     .feature-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:16px; background:${primary}18; }
     .feature-card h3 { font-size:15px; font-weight:700; margin-bottom:8px; color:${text}; }
@@ -301,7 +365,9 @@ export function generateHtml(layout: Layout): string {
       .footer-hours-row { justify-content:space-around; max-width:100%; }
       .footer-bottom { flex-direction:row; justify-content:space-between; text-align:left; }
     }
-  </style>
+</style>
+
+  ${layout.customCss ? `<style id="developer-agent-css">\n${layout.customCss}\n</style>` : ""}
 </head>
 <body>
 
@@ -766,6 +832,8 @@ if (form) {
 }
 </script>
 
+  ${layout.customJs ? `<script>\n${layout.customJs}\n</script>` : ""}
 </body>
-</html>`;
+</html>
+`;
 }

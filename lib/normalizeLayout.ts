@@ -30,6 +30,20 @@ export function normalizeLayout(raw: any): Layout {
     primaryColor: raw?.primaryColor ?? "#6366f1",
     branding: normalizeBranding(raw?.branding),
     sections: normalizeSections(raw?.sections),
+    // ← Preserve Developer Agent output — these are added AFTER AI generation
+    // normalizeLayout must pass them through or they get silently dropped
+    customCss: raw?.customCss ?? undefined,
+    customJs: raw?.customJs ?? undefined,
+    customFont:
+      raw?.customFont?.url &&
+      raw?.customFont?.displayFamily &&
+      raw?.customFont?.bodyFamily
+        ? {
+            url: raw.customFont.url,
+            displayFamily: raw.customFont.displayFamily,
+            bodyFamily: raw.customFont.bodyFamily,
+          }
+        : undefined,
   };
 }
 

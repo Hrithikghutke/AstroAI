@@ -38,7 +38,7 @@ The user wants to modify it. Apply ONLY the changes they request. Keep everythin
         },
         body: JSON.stringify({
           model: "anthropic/claude-3-haiku",
-          max_tokens: 3000,
+          max_tokens: 5000,
           messages: [
             {
               role: "system",
@@ -369,6 +369,203 @@ OUTPUT this exact JSON shape (fill every field with real content):
         featuresSec.features.length,
       );
     }
+    // ── Developer Agent — writes custom CSS + JS for this specific website ──
+    // Fixes literal newlines/tabs inside JSON string values — common AI output issue
+    function sanitizeJsonString(str: string): string {
+      let result = "";
+      let inString = false;
+      let escaped = false;
+
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+
+        if (escaped) {
+          result += char;
+          escaped = false;
+          continue;
+        }
+
+        if (char === "\\" && inString) {
+          escaped = true;
+          result += char;
+          continue;
+        }
+
+        if (char === '"') {
+          inString = !inString;
+          result += char;
+          continue;
+        }
+
+        if (inString) {
+          if (char === "\n") {
+            result += "\\n";
+            continue;
+          }
+          if (char === "\r") {
+            result += "\\r";
+            continue;
+          }
+          if (char === "\t") {
+            result += "\\t";
+            continue;
+          }
+          if (char.charCodeAt(0) < 32) continue; // drop other control chars
+        }
+
+        result += char;
+      }
+
+      return result;
+    }
+
+    let devRaw = "";
+    try {
+      const primaryColor = parsedLayout?.branding?.primaryColor ?? "#6366f1";
+      const secondaryColor =
+        parsedLayout?.branding?.secondaryColor ?? "#ffffff";
+      const sectionTypes = parsedLayout.sections
+        ?.map((s: any) => s.type)
+        .join(", ");
+      const themeStyleUsed = parsedLayout?.themeStyle ?? "corporate";
+      const isDarkTheme = parsedLayout?.theme === "dark";
+
+      const devAgentResponse = await fetch(
+        "https://openrouter.ai/api/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "anthropic/claude-3-haiku",
+            max_tokens: 5000,
+            messages: [
+              {
+                role: "system",
+                content: `You are an expert CSS and JavaScript developer who specialises in creating visually stunning, unique web experiences.
+
+You will receive a website's layout data. Your job is to write custom CSS animations, visual treatments, and JavaScript interactions that make this specific website feel unique, polished, and premium.
+
+STRICT RULES:
+- Return ONLY valid raw JSON in this exact shape: {"css": "...", "js": "...", "fontUrl": "...", "displayFamily": "...", "bodyFamily": "..."}
+- No markdown. No explanation. No code blocks. Raw JSON only.
+- All double quotes inside CSS/JS strings must be escaped as \\".
+- Newlines inside strings must be \\n not actual newlines.
+
+CSS GUIDELINES:
+- Declare CSS custom properties on :root — --primary: ${primaryColor}; --secondary: ${secondaryColor};
+- Write keyframe animations (@keyframes) for entrance effects, floating elements, glows, pulses
+- Add unique hover effects on buttons, cards, nav links using transform and opacity (not layout-affecting properties)
+- Add a subtle animated gradient or pattern to the hero section background
+- Add scroll-triggered fade-in classes (.reveal-up, .reveal-left, .reveal-right) with transitions
+- Style the stats numbers with a glow or accent treatment using --primary
+- Add a shimmer or highlight effect to the primary CTA button
+- Match the themeStyle "${themeStyleUsed}" — ${themeStyleUsed === "bold" ? "high contrast, punchy, strong shadows" : themeStyleUsed === "minimal" ? "subtle, refined, lots of whitespace" : themeStyleUsed === "glassmorphism" ? "frosted glass, glowing borders, translucent cards" : themeStyleUsed === "elegant" ? "sophisticated, gold accents, serif-friendly" : "professional, clean, trust-building"}
+- Background is ${isDarkTheme ? "dark (#0a0a0a)" : "light (#ffffff)"}
+FONT GUIDELINES:
+- Choose a TWO-FONT pairing: one display font for headings, one body font for everything else
+- fontUrl: single Google Fonts CSS2 URL loading BOTH fonts e.g. "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;600&display=swap"
+- displayFamily: the display font CSS value e.g. "'Playfair Display', serif"
+- bodyFamily: the body font CSS value e.g. "'Lato', sans-serif"
+- CRITICAL: Your CSS output MUST include these exact rules so fonts apply correctly:
+    body, nav, footer, p, a, button, li, input, textarea, label { font-family: <bodyFamily>; }
+    h1, h2, h3, h4, h5, h6 { font-family: <displayFamily>; }
+- CRITICAL: Always use !important on every font-weight declaration you write. Example:
+    h1 { font-weight: 700 !important; }
+    h2 { font-weight: 600 !important; }
+    p { font-weight: 400 !important; }
+  This is required because the preview environment uses a CSS framework that overrides font-weight without !important.
+- Never target span elements with a font-family rule — spans must inherit from their parent element.
+  Replace <bodyFamily> and <displayFamily> with your chosen values. These rules must be at the TOP of your CSS, before any other rules.
+- Font pairings by themeStyle:
+  - elegant: Playfair Display + Lato — sophisticated serif headings, clean body
+  - minimal: Cormorant Garamond + DM Sans — OR Fraunces + Inter
+  - bold: Oswald + Inter — OR Bebas Neue + Roboto
+  - glassmorphism: Syne + Outfit — OR Space Grotesk + Inter
+  - corporate: Merriweather + Nunito Sans — OR DM Serif Display + Inter
+- Always adapt to the business type too — a law firm gets different fonts than a gym
+- The bodyFamily must always be highly readable at small sizes — never use a decorative font for body
+
+JS GUIDELINES:
+- Always wrap everything in: document.addEventListener('DOMContentLoaded', function() { ... });
+- Always check element exists before using it: if (!el) return;
+- Implement scroll-triggered animations using IntersectionObserver on elements with .reveal-up, .reveal-left, .reveal-right classes
+- Animate stat number counters (count up from 0 when scrolled into view)
+- Add navbar shrink effect on scroll (reduce padding, add box-shadow)
+- Add smooth scroll for all anchor links
+- The sections present are: ${sectionTypes}
+
+The brand uses primaryColor: ${primaryColor}, theme: ${isDarkTheme ? "dark" : "light"}, style: ${themeStyleUsed}.`,
+              },
+              {
+                role: "user",
+                content: `Generate custom CSS and JS for this website layout:\n${JSON.stringify(
+                  {
+                    branding: parsedLayout.branding,
+                    themeStyle: parsedLayout.themeStyle,
+                    theme: parsedLayout.theme,
+                    sections: parsedLayout.sections?.map((s: any) => ({
+                      type: s.type,
+                      variant: s.variant,
+                      headline: s.headline,
+                    })),
+                  },
+                  null,
+                  2,
+                )}`,
+              },
+            ],
+            temperature: 0.7,
+          }),
+        },
+      );
+
+      const devData = await devAgentResponse.json();
+      // console.log(
+      //   "🔍 Dev agent full response:",
+      //   JSON.stringify(devData, null, 2),
+      // );
+      devRaw = devData.choices?.[0]?.message?.content ?? "";
+      const devCleaned = sanitizeJsonString(
+        devRaw
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/i, "")
+          .replace(/```\s*$/i, "")
+          .trim(),
+      );
+
+      const devParsed = JSON.parse(devCleaned);
+      if (devParsed.css) parsedLayout.customCss = devParsed.css;
+      if (devParsed.js) parsedLayout.customJs = devParsed.js;
+      if (
+        devParsed.fontUrl &&
+        devParsed.displayFamily &&
+        devParsed.bodyFamily
+      ) {
+        parsedLayout.customFont = {
+          url: devParsed.fontUrl,
+          displayFamily: devParsed.displayFamily,
+          bodyFamily: devParsed.bodyFamily,
+        };
+      }
+      console.log(
+        "✅ Developer Agent: CSS + JS + Fonts generated |",
+        "display:",
+        devParsed.displayFamily ?? "none",
+        "| body:",
+        devParsed.bodyFamily ?? "none",
+      );
+    } catch (devErr) {
+      // Developer Agent failure is non-fatal — website still generates fine
+      console.warn(
+        "⚠️ Developer Agent failed, skipping custom CSS/JS:",
+        devErr,
+      );
+      // console.warn("Dev agent raw output:", devRaw);
+    }
+
     // ── Deduct credit ──
     await deductCredit(userId);
 

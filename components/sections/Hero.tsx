@@ -378,7 +378,7 @@ export default function Hero({
           <div className="relative hidden @md:flex items-center justify-center">
             {hasImage ? (
               <div
-                className="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl relative"
+                className="w-full aspect-4/3 rounded-2xl overflow-hidden shadow-2xl relative"
                 style={{ boxShadow: `0 40px 80px ${brand.primaryColor}33` }}
               >
                 <img

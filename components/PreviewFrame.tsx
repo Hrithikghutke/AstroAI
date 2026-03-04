@@ -93,8 +93,50 @@ export default function PreviewFrame({
   return (
     <BrandContext.Provider value={brandContextValue}>
       <div
-        className={`@container min-h-screen ${layout.theme === "dark" ? "bg-black text-white" : "bg-white text-black"}`}
+        className={`preview-root @container min-h-screen ${layout.theme === "dark" ? "bg-black text-white" : "bg-white text-black"}`}
       >
+        {/* Developer Agent Google Font */}
+        {layout.customFont?.url && (
+          <link rel="stylesheet" href={layout.customFont.url} />
+        )}
+
+        {/* Developer Agent custom CSS + font-family applied to preview root */}
+        {layout.customCss && (
+          <style dangerouslySetInnerHTML={{ __html: layout.customCss }} />
+        )}
+
+        {/* Font enforcement — must come AFTER customCss and uses !important
+            to override Tailwind utility classes like font-serif, font-normal etc. */}
+        {layout.customFont && (
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+            .preview-root h1,
+            .preview-root h2,
+            .preview-root h3,
+            .preview-root h4,
+            .preview-root h5,
+            .preview-root h6 {
+              font-family: ${layout.customFont.displayFamily} !important;
+              font-weight: revert !important;
+            }
+            .preview-root nav,
+            .preview-root footer,
+            .preview-root p,
+            .preview-root a,
+            .preview-root button,
+            .preview-root li,
+            .preview-root input,
+            .preview-root textarea,
+            .preview-root label {
+              font-family: ${layout.customFont.bodyFamily} !important;
+              font-weight: revert !important;
+            }
+          `,
+            }}
+          />
+        )}
+
         <Navbar
           editable={editable}
           phone={phone}

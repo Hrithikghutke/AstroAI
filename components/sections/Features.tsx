@@ -167,7 +167,7 @@ export default function Features({
                   >
                     {feature.imageUrl ? (
                       <div
-                        className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative"
+                        className="w-full aspect-4/3 rounded-2xl overflow-hidden relative"
                         style={{
                           boxShadow: `0 20px 60px ${brand.primaryColor}22`,
                         }}
@@ -189,7 +189,7 @@ export default function Features({
                     ) : (
                       /* Decorative fallback if image fetch failed */
                       <div
-                        className="w-full aspect-[4/3] rounded-2xl relative overflow-hidden flex items-center justify-center"
+                        className="w-full aspect-4/3 rounded-2xl relative overflow-hidden flex items-center justify-center"
                         style={{
                           background: isDark
                             ? "linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)"
