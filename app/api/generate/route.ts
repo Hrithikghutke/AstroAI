@@ -12,9 +12,13 @@ export async function POST(req: Request) {
     }
 
     const credits = await getUserCredits(userId);
-    if (credits < 1) {
+    const FAST_MODE_COST = 2;
+    if (credits < FAST_MODE_COST) {
       return NextResponse.json(
-        { error: "NO_CREDITS", message: "You have no credits left." },
+        {
+          error: "NO_CREDITS",
+          message: `Not enough credits. Fast Mode requires ${FAST_MODE_COST} credits — you have ${credits}.`,
+        },
         { status: 402 },
       );
     }
@@ -37,7 +41,7 @@ The user wants to modify it. Apply ONLY the changes they request. Keep everythin
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "anthropic/claude-3-haiku",
+          model: "anthropic/claude-haiku-4.5",
           max_tokens: 5000,
           messages: [
             {
@@ -439,7 +443,7 @@ OUTPUT this exact JSON shape (fill every field with real content):
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "anthropic/claude-3-haiku",
+            model: "anthropic/claude-haiku-4.5",
             max_tokens: 5000,
             messages: [
               {

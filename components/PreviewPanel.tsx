@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import PreviewFrame from "@/components/PreviewFrame";
+import DeepPreview from "@/components/DeepPreview";
 import { Layout } from "@/types/layout";
 import {
   Monitor,
@@ -11,17 +12,22 @@ import {
   Download,
   Check,
   Pencil,
+  Telescope,
 } from "lucide-react";
 import { generateHtml } from "@/lib/generateHtml";
 
 export default function PreviewPanel({
   layout,
+  deepHtml,
+  deepBrandName,
   prompt,
   savedId,
   onSaved,
   onLayoutChange,
 }: {
   layout: Layout | null;
+  deepHtml?: string | null;
+  deepBrandName?: string | null;
   prompt?: string;
   savedId?: string | null;
   onSaved?: (id: string) => void;
@@ -32,21 +38,28 @@ export default function PreviewPanel({
   const [shareId, setShareId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState(false); // ← NEW
+  const [pendingChanges, setPendingChanges] = useState(false);
 
-  // When layout changes:
-  // - If never saved: reset saved so POST can happen
-  // - If already saved: mark pending changes so PATCH happens on next save
+  // Determine active mode
+  const isDeepMode = !!deepHtml && !layout;
+
+  // Brand name for URL bar — works for both modes
+  const brandName = isDeepMode
+    ? (deepBrandName ?? "preview")
+    : (layout?.branding?.logoText ?? "preview");
+
+  const urlBarName = brandName.toLowerCase().replace(/\s+/g, "");
+
+  // Reset save state when content changes
   useEffect(() => {
     if (savedId) {
-      setPendingChanges(true); // inline edit — will PATCH on save
+      setPendingChanges(true);
     } else {
-      setSaved(false); // new generation — will POST on save
+      setSaved(false);
     }
     setCopied(false);
-  }, [layout]);
+  }, [layout, deepHtml]);
 
-  // New chat → clear everything
   useEffect(() => {
     if (!savedId) {
       setShareId(null);
@@ -55,29 +68,37 @@ export default function PreviewPanel({
     }
   }, [savedId]);
 
+  // ── Save ──
   const handleSave = async () => {
-    if (!layout || saving) return;
-    if (saved && !pendingChanges) return; // nothing changed since last save
+    if ((!layout && !deepHtml) || saving) return;
+    if (saved && !pendingChanges) return;
     setSaving(true);
 
     try {
       if (savedId) {
-        // ✅ Already exists — always PATCH
         const res = await fetch("/api/generations/save", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: savedId, layout, prompt: prompt ?? "" }),
+          body: JSON.stringify({
+            id: savedId,
+            layout: layout ?? null,
+            deepHtml: deepHtml ?? null,
+            prompt: prompt ?? "",
+          }),
         });
         if (res.ok) {
           setSaved(true);
-          setPendingChanges(false); // ← clear pending after successful PATCH
+          setPendingChanges(false);
         }
       } else {
-        // ✅ First save — POST
         const res = await fetch("/api/generations/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ layout, prompt: prompt ?? "" }),
+          body: JSON.stringify({
+            layout: layout ?? null,
+            deepHtml: deepHtml ?? null,
+            prompt: prompt ?? "",
+          }),
         });
         const data = await res.json();
         if (data.id && data.shareId) {
@@ -94,6 +115,7 @@ export default function PreviewPanel({
     }
   };
 
+  // ── Share ──
   const handleShare = async () => {
     if (saving) return;
 
@@ -122,7 +144,11 @@ export default function PreviewPanel({
         const res = await fetch("/api/generations/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ layout, prompt: prompt ?? "" }),
+          body: JSON.stringify({
+            layout: layout ?? null,
+            deepHtml: deepHtml ?? null,
+            prompt: prompt ?? "",
+          }),
         });
         const data = await res.json();
         if (data.id && data.shareId) {
@@ -147,29 +173,46 @@ export default function PreviewPanel({
     }
   };
 
+  // ── Download ──
+  // Fast mode: generate HTML from layout JSON
+  // Deep mode: download the raw HTML string directly
   const handleDownload = () => {
-    if (!layout) return;
-    const html = generateHtml(layout);
+    let html = "";
+    let filename = "website";
+
+    if (isDeepMode && deepHtml) {
+      html = deepHtml;
+      filename = brandName.toLowerCase().replace(/\s+/g, "-");
+    } else if (layout) {
+      html = generateHtml(layout);
+      filename =
+        layout.branding?.logoText?.toLowerCase().replace(/\s+/g, "-") ??
+        "website";
+    } else {
+      return;
+    }
+
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${layout.branding?.logoText?.toLowerCase().replace(/\s+/g, "-") ?? "website"}.html`;
+    a.download = `${filename}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Save button label logic
   const saveLabel = () => {
     if (saving) return "Saving…";
-    if (saved && !pendingChanges) return savedId ? "Saved!" : "Saved!";
+    if (saved && !pendingChanges) return "Saved!";
     if (saved && pendingChanges) return "Save changes";
     return "Save";
   };
 
   const saveDisabled = saving || (saved && !pendingChanges);
+  const hasContent = !!(layout || deepHtml);
 
-  if (!layout) {
+  // ── Empty state ──
+  if (!hasContent) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-neutral-950 gap-4 relative">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none" />
@@ -201,10 +244,15 @@ export default function PreviewPanel({
             <div className="w-2 h-2 rounded-full bg-green-500/60" />
           </div>
           <span className="text-xs text-neutral-600 truncate">
-            {layout.branding?.logoText?.toLowerCase().replace(/\s+/g, "") ||
-              "preview"}
-            .crawlcube.app
+            {urlBarName}.crawlcube.app
           </span>
+          {/* Deep Dive badge in toolbar */}
+          {isDeepMode && (
+            <span className="ml-1 flex items-center gap-1 text-[10px] font-semibold text-pink-400 bg-pink-500/10 border border-pink-500/20 px-1.5 py-0.5 rounded-full shrink-0">
+              <Telescope className="w-2.5 h-2.5" />
+              Deep
+            </span>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -282,28 +330,43 @@ export default function PreviewPanel({
         </div>
       </div>
 
-      {/* Edit hint bar */}
-      <div className="flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border-b border-purple-500/20 text-xs text-purple-400">
-        <Pencil className="w-3 h-3 shrink-0" />
-        <span>Click any text in the preview to edit it directly</span>
-      </div>
+      {/* Hint bar — edit hint for Fast Mode, info bar for Deep Dive */}
+      {isDeepMode ? (
+        <div className="flex items-center gap-2 px-4 py-1.5 bg-pink-500/10 border-b border-pink-500/20 text-xs text-pink-400">
+          <Telescope className="w-3 h-3 shrink-0" />
+          <span>
+            Deep Dive website — describe changes in the chat to regenerate
+          </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border-b border-purple-500/20 text-xs text-purple-400">
+          <Pencil className="w-3 h-3 shrink-0" />
+          <span>Click any text in the preview to edit it directly</span>
+        </div>
+      )}
 
       {/* Preview area */}
       <div className="flex-1 overflow-auto bg-neutral-800 flex items-start justify-center p-4">
-        <div
-          className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto"
-          style={{
-            width: viewport === "mobile" ? "390px" : "100%",
-            minHeight: "100%",
-            background: "white",
-          }}
-        >
-          <PreviewFrame
-            layout={layout}
-            editable={true}
-            onLayoutChange={onLayoutChange}
-          />
-        </div>
+        {isDeepMode ? (
+          // Deep Dive — raw HTML in iframe
+          <DeepPreview html={deepHtml!} viewport={viewport} />
+        ) : (
+          // Fast Mode — React component tree
+          <div
+            className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto"
+            style={{
+              width: viewport === "mobile" ? "390px" : "100%",
+              minHeight: "100%",
+              background: "white",
+            }}
+          >
+            <PreviewFrame
+              layout={layout}
+              editable={true}
+              onLayoutChange={onLayoutChange}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

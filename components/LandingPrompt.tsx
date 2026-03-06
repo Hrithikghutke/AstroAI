@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MoveRight, LoaderCircle } from "lucide-react";
+import { MoveRight, Zap, Telescope, ChevronDown } from "lucide-react";
 import { normalizeLayout } from "@/lib/normalizeLayout";
 import { THEME_STYLES, getThemeLabel } from "@/lib/themeConfig";
 import { ThemeStyle } from "@/types/layout";
 import { useCredits } from "@/context/CreditsContext";
 import Logo from "@/assets/logo_light.svg";
+import { DEEP_DIVE_MODELS, CLAUDE_LOGO_SVG } from "@/lib/modelConfig";
+type GenerationMode = "fast" | "deep";
 
 const useTypewriter = (
   words: string[],
@@ -63,13 +65,36 @@ export default function LandingPrompt() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<ThemeStyle>("corporate");
+  const [selectedMode, setSelectedMode] = useState<GenerationMode>("fast");
+  const [selectedModel, setSelectedModel] = useState(
+    "anthropic/claude-sonnet-4.5",
+  );
+  const [showModelPicker, setShowModelPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const animatedPlaceholder = useTypewriter(PLACEHOLDERS);
+
+  const MODELS = DEEP_DIVE_MODELS;
+  const activeModel =
+    MODELS.find((m) => m.model === selectedModel) ?? MODELS[0];
 
   const handleGenerate = async () => {
     if (!prompt.trim() || loading) return;
     setLoading(true);
     setError(null);
+
+    // ── DEEP DIVE MODE ──
+    // Don't call any API here — just save the prompt + mode and navigate.
+    // The Deep Dive pipeline runs inside BuildPage/ChatPanel after navigation.
+    if (selectedMode === "deep") {
+      sessionStorage.setItem("crawlcube_prompt", prompt);
+      sessionStorage.setItem("crawlcube_mode", "deep");
+      sessionStorage.setItem("crawlcube_model", selectedModel);
+      sessionStorage.removeItem("crawlcube_layout");
+      router.push("/build");
+      return;
+    }
+
+    // ── FAST MODE ──
     deductCredit();
 
     try {
@@ -87,13 +112,11 @@ export default function LandingPrompt() {
       const normalized = normalizeLayout(data.layout);
       normalized.themeStyle = selectedTheme;
 
-      // Save to sessionStorage so /build can read it after navigation
-      sessionStorage.setItem("astroweb_layout", JSON.stringify(normalized));
-      sessionStorage.setItem("astroweb_prompt", prompt);
+      sessionStorage.setItem("crawlcube_layout", JSON.stringify(normalized));
+      sessionStorage.setItem("crawlcube_prompt", prompt);
+      sessionStorage.setItem("crawlcube_mode", "fast");
 
       await refreshCredits();
-
-      // Navigate to /build — this is now a separate page
       router.push("/build");
     } catch (err: any) {
       await refreshCredits();
@@ -178,30 +201,155 @@ export default function LandingPrompt() {
           </p>
         </div>
 
-        {/* Theme selector */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {THEME_STYLES.map((style) => (
-            <button
-              key={style}
-              onClick={() => setSelectedTheme(style)}
-              className="flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 cursor-pointer"
+        {/* Mode toggle */}
+        <div className="flex items-stretch gap-3 w-full">
+          <button
+            onClick={() => setSelectedMode("fast")}
+            className="flex-1 flex flex-col items-start gap-1.5 px-4 py-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left"
+            style={{
+              borderColor: selectedMode === "fast" ? "#a855f7" : "#2a2a2a",
+              background:
+                selectedMode === "fast"
+                  ? "rgba(168,85,247,0.12)"
+                  : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{
+                  background:
+                    selectedMode === "fast"
+                      ? "rgba(168,85,247,0.25)"
+                      : "rgba(255,255,255,0.05)",
+                }}
+              >
+                <Zap
+                  className="w-3.5 h-3.5"
+                  style={{
+                    color: selectedMode === "fast" ? "#d8b4fe" : "#525252",
+                  }}
+                />
+              </div>
+              <span
+                className="text-sm font-semibold"
+                style={{
+                  color: selectedMode === "fast" ? "#d8b4fe" : "#525252",
+                }}
+              >
+                Fast Mode
+              </span>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  background:
+                    selectedMode === "fast"
+                      ? "rgba(168,85,247,0.2)"
+                      : "rgba(255,255,255,0.05)",
+                  color: selectedMode === "fast" ? "#d8b4fe" : "#525252",
+                }}
+              >
+                1 credit
+              </span>
+            </div>
+            <p
+              className="text-xs leading-relaxed"
               style={{
-                borderColor: selectedTheme === style ? "#a855f7" : "#2a2a2a",
-                background:
-                  selectedTheme === style
-                    ? "rgba(168,85,247,0.15)"
-                    : "rgba(255,255,255,0.03)",
-                color: selectedTheme === style ? "#d8b4fe" : "#737373",
+                color: selectedMode === "fast" ? "#a78bfa" : "#404040",
               }}
             >
-              <span className="font-semibold">{getThemeLabel(style)}</span>
-              <span className="text-[10px] opacity-70 mt-0.5">
-                {THEME_DESCRIPTIONS[style]}
+              Structured components with AI-enhanced CSS, animations and custom
+              fonts. Ready in ~15 seconds.
+            </p>
+          </button>
+
+          <button
+            onClick={() => setSelectedMode("deep")}
+            className="flex-1 flex flex-col items-start gap-1.5 px-4 py-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left"
+            style={{
+              borderColor: selectedMode === "deep" ? "#ec4899" : "#2a2a2a",
+              background:
+                selectedMode === "deep"
+                  ? "rgba(236,72,153,0.10)"
+                  : "rgba(255,255,255,0.02)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{
+                  background:
+                    selectedMode === "deep"
+                      ? "rgba(236,72,153,0.2)"
+                      : "rgba(255,255,255,0.05)",
+                }}
+              >
+                <Telescope
+                  className="w-3.5 h-3.5"
+                  style={{
+                    color: selectedMode === "deep" ? "#f9a8d4" : "#525252",
+                  }}
+                />
+              </div>
+              <span
+                className="text-sm font-semibold"
+                style={{
+                  color: selectedMode === "deep" ? "#f9a8d4" : "#525252",
+                }}
+              >
+                Deep Dive
               </span>
-            </button>
-          ))}
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                style={{
+                  background:
+                    selectedMode === "deep"
+                      ? "rgba(236,72,153,0.2)"
+                      : "rgba(255,255,255,0.05)",
+                  color: selectedMode === "deep" ? "#f9a8d4" : "#525252",
+                }}
+              >
+                3 credits
+              </span>
+            </div>
+            <p
+              className="text-xs leading-relaxed"
+              style={{
+                color: selectedMode === "deep" ? "#f9a8d4" : "#404040",
+              }}
+            >
+              Full AI agent pipeline — Architect, Developer and QA work together
+              to build a truly unique website. Takes ~45 seconds.
+            </p>
+          </button>
         </div>
 
+        {/* Theme selector — only shown in Fast Mode */}
+        {selectedMode === "fast" && (
+          <div className="flex flex-wrap justify-center gap-2">
+            {THEME_STYLES.map((style) => (
+              <button
+                key={style}
+                onClick={() => setSelectedTheme(style)}
+                className="flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 cursor-pointer"
+                style={{
+                  borderColor: selectedTheme === style ? "#a855f7" : "#2a2a2a",
+                  background:
+                    selectedTheme === style
+                      ? "rgba(168,85,247,0.15)"
+                      : "rgba(255,255,255,0.03)",
+                  color: selectedTheme === style ? "#d8b4fe" : "#737373",
+                }}
+              >
+                <span className="font-semibold">{getThemeLabel(style)}</span>
+                <span className="text-[10px] opacity-70 mt-0.5">
+                  {THEME_DESCRIPTIONS[style]}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        {/* Prompt input */}
         {/* Prompt input */}
         <div className="relative w-full">
           <textarea
@@ -212,26 +360,130 @@ export default function LandingPrompt() {
             rows={4}
             className="scrollbar no-scrollbar w-full resize-none rounded-2xl bg-neutral-900/80 backdrop-blur-sm border border-neutral-800 focus:border-purple-500/60 px-5 pt-4 pb-14 text-sm text-stone-300 outline-none placeholder:text-neutral-600 transition-all"
           />
-          <button
-            onClick={handleGenerate}
-            disabled={loading || !prompt.trim()}
-            className="absolute bottom-5 right-3 flex items-center gap-2 rounded-xl bg-purple-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-400 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {loading ? (
-              <>
+
+          {/* Bottom bar inside textarea */}
+          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+            {/* Model selector pill — Deep Dive only */}
+            {selectedMode === "deep" ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowModelPicker(!showModelPicker)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                  style={{
+                    background: "rgba(236,72,153,0.12)",
+                    border: "1px solid rgba(236,72,153,0.3)",
+                    color: "#f9a8d4",
+                  }}
+                >
+                  <span
+                    dangerouslySetInnerHTML={{ __html: CLAUDE_LOGO_SVG }}
+                    className="shrink-0"
+                  />
+                  <span>{activeModel.label}</span>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </button>
+
+                {/* Dropdown */}
+                {showModelPicker && (
+                  <div
+                    className="absolute bottom-full mb-2 left-0 rounded-xl overflow-hidden z-50 min-w-48"
+                    style={{
+                      background: "#141414",
+                      border: "1px solid #2a2a2a",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {MODELS.map(({ model, label, sublabel, credits }) => (
+                      <button
+                        key={model}
+                        onClick={() => {
+                          setSelectedModel(model);
+                          setShowModelPicker(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all cursor-pointer hover:bg-white/5"
+                        style={{
+                          background:
+                            selectedModel === model
+                              ? "rgba(236,72,153,0.1)"
+                              : "transparent",
+                        }}
+                      >
+                        <span
+                          dangerouslySetInnerHTML={{ __html: CLAUDE_LOGO_SVG }}
+                          className="shrink-0"
+                        />
+                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                          <span
+                            className="text-xs font-semibold truncate"
+                            style={{
+                              color:
+                                selectedModel === model ? "#f9a8d4" : "#e5e5e5",
+                            }}
+                          >
+                            {label}
+                          </span>
+                          <span className="text-[10px] text-neutral-500 truncate">
+                            {sublabel}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded-full"
+                            style={{
+                              background:
+                                selectedModel === model
+                                  ? "rgba(236,72,153,0.2)"
+                                  : "rgba(255,255,255,0.06)",
+                              color:
+                                selectedModel === model ? "#f9a8d4" : "#525252",
+                            }}
+                          >
+                            {credits}
+                          </span>
+                          {selectedModel === model && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Fast mode — just a static label
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                style={{
+                  background: "rgba(168,85,247,0.12)",
+                  border: "1px solid rgba(168,85,247,0.3)",
+                  color: "#d8b4fe",
+                }}
+              >
+                <Zap className="w-3 h-3" />
+                <span>Fast Mode · 1 credit</span>
+              </div>
+            )}
+
+            {/* Send button */}
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !prompt.trim()}
+              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              style={{
+                background: selectedMode === "deep" ? "#ec4899" : "#a855f7",
+              }}
+            >
+              {loading ? (
                 <img
                   src={Logo.src}
                   alt="Loading"
                   className="w-4 h-4 animate-spin"
                 />
-                {/* <LoaderCircle className="w-4 h-4 animate-spin" /> */}
-              </>
-            ) : (
-              <>
+              ) : (
                 <MoveRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+              )}
+            </button>
+          </div>
         </div>
 
         <p className="text-xs text-neutral-600">

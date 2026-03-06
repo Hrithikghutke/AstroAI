@@ -16,7 +16,7 @@ import {
 import { db } from "@/lib/firebase";
 import { generateShareId } from "@/lib/generateId";
 
-const STARTING_CREDITS = 5;
+const STARTING_CREDITS = 50;
 
 /* -------------------------------------------------------
    Create a new user document when they sign up.
@@ -54,19 +54,24 @@ export async function getUserCredits(clerkUserId: string): Promise<number> {
    Returns false if the user doesn't have enough credits.
 ------------------------------------------------------- */
 export async function deductCredit(clerkUserId: string): Promise<boolean> {
-  const credits = await getUserCredits(clerkUserId);
+  return deductCredits(clerkUserId, 1);
+}
 
-  if (credits < 1) return false;
+export async function deductCredits(
+  clerkUserId: string,
+  amount: number,
+): Promise<boolean> {
+  const credits = await getUserCredits(clerkUserId);
+  if (credits < amount) return false;
 
   const userRef = doc(db, "users", clerkUserId);
   await updateDoc(userRef, {
-    credits: increment(-1),
+    credits: increment(-amount),
     totalGenerated: increment(1),
   });
 
   return true;
 }
-
 /* -------------------------------------------------------
    Add credits to a user (called after payment).
 ------------------------------------------------------- */

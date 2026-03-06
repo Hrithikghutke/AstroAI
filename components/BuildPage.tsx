@@ -7,18 +7,31 @@ import ChatPanel from "@/components/ChatPanel";
 import PreviewPanel from "@/components/PreviewPanel";
 import { Layout } from "@/types/layout";
 
+type GenerationMode = "fast" | "deep";
+
 export default function BuildPage() {
   const router = useRouter();
   const [layout, setLayout] = useState<any>(null);
+  const [deepHtml, setDeepHtml] = useState<string | null>(null);
+  const [deepBrandName, setDeepBrandName] = useState<string | null>(null);
   const [initialPrompt, setInitialPrompt] = useState<string>("");
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
+  const [initialMode, setInitialMode] = useState<GenerationMode>("fast");
   const [mobileView, setMobileView] = useState<"chat" | "preview">("preview");
   const [ready, setReady] = useState(false);
-  const [savedId, setSavedId] = useState<string | null>(null); // persists across modifications
-
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [initialModel, setInitialModel] = useState(
+    "anthropic/claude-haiku-4.5",
+  ); // ← add this
   useEffect(() => {
-    const stored = sessionStorage.getItem("astroweb_layout");
-    const storedPrompt = sessionStorage.getItem("astroweb_prompt");
+    const stored = sessionStorage.getItem("crawlcube_layout");
+    const storedPrompt = sessionStorage.getItem("crawlcube_prompt");
+    const storedMode = sessionStorage.getItem(
+      "crawlcube_mode",
+    ) as GenerationMode | null;
+    const storedModel = sessionStorage.getItem("crawlcube_model");
+    setInitialMode(storedMode === "deep" ? "deep" : "fast");
+    if (storedModel) setInitialModel(storedModel);
 
     if (stored) {
       try {
@@ -29,29 +42,52 @@ export default function BuildPage() {
         router.replace("/");
         return;
       }
+    } else if (storedMode === "deep" && storedPrompt) {
+      // Deep dive mode — no layout yet, just the prompt
+      // ChatPanel will auto-start the pipeline
+      setInitialPrompt(storedPrompt ?? "");
+      setCurrentPrompt(storedPrompt ?? "");
     }
+
     setReady(true);
   }, [router]);
 
+  // ── Fast Mode: layout JSON from ChatPanel ──
   const handleChatGenerate = (generatedLayout: any, prompt?: string) => {
     setLayout(generatedLayout);
+    setDeepHtml(null); // clear any deep dive output
     if (prompt) setCurrentPrompt(prompt);
-    sessionStorage.setItem("astroweb_layout", JSON.stringify(generatedLayout));
+    if (generatedLayout) {
+      sessionStorage.setItem(
+        "crawlcube_layout",
+        JSON.stringify(generatedLayout),
+      );
+    }
     setMobileView("preview");
-    // ✅ Do NOT clear savedId — modifications update the same entry
+  };
+
+  // ── Deep Dive Mode: raw HTML from ChatPanel ──
+  const handleDeepHtml = (html: string, brandName?: string) => {
+    setDeepHtml(html);
+    setDeepBrandName(brandName ?? null);
+    setLayout(null); // clear any fast mode layout
+    setMobileView("preview");
   };
 
   const handleNewChat = () => {
-    setSavedId(null); // new chat = fresh save entry
+    setSavedId(null);
     setLayout(null);
+    setDeepHtml(null);
+    setDeepBrandName(null);
     setCurrentPrompt("");
-    sessionStorage.removeItem("astroweb_layout");
-    sessionStorage.removeItem("astroweb_prompt");
+    sessionStorage.removeItem("crawlcube_layout");
+    sessionStorage.removeItem("crawlcube_prompt");
+    sessionStorage.removeItem("crawlcube_mode");
   };
 
   const handleLayoutChange = (updated: Layout) => {
     setLayout(updated);
-    sessionStorage.setItem("astroweb_layout", JSON.stringify(updated));
+    sessionStorage.setItem("crawlcube_layout", JSON.stringify(updated));
   };
 
   if (!ready) {
@@ -73,19 +109,24 @@ export default function BuildPage() {
         <div className="hidden md:flex w-[38%] shrink-0 border-r border-neutral-800 flex-col">
           <ChatPanel
             setLayout={handleChatGenerate}
+            setDeepHtml={handleDeepHtml}
             initialLayout={layout}
             initialPrompt={initialPrompt}
+            initialMode={initialMode}
             onNewChat={handleNewChat}
+            initialModel={initialModel}
           />
         </div>
 
         <div className="hidden md:flex flex-1 flex-col">
           <PreviewPanel
             layout={layout}
+            deepHtml={deepHtml}
+            deepBrandName={deepBrandName}
             prompt={currentPrompt}
             savedId={savedId}
             onSaved={(id) => setSavedId(id)}
-            onLayoutChange={handleLayoutChange} // ← NEW
+            onLayoutChange={handleLayoutChange}
           />
         </div>
 
@@ -94,10 +135,13 @@ export default function BuildPage() {
           {mobileView === "chat" ? (
             <ChatPanel
               setLayout={handleChatGenerate}
+              setDeepHtml={handleDeepHtml}
               initialLayout={layout}
               initialPrompt={initialPrompt}
+              initialModel={initialModel}
+              initialMode={initialMode}
               onShowPreview={() => setMobileView("preview")}
-              hasLayout={!!layout}
+              hasLayout={!!(layout || deepHtml)}
               onNewChat={handleNewChat}
             />
           ) : (
@@ -129,10 +173,12 @@ export default function BuildPage() {
               </div>
               <PreviewPanel
                 layout={layout}
+                deepHtml={deepHtml}
+                deepBrandName={deepBrandName}
                 prompt={currentPrompt}
                 savedId={savedId}
                 onSaved={(id) => setSavedId(id)}
-                onLayoutChange={handleLayoutChange} // ← NEW
+                onLayoutChange={handleLayoutChange}
               />
             </div>
           )}
