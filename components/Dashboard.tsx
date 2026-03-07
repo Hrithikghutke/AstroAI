@@ -29,6 +29,16 @@ const THEME_COLORS: Record<string, string> = {
   glassmorphism: "#8b5cf6",
   elegant: "#d4af7a",
   corporate: "#3b82f6",
+  "deep-dive": "#ec4899",
+};
+
+const THEME_LABELS: Record<string, string> = {
+  minimal: "Minimal",
+  bold: "Bold",
+  glassmorphism: "Glassmorphism",
+  elegant: "Elegant",
+  corporate: "Corporate",
+  "deep-dive": "✦ Deep Dive",
 };
 
 export default function Dashboard({ data }: any) {
@@ -153,7 +163,10 @@ export default function Dashboard({ data }: any) {
                   <div
                     className="h-1.5 w-full shrink-0"
                     style={{
-                      background: THEME_COLORS[gen.themeStyle] ?? "#6366f1",
+                      background:
+                        gen.themeStyle === "deep-dive"
+                          ? "linear-gradient(90deg, #6366f1, #ec4899, #8b5cf6)"
+                          : (THEME_COLORS[gen.themeStyle] ?? "#6366f1"),
                     }}
                   />
 
@@ -165,13 +178,13 @@ export default function Dashboard({ data }: any) {
                           {gen.siteName}
                         </h3>
                         <span
-                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize shrink-0 mt-0.5"
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5"
                           style={{
                             background: `${THEME_COLORS[gen.themeStyle] ?? "#6366f1"}22`,
                             color: THEME_COLORS[gen.themeStyle] ?? "#6366f1",
                           }}
                         >
-                          {gen.themeStyle}
+                          {THEME_LABELS[gen.themeStyle] ?? gen.themeStyle}
                         </span>
                       </div>
 
@@ -237,29 +250,51 @@ export default function Dashboard({ data }: any) {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
+                      {/* Continue editing — full width primary action */}
                       <Link
-                        href={`/preview/${gen.shareId}`}
-                        target="_blank"
-                        className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-all"
-                      >
-                        View
-                      </Link>
-                      <button
-                        onClick={() => handleShare(gen.shareId)}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer"
+                        href={`/build?continue=${gen.id}`}
+                        className="w-full text-center text-xs font-semibold py-2 rounded-lg transition-all"
                         style={{
                           background:
-                            copiedId === gen.shareId
-                              ? "#16a34a22"
+                            gen.themeStyle === "deep-dive"
+                              ? "linear-gradient(90deg,#6366f122,#ec489922)"
                               : "#7c3aed22",
                           color:
-                            copiedId === gen.shareId ? "#4ade80" : "#a78bfa",
+                            gen.themeStyle === "deep-dive"
+                              ? "#ec4899"
+                              : "#a78bfa",
+                          border: `1px solid ${gen.themeStyle === "deep-dive" ? "#ec489933" : "#7c3aed33"}`,
                         }}
                       >
-                        <Share2 className="w-3 h-3" />
-                        {copiedId === gen.shareId ? "Copied!" : "Share"}
-                      </button>
+                        ✦ Continue Editing
+                      </Link>
+                      {/* View + Share row */}
+                      <div className="flex gap-2">
+                        <Link
+                          href={`/preview/${gen.shareId}`}
+                          target="_blank"
+                          className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-all"
+                        >
+                          View
+                        </Link>
+                        <button
+                          onClick={() => handleShare(gen.shareId)}
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer"
+                          style={{
+                            background:
+                              copiedId === gen.shareId
+                                ? "#16a34a22"
+                                : "#ffffff11",
+                            color:
+                              copiedId === gen.shareId ? "#4ade80" : "#a3a3a3",
+                            border: `1px solid ${copiedId === gen.shareId ? "#16a34a44" : "#2a2a2a"}`,
+                          }}
+                        >
+                          <Share2 className="w-3 h-3" />
+                          {copiedId === gen.shareId ? "Copied!" : "Share"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

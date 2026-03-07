@@ -1,7 +1,6 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import ChatPanel from "@/components/ChatPanel";
 import PreviewPanel from "@/components/PreviewPanel";
@@ -11,6 +10,7 @@ type GenerationMode = "fast" | "deep";
 
 export default function BuildPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [layout, setLayout] = useState<any>(null);
   const [deepHtml, setDeepHtml] = useState<string | null>(null);
   const [deepBrandName, setDeepBrandName] = useState<string | null>(null);
@@ -22,8 +22,60 @@ export default function BuildPage() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [initialModel, setInitialModel] = useState(
     "anthropic/claude-haiku-4.5",
-  ); // ← add this
+  );
+
   useEffect(() => {
+    const continueId = searchParams.get("continue");
+
+    // ── Continue from dashboard ──
+    if (continueId) {
+      const restoreGeneration = async () => {
+        try {
+          const res = await fetch(`/api/generations/${continueId}`);
+          if (!res.ok) {
+            router.replace("/");
+            return;
+          }
+          const data = await res.json();
+          const gen = data.generation;
+
+          setSavedId(continueId);
+          setInitialPrompt(gen.prompt ?? "");
+          setCurrentPrompt(gen.prompt ?? "");
+
+          if (gen.deepHtml) {
+            // Restore Deep Dive
+            setDeepHtml(gen.deepHtml);
+            setDeepBrandName(gen.siteName ?? null);
+            setInitialMode("deep");
+            sessionStorage.setItem("crawlcube_mode", "deep");
+          } else if (gen.layout) {
+            // Restore Fast Mode
+            setLayout(gen.layout);
+            setInitialMode("fast");
+            sessionStorage.setItem(
+              "crawlcube_layout",
+              JSON.stringify(gen.layout),
+            );
+            sessionStorage.setItem("crawlcube_mode", "fast");
+          }
+
+          if (gen.prompt) {
+            sessionStorage.setItem("crawlcube_prompt", gen.prompt);
+          }
+        } catch {
+          router.replace("/");
+          return;
+        } finally {
+          setReady(true);
+        }
+      };
+
+      restoreGeneration();
+      return;
+    }
+
+    // ── Normal flow from sessionStorage ──
     const stored = sessionStorage.getItem("crawlcube_layout");
     const storedPrompt = sessionStorage.getItem("crawlcube_prompt");
     const storedMode = sessionStorage.getItem(
@@ -43,14 +95,12 @@ export default function BuildPage() {
         return;
       }
     } else if (storedMode === "deep" && storedPrompt) {
-      // Deep dive mode — no layout yet, just the prompt
-      // ChatPanel will auto-start the pipeline
       setInitialPrompt(storedPrompt ?? "");
       setCurrentPrompt(storedPrompt ?? "");
     }
 
     setReady(true);
-  }, [router]);
+  }, [router, searchParams]);
 
   // ── Fast Mode: layout JSON from ChatPanel ──
   const handleChatGenerate = (generatedLayout: any, prompt?: string) => {
@@ -115,6 +165,7 @@ export default function BuildPage() {
             initialMode={initialMode}
             onNewChat={handleNewChat}
             initialModel={initialModel}
+            restoredDeepHtml={deepHtml}
           />
         </div>
 
@@ -139,6 +190,7 @@ export default function BuildPage() {
               initialLayout={layout}
               initialPrompt={initialPrompt}
               initialModel={initialModel}
+              restoredDeepHtml={deepHtml}
               initialMode={initialMode}
               onShowPreview={() => setMobileView("preview")}
               hasLayout={!!(layout || deepHtml)}

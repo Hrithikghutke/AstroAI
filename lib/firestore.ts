@@ -93,20 +93,33 @@ export async function saveGeneration(
   clerkUserId: string,
   prompt: string,
   layout: any,
+  deepHtml: string | null = null,
 ): Promise<{ id: string; shareId: string }> {
   const shareId = generateShareId();
 
   const docRef = await addDoc(collection(db, "generations"), {
     clerkUserId,
     prompt,
-    layout,
+    layout: layout ?? null,
+    deepHtml: deepHtml ?? null,
+    mode: deepHtml ? "deep" : "fast",
     shareId,
-    siteName: layout?.branding?.logoText ?? "Untitled",
+    siteName: deepHtml
+      ? extractTitleFromHtml(deepHtml)
+      : (layout?.branding?.logoText ?? "Untitled"),
     themeStyle: layout?.themeStyle ?? "corporate",
     createdAt: serverTimestamp(),
   });
 
   return { id: docRef.id, shareId };
+}
+
+// Helper to extract <title> from deep dive HTML for siteName
+function extractTitleFromHtml(html: string): string {
+  const match = html.match(/<title>([^<]+)<\/title>/i);
+  if (!match) return "Untitled";
+  // Strip " - Tagline" suffix if present, just keep brand name
+  return match[1].split(" - ")[0].split(" | ")[0].trim();
 }
 
 /* -------------------------------------------------------
@@ -174,6 +187,7 @@ export async function updateGeneration(
   clerkUserId: string,
   layout: any,
   prompt: string,
+  deepHtml: string | null = null,
 ): Promise<void> {
   const ref = doc(db, "generations", docId);
   const snap = await getDoc(ref);
@@ -182,10 +196,14 @@ export async function updateGeneration(
   if (snap.data().clerkUserId !== clerkUserId) throw new Error("Unauthorized");
 
   await updateDoc(ref, {
-    layout,
+    layout: layout ?? null,
+    deepHtml: deepHtml ?? null,
+    mode: deepHtml ? "deep" : "fast",
     prompt,
-    siteName: layout?.branding?.logoText ?? "Untitled",
-    themeStyle: layout?.themeStyle ?? "corporate",
+    siteName: deepHtml
+      ? extractTitleFromHtml(deepHtml)
+      : (layout?.branding?.logoText ?? "Untitled"),
+    themeStyle: deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate"),
     updatedAt: serverTimestamp(),
   });
 }

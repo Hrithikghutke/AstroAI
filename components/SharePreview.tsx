@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import PreviewFrame from "@/components/PreviewFrame";
+import DeepPreview from "@/components/DeepPreview";
 import { normalizeLayout } from "@/lib/normalizeLayout";
 import { Monitor, Smartphone, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import cname from "@/assets/cname.svg";
 
 export default function SharePreview({ shareId }: { shareId: string }) {
   const [layout, setLayout] = useState<any>(null);
+  const [deepHtml, setDeepHtml] = useState<string | null>(null);
   const [siteName, setSiteName] = useState("");
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -24,9 +26,18 @@ export default function SharePreview({ shareId }: { shareId: string }) {
           return;
         }
         const data = await res.json();
-        const normalized = normalizeLayout(data.generation.layout);
-        setLayout(normalized);
-        setSiteName(data.generation.siteName ?? "Untitled");
+        const gen = data.generation;
+        setSiteName(gen.siteName ?? "Untitled");
+
+        if (gen.deepHtml) {
+          // Deep Dive mode — use raw HTML
+          setDeepHtml(gen.deepHtml);
+        } else if (gen.layout) {
+          // Fast Mode — normalize layout JSON
+          setLayout(normalizeLayout(gen.layout));
+        } else {
+          setNotFound(true);
+        }
       } catch {
         setNotFound(true);
       } finally {
@@ -47,7 +58,7 @@ export default function SharePreview({ shareId }: { shareId: string }) {
     );
   }
 
-  if (notFound || !layout) {
+  if (notFound || (!layout && !deepHtml)) {
     return (
       <div className="h-screen bg-neutral-950 flex flex-col items-center justify-center gap-4">
         <p className="text-neutral-300 text-lg font-semibold">
@@ -116,16 +127,21 @@ export default function SharePreview({ shareId }: { shareId: string }) {
       </div>
 
       {/* Preview */}
+      {/* Preview */}
       <div className="flex-1 overflow-auto bg-neutral-800 flex items-start justify-center p-4">
-        <div
-          className="bg-white rounded-lg overflow-auto shadow-2xl transition-all duration-300"
-          style={{
-            width: viewport === "mobile" ? "390px" : "100%",
-            minHeight: "100%",
-          }}
-        >
-          <PreviewFrame layout={layout} />
-        </div>
+        {deepHtml ? (
+          <DeepPreview html={deepHtml} viewport={viewport} />
+        ) : (
+          <div
+            className="bg-white rounded-lg overflow-auto shadow-2xl transition-all duration-300"
+            style={{
+              width: viewport === "mobile" ? "390px" : "100%",
+              minHeight: "100%",
+            }}
+          >
+            <PreviewFrame layout={layout} />
+          </div>
+        )}
       </div>
     </div>
   );

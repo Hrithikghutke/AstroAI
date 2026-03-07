@@ -116,6 +116,7 @@ export default function ChatPanel({
   onShowPreview,
   hasLayout,
   onNewChat,
+  restoredDeepHtml,
 }: {
   setLayout: (layout: any, prompt?: string) => void;
   setDeepHtml?: (html: string, brandName?: string) => void;
@@ -126,6 +127,7 @@ export default function ChatPanel({
   onShowPreview?: () => void;
   hasLayout?: boolean;
   onNewChat?: () => void;
+  restoredDeepHtml?: string | null;
 }) {
   const [mode, setMode] = useState<GenerationMode>(initialMode ?? "fast");
   const [selectedModel, setSelectedModel] = useState(
@@ -137,6 +139,21 @@ export default function ChatPanel({
   const activeModel =
     MODELS.find((m) => m.model === selectedModel) ?? MODELS[0];
   const [messages, setMessages] = useState<Message[]>(() => {
+    // Restored from dashboard — show continuation message
+    if (restoredDeepHtml && initialPrompt) {
+      return [
+        {
+          id: "initial-user",
+          role: "user" as const,
+          content: initialPrompt,
+        },
+        {
+          id: "initial-response",
+          role: "assistant" as const,
+          content: `Welcome back! Your website is loaded in the preview.\n\nDescribe any changes you want — I'll regenerate it with your updates.`,
+        },
+      ];
+    }
     if (initialLayout && initialPrompt) {
       return [
         {
@@ -147,11 +164,10 @@ export default function ChatPanel({
         {
           id: "initial-response",
           role: "assistant" as const,
-          content: `Done! I've generated a **${getThemeLabel(initialLayout.themeStyle ?? "corporate")}** style website for **${initialLayout.branding?.logoText || "your brand"}**. It's showing in the preview.\n\nDescribe changes you want or generate something completely new!`,
+          content: `Welcome back! Your **${getThemeLabel(initialLayout.themeStyle ?? "corporate")}** website for **${initialLayout.branding?.logoText || "your brand"}** is loaded.\n\nDescribe changes you want or generate something completely new!`,
         },
       ];
     }
-    // Deep dive mode — pipeline starts automatically if initialPrompt is set
     return [
       {
         id: "welcome",
@@ -187,6 +203,7 @@ export default function ChatPanel({
       initialMode === "deep" &&
       initialPrompt &&
       !initialLayout &&
+      !restoredDeepHtml &&
       !hasAutoStarted.current
     ) {
       hasAutoStarted.current = true;
@@ -673,7 +690,7 @@ export default function ChatPanel({
 
       iframe.onload = async () => {
         clearTimeout(timeout);
-        await new Promise((r) => setTimeout(r, 1500)); // wait for fonts + images
+        await new Promise((r) => setTimeout(r, 4000)); // wait for fonts + images
         const doc = iframe.contentDocument;
         if (!doc?.body) {
           cleanup();
@@ -788,6 +805,15 @@ export default function ChatPanel({
           "done",
           "Layout looks great! No visual issues found.",
         );
+        if (screenshots.desktopFull) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === agentMessageId
+                ? { ...m, thumbnail: screenshots.desktopFull }
+                : m,
+            ),
+          );
+        }
         return html;
       }
 
@@ -813,6 +839,16 @@ export default function ChatPanel({
           "done",
           `Fixed ${qaReport.issues.length} layout issue(s) ✓`,
         );
+        // Show before/after screenshots in chat
+        if (screenshots.desktopFull) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === agentMessageId
+                ? { ...m, thumbnail: screenshots.desktopFull }
+                : m,
+            ),
+          );
+        }
         return fixData.html;
       } else {
         updateStep("visual-qa", "done", "Fix attempted — showing best result.");

@@ -9,16 +9,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { prompt, layout } = await req.json();
+    const { prompt, layout, deepHtml } = await req.json();
 
-    if (!layout) {
+    if (!layout && !deepHtml) {
       return NextResponse.json(
-        { error: "No layout provided" },
+        { error: "No content provided" },
         { status: 400 },
       );
     }
 
-    const { id, shareId } = await saveGeneration(userId, prompt ?? "", layout);
+    const { id, shareId } = await saveGeneration(
+      userId,
+      prompt ?? "",
+      layout ?? null,
+      deepHtml ?? null,
+    );
     return NextResponse.json({ id, shareId });
   } catch (error) {
     console.error("Save generation error:", error);
@@ -33,16 +38,22 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, prompt, layout } = await req.json();
+    const { id, prompt, layout, deepHtml } = await req.json();
 
-    if (!id || !layout) {
+    if (!id || (!layout && !deepHtml)) {
       return NextResponse.json(
-        { error: "Missing id or layout" },
+        { error: "Missing id or content" },
         { status: 400 },
       );
     }
 
-    await updateGeneration(id, userId, layout, prompt ?? "");
+    await updateGeneration(
+      id,
+      userId,
+      layout ?? null,
+      prompt ?? "",
+      deepHtml ?? null,
+    );
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Update generation error:", error);
