@@ -109,6 +109,8 @@ function AgentStepRow({ step }: { step: AgentStep }) {
 export default function ChatPanel({
   setLayout,
   setDeepHtml,
+  onStreamCode,
+  onGeneratingChange,
   initialLayout,
   initialPrompt,
   initialMode,
@@ -120,6 +122,8 @@ export default function ChatPanel({
 }: {
   setLayout: (layout: any, prompt?: string) => void;
   setDeepHtml?: (html: string, brandName?: string) => void;
+  onStreamCode?: (code: string) => void;
+  onGeneratingChange?: (generating: boolean) => void;
   initialLayout?: any;
   initialPrompt?: string;
   initialMode?: GenerationMode;
@@ -192,6 +196,7 @@ export default function ChatPanel({
     initialLayout ?? null,
   );
   const hasAutoStarted = useRef(false);
+  const typewriterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -243,6 +248,8 @@ export default function ChatPanel({
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     deductCredit();
+    onGeneratingChange?.(true);
+    onStreamCode?.("");
 
     try {
       const res = await fetch("/api/generate", {
@@ -268,6 +275,21 @@ export default function ChatPanel({
       setLayout(normalized, prompt);
       await refreshCredits();
 
+      // Typewriter effect — feeds JSON into Code tab character by character
+      const jsonStr = JSON.stringify(normalized, null, 2);
+      let charIdx = 0;
+      const typeNext = () => {
+        charIdx += Math.floor(Math.random() * 10) + 6; // 6-16 chars per tick
+        if (charIdx >= jsonStr.length) {
+          onStreamCode?.(jsonStr);
+          onGeneratingChange?.(false); // unlock Preview tab
+          return;
+        }
+        onStreamCode?.(jsonStr.slice(0, charIdx));
+        typewriterRef.current = setTimeout(typeNext, 16);
+      };
+      typewriterRef.current = setTimeout(typeNext, 50);
+
       setMessages((prev) =>
         prev.map((m) =>
           m.isGenerating
@@ -280,6 +302,8 @@ export default function ChatPanel({
         ),
       );
     } catch (err: any) {
+      onGeneratingChange?.(false);
+      if (typewriterRef.current) clearTimeout(typewriterRef.current);
       await refreshCredits();
       const errorMsg =
         err.message === "NO_CREDITS"
@@ -345,6 +369,8 @@ export default function ChatPanel({
     setMessages((prev) => [...prev, userMessage, agentMessage]);
     setInput("");
     setLoading(true);
+    onGeneratingChange?.(true);
+    onStreamCode?.("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     // Helper to update a specific agent step in the message
@@ -486,6 +512,11 @@ export default function ChatPanel({
               updateStep("developer", "done", event.message);
               break;
 
+            case "HTML_CHUNK":
+              // Live streaming — feed into Code tab
+              onStreamCode?.(event.chunk);
+              break;
+
             case "HTML_PREVIEW":
               // Show HTML in preview immediately — don't wait for QA
               setDeepHtml?.(event.html, event.brandName);
@@ -515,6 +546,8 @@ export default function ChatPanel({
             case "COMPLETE":
               receivedComplete = true;
               updateStep("qa", "done", "All checks passed!");
+              onStreamCode?.(event.html); // show final HTML in code tab
+              onGeneratingChange?.(false); // unlock Preview tab
 
               setDeepHtml?.(event.html, event.brandName);
 
@@ -548,6 +581,7 @@ export default function ChatPanel({
 
             case "ERROR":
               receivedError = true;
+              onGeneratingChange?.(false);
               updateStep("architect", "error", event.message);
               updateStep("developer", "error");
               updateStep("qa", "error");
@@ -1178,7 +1212,9 @@ export default function ChatPanel({
                   }}
                 >
                   <span
-                    dangerouslySetInnerHTML={{ __html: CLAUDE_LOGO_SVG }}
+                    dangerouslySetInnerHTML={{
+                      __html: activeModel.logo ?? CLAUDE_LOGO_SVG,
+                    }}
                     className="shrink-0"
                   />
                   <span>{activeModel.label}</span>
@@ -1195,7 +1231,7 @@ export default function ChatPanel({
                       boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
                     }}
                   >
-                    {MODELS.map(({ model, label, sublabel, credits }) => (
+                    {MODELS.map(({ model, label, sublabel, credits, logo }) => (
                       <button
                         key={model}
                         onClick={() => {
@@ -1212,7 +1248,9 @@ export default function ChatPanel({
                       >
                         {/* Claude logo */}
                         <span
-                          dangerouslySetInnerHTML={{ __html: CLAUDE_LOGO_SVG }}
+                          dangerouslySetInnerHTML={{
+                            __html: logo ?? CLAUDE_LOGO_SVG,
+                          }}
                           className="shrink-0"
                         />
 

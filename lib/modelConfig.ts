@@ -1,10 +1,17 @@
 export const CLAUDE_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M5.13405 12.64L8.28605 10.88L8.33405 10.72L8.28605 10.64H8.12605L7.59805 10.608L5.80605 10.56L4.23805 10.48L2.71805 10.4L2.33405 10.32L1.99805 9.84L2.03005 9.6L2.35005 9.392L2.81405 9.424L3.82205 9.504L5.34205 9.6L6.44605 9.664L8.07805 9.856H8.33405L8.36605 9.744L8.28605 9.68L8.22205 9.616L6.63805 8.56L4.94205 7.44L4.04605 6.784L3.56605 6.464L3.32605 6.144L3.23005 5.472L3.66205 4.992L4.25405 5.04L4.39805 5.072L4.99005 5.536L6.27005 6.512L7.91805 7.76L8.15805 7.952L8.25405 7.888L8.27005 7.84L8.15805 7.664L7.27805 6L6.31805 4.336L5.88605 3.648L5.77405 3.232C5.72605 3.072 5.71005 2.912 5.71005 2.752L6.19005 2.08L6.47805 2L7.15005 2.096L7.40605 2.32L7.82205 3.28L8.47805 4.768L9.51805 6.784L9.83805 7.392L9.99805 7.936L10.046 8.096H10.158V8.016L10.238 6.864L10.398 5.472L10.558 3.68L10.606 3.168L10.862 2.56L11.342 2.24L11.758 2.416L12.078 2.88L12.03 3.168L11.854 4.4L11.438 6.336L11.198 7.648H11.342L11.502 7.472L12.158 6.608L13.262 5.232L13.742 4.672L14.318 4.08L14.686 3.792H15.374L15.87 4.544L15.646 5.328L14.942 6.224L14.35 6.976L13.502 8.112L12.99 9.024L13.038 9.088H13.15L15.07 8.672L16.094 8.496L17.31 8.288L17.87 8.544L17.934 8.8L17.71 9.344L16.398 9.664L14.862 9.984L12.574 10.512L12.542 10.528L12.574 10.576L13.598 10.672L14.046 10.704H15.134L17.15 10.864L17.678 11.184L17.982 11.616L17.934 11.936L17.118 12.352L16.03 12.096L13.47 11.488L12.606 11.28H12.478V11.344L13.214 12.064L14.542 13.264L16.238 14.816L16.318 15.2L16.11 15.52L15.886 15.488L14.414 14.368L13.838 13.888L12.558 12.8H12.478V12.912L12.766 13.344L14.334 15.696L14.414 16.416L14.302 16.64L13.886 16.8L13.454 16.704L12.526 15.424L11.566 13.984L10.814 12.672L10.734 12.736L10.27 17.568L10.062 17.808L9.58205 18L9.18205 17.68L8.95805 17.2L9.18205 16.208L9.43805 14.928L9.64605 13.904L9.83805 12.64L9.95005 12.224V12.192H9.83805L8.87805 13.52L7.43805 15.488L6.28605 16.704L6.01405 16.816L5.53405 16.576L5.58205 16.128L5.83805 15.76L7.43805 13.712L8.39805 12.448L9.03805 11.712L9.02205 11.632H8.97405L4.75005 14.384L3.99805 14.48L3.67805 14.16L3.71005 13.68L3.87005 13.52L5.15005 12.64H5.13405Z" fill="#E58D73"/></svg>`;
 
+export const DEEPSEEK_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M23.748 10.053c-.028-.058-.081-.098-.144-.108a6.67 6.67 0 0 0-.481-.055c-.364-.032-.614-.05-.75-.055a9.3 9.3 0 0 0-.396-.007c-.165.003-.267.01-.306.02-.24.06-.466.163-.672.303a2.44 2.44 0 0 0-.489.457l-.073.098c-.08.113-.12.17-.12.17a3.52 3.52 0 0 0-.124.204 4.44 4.44 0 0 1-.58.808 5.64 5.64 0 0 1-.695.64c-.245.182-.501.34-.77.471a5.13 5.13 0 0 1-1.649.44 5.14 5.14 0 0 1-1.097-.016 5.38 5.38 0 0 1-1.01-.24 5.55 5.55 0 0 1-.915-.442 5.8 5.8 0 0 1-.792-.63 6.07 6.07 0 0 1-.647-.8 6.38 6.38 0 0 1-.477-.944 6.64 6.64 0 0 1-.285-1.059 6.85 6.85 0 0 1-.083-1.138c.013-.4.067-.797.162-1.185a6.96 6.96 0 0 1 .374-1.097l.037-.08a.16.16 0 0 0-.017-.166.17.17 0 0 0-.154-.065 5.72 5.72 0 0 0-1.311.37 6.67 6.67 0 0 0-1.162.672 7.12 7.12 0 0 0-.985.945 7.38 7.38 0 0 0-.77 1.178 7.45 7.45 0 0 0-.467 1.298 7.36 7.36 0 0 0-.147 1.334c.003.438.053.875.149 1.302.098.433.243.854.432 1.254a7.27 7.27 0 0 0 .69 1.145 7.2 7.2 0 0 0 .928.992 7.12 7.12 0 0 0 1.142.796 7.07 7.07 0 0 0 1.312.547 7.07 7.07 0 0 0 1.405.265 7.13 7.13 0 0 0 1.36-.029 7.11 7.11 0 0 0 1.301-.298 7.13 7.13 0 0 0 1.193-.553 7.2 7.2 0 0 0 1.034-.784 7.32 7.32 0 0 0 .83-.985 7.47 7.47 0 0 0 .592-1.155c.054-.133.1-.27.138-.407.022-.082.066-.156.128-.215.063-.058.14-.097.224-.113l.267-.049a.38.38 0 0 0 .227-.136.36.36 0 0 0 .083-.253l-.022-.413a.18.18 0 0 0-.065-.127zm-12.45-5.21a.17.17 0 0 0 .11-.041.16.16 0 0 0 .054-.103 6.8 6.8 0 0 1 .392-1.65 6.33 6.33 0 0 1 .74-1.398 5.85 5.85 0 0 1 1.052-1.1 5.4 5.4 0 0 1 1.306-.75 5.17 5.17 0 0 1 .728-.213c.253-.054.51-.085.768-.092a5.2 5.2 0 0 1 .773.046c.254.038.504.098.746.18.237.082.466.185.683.308.211.12.412.258.6.412.181.15.35.315.503.493.149.174.282.36.398.555.111.19.205.389.28.594a.17.17 0 0 0 .1.101.18.18 0 0 0 .143-.005l.896-.412a.17.17 0 0 0 .095-.21 6.35 6.35 0 0 0-.388-.81 6.13 6.13 0 0 0-.541-.737 6.1 6.1 0 0 0-.676-.638 6.15 6.15 0 0 0-.79-.507 6.32 6.32 0 0 0-.882-.365 6.54 6.54 0 0 0-.95-.215 6.78 6.78 0 0 0-.994-.062 6.92 6.92 0 0 0-1.01.1 6.87 6.87 0 0 0-.975.274 6.72 6.72 0 0 0-.898.434 6.53 6.53 0 0 0-.782.577 6.32 6.32 0 0 0-.636.702 6.11 6.11 0 0 0-.468.808 5.9 5.9 0 0 0-.286.889 5.71 5.71 0 0 0-.093.949.17.17 0 0 0 .049.12.17.17 0 0 0 .12.05h.977z" fill="#4D6BFE"/></svg>`;
+export const GEMINI_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><defs><linearGradient id="geminiGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#8A6FF0"/><stop offset="100%" stop-color="#FF6FBF"/></linearGradient></defs><path d="M 10,1 C 10,5.5 14.5,10 19,10 C 14.5,10 10,14.5 10,19 C 10,14.5 5.5,10 1,10 C 5.5,10 10,5.5 10,1 Z" fill="url(#geminiGrad)"/></svg>`;
+
 export interface ModelOption {
   model: string;
   label: string; // e.g. "Claude 4.5 Haiku"
   sublabel: string; // e.g. "Anthropic's Fast Model"
   credits: string;
+  logo?: string; // SVG string
+  costPerOutputToken: number; // in dollars per token
+  minCreditsToStart: number;
+  maxOutputTokens: number;
 }
 
 export const DEEP_DIVE_MODELS: ModelOption[] = [
@@ -13,17 +20,75 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     label: "Claude 4.5 Haiku",
     sublabel: "Anthropic's Fast Model",
     credits: "2 credits",
+    logo: CLAUDE_LOGO_SVG,
+    costPerOutputToken: 0.000004,
+    minCreditsToStart: 3,
+    maxOutputTokens: 8192,
   },
   {
     model: "anthropic/claude-sonnet-4.5",
     label: "Claude 4.5 Sonnet",
     sublabel: "Anthropic's Balanced Model",
     credits: "5 credits",
+    logo: CLAUDE_LOGO_SVG,
+    costPerOutputToken: 0.000015,
+    minCreditsToStart: 10,
+    maxOutputTokens: 16000,
   },
   {
     model: "anthropic/claude-opus-4",
     label: "Claude 4 Opus",
     sublabel: "Best quality · May take 3-5 minutes",
     credits: "12 credits",
+    logo: CLAUDE_LOGO_SVG,
+    costPerOutputToken: 0.000075,
+    minCreditsToStart: 50,
+    maxOutputTokens: 16000,
+  },
+  {
+    model: "deepseek/deepseek-v3.2",
+    label: "DeepSeek V3.2",
+    sublabel: "Best value · Fast & powerful coding model",
+    credits: "3 credits",
+    logo: DEEPSEEK_LOGO_SVG,
+    costPerOutputToken: 0.00000038,
+    minCreditsToStart: 3,
+    maxOutputTokens: 32000,
+  },
+
+  {
+    model: "google/gemini-3-flash-preview",
+    label: "Gemini 3 Flash Preview",
+    sublabel: "Best value · Fast & powerful coding model",
+    credits: "3 credits",
+    logo: GEMINI_LOGO_SVG,
+    costPerOutputToken: 0.0000004,
+    minCreditsToStart: 3,
+    maxOutputTokens: 32000,
   },
 ];
+
+// ── Model lookup helpers — import these in route files ──
+export function getModelConfig(modelId: string): ModelOption {
+  return (
+    DEEP_DIVE_MODELS.find((m) => m.model === modelId) ?? {
+      model: modelId,
+      label: modelId,
+      sublabel: "",
+      credits: "3 credits",
+      costPerOutputToken: 0.000004,
+      minCreditsToStart: 3,
+      maxOutputTokens: 16000,
+    }
+  );
+}
+
+export function calculateCredits(
+  outputTokens: number,
+  modelId: string,
+): number {
+  const config = getModelConfig(modelId);
+  const actualCost = outputTokens * config.costPerOutputToken;
+  const rawCredits = (actualCost / 0.005) * 2; // CREDIT_VALUE_USD=0.005, PROFIT_MARGIN=2
+  return Math.max(5, Math.ceil(rawCredits));
+}

@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { getUserCredits, deductCredits } from "@/lib/firestore";
 import { getDeveloperPrompt } from "@/lib/agentPrompts/developer";
 import { fetchUnsplashImage } from "@/lib/fetchUnsplash";
+import { getModelConfig, calculateCredits } from "@/lib/modelConfig";
 
 // Increase max duration for Deep Dive — Opus can take 45-60s
 export const maxDuration = 120; // seconds — requires Vercel Pro or hobby with override
@@ -45,22 +46,76 @@ async function callOpenRouter(
   return { content, outputTokens };
 }
 
-// OpenRouter output cost per token (in dollars)
-const MODEL_COST_PER_TOKEN: Record<string, number> = {
-  "anthropic/claude-haiku-4.5": 0.000004, // $0.004 per 1K
-  "anthropic/claude-sonnet-4.5": 0.000015, // $0.015 per 1K
-  "anthropic/claude-opus-4": 0.000075, // $0.075 per 1K
-};
+// ── Streaming version for developer agent ──
+async function callOpenRouterStream(
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number,
+  model: string,
+  onChunk: (accumulated: string) => void,
+): Promise<{ outputTokens: number }> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: maxTokens,
+      temperature: 0.8,
+      stream: true,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+    }),
+  });
 
-const CREDIT_VALUE_USD = 0.005; // 1 credit = $0.005
-const PROFIT_MARGIN = 2; // 40% margin
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`OpenRouter stream error: ${JSON.stringify(err)}`);
+  }
 
-function calculateCredits(outputTokens: number, model: string): number {
-  const costPerToken = MODEL_COST_PER_TOKEN[model] ?? 0.000004;
-  const actualCost = outputTokens * costPerToken;
-  const rawCredits = (actualCost / CREDIT_VALUE_USD) * PROFIT_MARGIN;
-  // Round up to nearest integer, minimum 2 credits
-  return Math.max(2, Math.ceil(rawCredits));
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("No stream body");
+
+  const decoder = new TextDecoder();
+  let accumulated = "";
+  let outputTokens = 0;
+  let buffer = "";
+  let chunkCount = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const data = line.slice(6).trim();
+      if (data === "[DONE]") continue;
+      try {
+        const parsed = JSON.parse(data);
+        const delta = parsed.choices?.[0]?.delta?.content ?? "";
+        if (delta) {
+          accumulated += delta;
+          chunkCount++;
+          if (chunkCount % 25 === 0) onChunk(accumulated);
+        }
+        if (parsed.usage?.completion_tokens) {
+          outputTokens = parsed.usage.completion_tokens;
+        }
+      } catch {
+        /* skip malformed */
+      }
+    }
+  }
+
+  onChunk(accumulated); // final
+  return { outputTokens };
 }
 
 // ── Strip markdown code fences if AI wraps output ──
@@ -96,12 +151,8 @@ export async function POST(req: Request) {
 
   // Minimum credits needed to even start (actual cost calculated after generation)
   // Use a small upfront check so users with 0 credits can't start at all
-  const MIN_CREDITS_TO_START: Record<string, number> = {
-    "anthropic/claude-haiku-4.5": 3,
-    "anthropic/claude-sonnet-4.5": 10,
-    "anthropic/claude-opus-4": 50,
-  };
-  const minRequired = MIN_CREDITS_TO_START[selectedModel] ?? 3;
+  const modelConfig = getModelConfig(selectedModel);
+  const minRequired = modelConfig.minCreditsToStart;
 
   const credits = await getUserCredits(userId);
   if (credits < minRequired) {
@@ -121,14 +172,7 @@ export async function POST(req: Request) {
   // Developer uses user-selected model
   const DEVELOPER_MODEL = selectedModel ?? "anthropic/claude-haiku-4.5";
 
-  const MODEL_LABELS: Record<string, string> = {
-    "anthropic/claude-haiku-4.5": "Haiku (Fast & Cost-Effective)",
-    "anthropic/claude-sonnet-4.5": "Sonnet (Balanced Quality & Cost)",
-    "anthropic/claude-opus-4":
-      "Opus (Premium & Expensive, best for complex sites)",
-  };
-
-  const modelLabel = MODEL_LABELS[DEVELOPER_MODEL] ?? DEVELOPER_MODEL;
+  const modelLabel = getModelConfig(DEVELOPER_MODEL).sublabel;
 
   // ── Set up streaming response ──
   const encoder = new TextEncoder();
@@ -304,19 +348,27 @@ export async function POST(req: Request) {
             : "10-15";
 
         push("DEVELOPER_START", {
-          message: `Developer [${modelLabel}] is building your website. This may take ${estimatedTime} seconds...`,
+          message: `Developer is building your website. This may take ${estimatedTime} seconds...`,
         });
-
-        const { content: htmlRaw, outputTokens: developerTokens } =
-          await callOpenRouter(
-            getDeveloperPrompt(),
-            `Build a complete multi-page website for: ${prompt}\n\nHero background image URL (use this exactly): ${heroImageUrl}`,
-            DEVELOPER_MODEL.includes("haiku") ? 14000 : 16000,
-            DEVELOPER_MODEL,
-          );
+        let htmlRaw = "";
+        const { outputTokens: developerTokens } = await callOpenRouterStream(
+          getDeveloperPrompt().replace(
+            "TARGET_TOKENS",
+            DEVELOPER_MODEL.includes("haiku") ? "6500" : "16000",
+          ),
+          `Build a complete multi-page website for: ${prompt}\n\nHero background image URL (use this exactly): ${heroImageUrl}`,
+          getModelConfig(DEVELOPER_MODEL).maxOutputTokens,
+          DEVELOPER_MODEL,
+          (accumulated) => {
+            htmlRaw = accumulated;
+            if (accumulated.includes("<body")) {
+              push("HTML_CHUNK", { chunk: accumulated });
+            }
+          },
+        );
         totalOutputTokens += developerTokens;
 
-        const htmlOutput = stripFences(htmlRaw);
+        let htmlOutput = stripFences(htmlRaw);
 
         if (
           !htmlOutput.includes("<html") &&
@@ -329,26 +381,69 @@ export async function POST(req: Request) {
           return;
         }
 
-        // Check for truncation
-        // const hasClosingTag = htmlOutput.toLowerCase().includes("</html>");
-        // const hasBody = htmlOutput.toLowerCase().includes("</body>");
-        // if (!hasClosingTag && !hasBody) {
-        //   push("ERROR", {
-        //     message: "Output was incomplete. Please try again.",
-        //   });
-        //   closeStream();
-        //   return;
-        // }
-        // Log what we got for debugging
-        console.log("[Developer] Output length:", htmlOutput.length);
-        console.log("[Developer] Last 200 chars:", htmlOutput.slice(-200));
+        // ── Continuation loop — keep calling until </html> appears (max 4 rounds) ──
+        let continuationRound = 0;
+        const MAX_CONTINUATIONS = 4;
+
+        while (
+          !htmlOutput.toLowerCase().includes("</html>") &&
+          continuationRound < MAX_CONTINUATIONS
+        ) {
+          continuationRound++;
+          console.log(
+            `[Developer] HTML truncated — continuation round ${continuationRound}...`,
+          );
+          push("DEVELOPER_FIX", {
+            message: `Continuing generation... (part ${continuationRound + 1})`,
+          });
+
+          try {
+            let continuationHtml = "";
+            const { outputTokens: contTokens } = await callOpenRouterStream(
+              `You are continuing an HTML document that was cut off mid-generation.
+RULES:
+- Continue writing from EXACTLY where the HTML ends — do not repeat any existing content
+- Maintain the exact same design system, colors, fonts, and style as the existing HTML
+- Complete all remaining sections then end with </script></body></html>
+- Output ONLY the continuation HTML fragment, nothing else — no explanations, no markdown, no code fences`,
+              `Continue this HTML document from exactly where it was cut off. Here are the last 4000 characters:\n\n${htmlOutput.slice(-4000)}\n\nContinue from here:`,
+              getModelConfig(DEVELOPER_MODEL).maxOutputTokens,
+              DEVELOPER_MODEL,
+              (accumulated) => {
+                continuationHtml = accumulated;
+                push("HTML_CHUNK", { chunk: htmlOutput + "\n" + accumulated });
+              },
+            );
+
+            totalOutputTokens += contTokens;
+            htmlOutput =
+              htmlOutput +
+              "\n" +
+              continuationHtml.replace(/```html|```/gi, "").trim();
+            console.log(
+              `[Developer] Round ${continuationRound} done | length: ${htmlOutput.length} | has </html>: ${htmlOutput.toLowerCase().includes("</html>")}`,
+            );
+          } catch (contErr) {
+            console.warn(
+              `[Developer] Continuation round ${continuationRound} failed:`,
+              contErr,
+            );
+            break;
+          }
+        }
+
+        // Last resort — force-close if still incomplete after all continuations
+        if (!htmlOutput.toLowerCase().includes("</html>")) {
+          console.warn(
+            "[Developer] Force-closing HTML after max continuations",
+          );
+          htmlOutput = htmlOutput + "\n</div></section></main></body></html>";
+        }
+
+        console.log("[Developer] Final length:", htmlOutput.length);
         console.log(
           "[Developer] Has </html>:",
           htmlOutput.toLowerCase().includes("</html>"),
-        );
-        console.log(
-          "[Developer] Has </body>:",
-          htmlOutput.toLowerCase().includes("</body>"),
         );
 
         // Extract brand name from <title>

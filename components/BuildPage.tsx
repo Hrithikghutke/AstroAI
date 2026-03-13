@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import ChatPanel from "@/components/ChatPanel";
@@ -22,6 +22,48 @@ export default function BuildPage() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [initialModel, setInitialModel] = useState(
     "anthropic/claude-haiku-4.5",
+  );
+  const [streamingCode, setStreamingCode] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const typewriterQueue = useRef<string>("");
+  const typewriterDisplayed = useRef<string>("");
+  const typewriterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Typewriter drain — called recursively until queue is empty
+  const drainQueue = useCallback(() => {
+    const queue = typewriterQueue.current;
+    const displayed = typewriterDisplayed.current;
+    if (displayed.length >= queue.length) {
+      typewriterTimer.current = null;
+      return;
+    }
+    // Advance by 8-20 chars per tick for fast but visible typing
+    const charsPerTick = Math.floor(Math.random() * 12) + 8;
+    const next = queue.slice(0, displayed.length + charsPerTick);
+    typewriterDisplayed.current = next;
+    setStreamingCode(next);
+    typewriterTimer.current = setTimeout(drainQueue, 16); // ~60fps
+  }, []);
+
+  // Called by ChatPanel with each new server chunk
+  const handleStreamCode = useCallback(
+    (code: string) => {
+      if (!code) {
+        // Reset on new generation
+        typewriterQueue.current = "";
+        typewriterDisplayed.current = "";
+        setStreamingCode("");
+        if (typewriterTimer.current) clearTimeout(typewriterTimer.current);
+        typewriterTimer.current = null;
+        return;
+      }
+      typewriterQueue.current = code;
+      // Start draining if not already running
+      if (!typewriterTimer.current) {
+        typewriterTimer.current = setTimeout(drainQueue, 16);
+      }
+    },
+    [drainQueue],
   );
 
   useEffect(() => {
@@ -166,6 +208,8 @@ export default function BuildPage() {
             onNewChat={handleNewChat}
             initialModel={initialModel}
             restoredDeepHtml={deepHtml}
+            onStreamCode={handleStreamCode}
+            onGeneratingChange={setIsGenerating}
           />
         </div>
 
@@ -178,6 +222,8 @@ export default function BuildPage() {
             savedId={savedId}
             onSaved={(id) => setSavedId(id)}
             onLayoutChange={handleLayoutChange}
+            streamingCode={streamingCode}
+            isGenerating={isGenerating}
           />
         </div>
 
@@ -195,6 +241,8 @@ export default function BuildPage() {
               onShowPreview={() => setMobileView("preview")}
               hasLayout={!!(layout || deepHtml)}
               onNewChat={handleNewChat}
+              onStreamCode={handleStreamCode}
+              onGeneratingChange={setIsGenerating}
             />
           ) : (
             <div className="flex flex-col flex-1 overflow-hidden">

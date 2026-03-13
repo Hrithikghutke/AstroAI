@@ -376,7 +376,9 @@ export default function LandingPrompt() {
                   }}
                 >
                   <span
-                    dangerouslySetInnerHTML={{ __html: CLAUDE_LOGO_SVG }}
+                    dangerouslySetInnerHTML={{
+                      __html: activeModel.logo ?? CLAUDE_LOGO_SVG,
+                    }}
                     className="shrink-0"
                   />
                   <span>{activeModel.label}</span>
@@ -393,7 +395,7 @@ export default function LandingPrompt() {
                       boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
                     }}
                   >
-                    {MODELS.map(({ model, label, sublabel, credits }) => (
+                    {MODELS.map(({ model, label, sublabel, credits, logo }) => (
                       <button
                         key={model}
                         onClick={() => {
@@ -409,7 +411,9 @@ export default function LandingPrompt() {
                         }}
                       >
                         <span
-                          dangerouslySetInnerHTML={{ __html: CLAUDE_LOGO_SVG }}
+                          dangerouslySetInnerHTML={{
+                            __html: logo ?? CLAUDE_LOGO_SVG,
+                          }}
                           className="shrink-0"
                         />
                         <div className="flex flex-col gap-0.5 flex-1 min-w-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import PreviewFrame from "@/components/PreviewFrame";
 import DeepPreview from "@/components/DeepPreview";
 import { Layout } from "@/types/layout";
@@ -16,6 +16,15 @@ import {
 } from "lucide-react";
 import { generateHtml } from "@/lib/generateHtml";
 
+// ── VS Code Dark+ syntax highlighter ──
+// ── Simple HTML escaper for code display ──
+function escapeHtml(code: string): string {
+  return code
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 export default function PreviewPanel({
   layout,
   deepHtml,
@@ -24,6 +33,8 @@ export default function PreviewPanel({
   savedId,
   onSaved,
   onLayoutChange,
+  streamingCode,
+  isGenerating,
 }: {
   layout: Layout | null;
   deepHtml?: string | null;
@@ -32,6 +43,8 @@ export default function PreviewPanel({
   savedId?: string | null;
   onSaved?: (id: string) => void;
   onLayoutChange?: (updated: Layout) => void;
+  streamingCode?: string;
+  isGenerating?: boolean;
 }) {
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
@@ -39,6 +52,23 @@ export default function PreviewPanel({
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
+  const codeEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-switch to Code tab when generation starts
+  useEffect(() => {
+    if (isGenerating) setActiveTab("code");
+  }, [isGenerating]);
+
+  // Auto-switch to Preview when generation finishes and content exists
+  useEffect(() => {
+    if (!isGenerating && (layout || deepHtml)) setActiveTab("preview");
+  }, [isGenerating]);
+
+  // Auto-scroll code to bottom as it streams
+  useEffect(() => {
+    codeEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [streamingCode]);
 
   // Determine active mode
   const isDeepMode = !!deepHtml && !layout;
@@ -211,8 +241,8 @@ export default function PreviewPanel({
   const saveDisabled = saving || (saved && !pendingChanges);
   const hasContent = !!(layout || deepHtml);
 
-  // ── Empty state ──
-  if (!hasContent) {
+  // ── Empty state — only show if not generating and no code streaming ──
+  if (!hasContent && !isGenerating && !streamingCode) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-neutral-950 gap-4 relative">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none" />
@@ -306,10 +336,13 @@ export default function PreviewPanel({
           {/* Download */}
           <button
             onClick={handleDownload}
+            disabled={isGenerating}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Download</span>
+            <span className="hidden sm:inline">
+              {isGenerating ? "Generating..." : "Download"}
+            </span>
           </button>
 
           {/* Viewport toggle */}
@@ -330,6 +363,49 @@ export default function PreviewPanel({
         </div>
       </div>
 
+      {/* Code / Preview tabs */}
+      <div className="flex items-center gap-1 px-4 pt-2 pb-0 bg-neutral-950 border-b border-neutral-800">
+        <button
+          onClick={() => setActiveTab("code")}
+          className="px-4 py-2 text-xs font-semibold rounded-t-lg transition-all cursor-pointer"
+          style={{
+            background: activeTab === "code" ? "#1e1e2e" : "transparent",
+            color: activeTab === "code" ? "#d4d4d4" : "#525252",
+            borderBottom:
+              activeTab === "code"
+                ? "2px solid #a855f7"
+                : "2px solid transparent",
+          }}
+        >
+          {"</>"} Code
+        </button>
+        <button
+          onClick={() => {
+            if (!isGenerating) setActiveTab("preview");
+          }}
+          className="px-4 py-2 text-xs font-semibold rounded-t-lg transition-all"
+          style={{
+            background: activeTab === "preview" ? "#1e1e2e" : "transparent",
+            color: isGenerating
+              ? "#2a2a2a"
+              : activeTab === "preview"
+                ? "#d4d4d4"
+                : "#525252",
+            borderBottom:
+              activeTab === "preview"
+                ? "2px solid #a855f7"
+                : "2px solid transparent",
+            cursor: isGenerating ? "not-allowed" : "pointer",
+          }}
+          title={
+            isGenerating ? "Preview unlocks when generation is complete" : ""
+          }
+        >
+          👁 Preview{" "}
+          {isGenerating && <span style={{ color: "#3a3a3a" }}>🔒</span>}
+        </button>
+      </div>
+
       {/* Hint bar — edit hint for Fast Mode, info bar for Deep Dive */}
       {isDeepMode ? (
         <div className="flex items-center gap-2 px-4 py-1.5 bg-pink-500/10 border-b border-pink-500/20 text-xs text-pink-400">
@@ -346,25 +422,62 @@ export default function PreviewPanel({
       )}
 
       {/* Preview area */}
-      <div className="flex-1 overflow-auto bg-neutral-800 flex items-start justify-center p-4">
-        {isDeepMode ? (
-          // Deep Dive — raw HTML in iframe
-          <DeepPreview html={deepHtml!} viewport={viewport} />
-        ) : (
-          // Fast Mode — React component tree
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {activeTab === "code" ? (
           <div
-            className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto"
+            className="flex-1 overflow-auto p-15"
             style={{
-              width: viewport === "mobile" ? "390px" : "100%",
-              minHeight: "100%",
-              background: "white",
+              background: "#141414",
+              fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+              fontSize: "12px",
+              lineHeight: "1.6",
             }}
           >
-            <PreviewFrame
-              layout={layout}
-              editable={true}
-              onLayoutChange={onLayoutChange}
-            />
+            {streamingCode ? (
+              <pre
+                style={{
+                  color: "#d4d4d4",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: escapeHtml(streamingCode),
+                }}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p
+                  style={{ color: "#3a3a3a", fontFamily: "system-ui" }}
+                  className="text-sm"
+                >
+                  Code will appear here during generation...
+                </p>
+              </div>
+            )}
+            <div ref={codeEndRef} />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-auto bg-neutral-800 flex items-start justify-center p-4">
+            {isDeepMode ? (
+              // Deep Dive — raw HTML in iframe
+              <DeepPreview html={deepHtml!} viewport={viewport} />
+            ) : (
+              // Fast Mode — React component tree
+              <div
+                className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto"
+                style={{
+                  width: viewport === "mobile" ? "390px" : "100%",
+                  minHeight: "100%",
+                  background: "white",
+                }}
+              >
+                <PreviewFrame
+                  layout={layout}
+                  editable={true}
+                  onLayoutChange={onLayoutChange}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
