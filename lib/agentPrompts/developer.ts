@@ -17,19 +17,36 @@ PAGES — 4 pages using JS routing (showPage):
 - #pricing  → Hero band + 3 pricing cards + FAQ accordion + CTA band
 - #contact  → Hero band + 2-col layout (contact details left, form right) + CTA band
 
-ROUTING JS — first line of <script>:
+⚠️ PAGE DIV RULES — CRITICAL, follow exactly:
+1. Each page: <div id="page-X" class="page"> ... </div><!-- end page-X -->
+   Always add the HTML comment so continuation generation knows where each page ends.
+2. ALWAYS write all 4 page divs in order: page-home, page-features, page-pricing, page-contact.
+3. Footer MUST come AFTER </div><!-- end page-contact -->, never inside any page div.
+4. Structure must be:
+   </div><!-- end page-contact -->
+   <footer>...</footer>
+   <script>... all JS ...</script>
+   </body></html>
+5. If truncated mid-page, continuation must close the current page div first before adding remaining pages.
+
+ROUTING JS — ⚠️ MUST be a standalone <script> block placed IMMEDIATELY after <body> opens, BEFORE the navbar. This ensures routing works even if HTML is truncated mid-generation:
+<body>
+<script>
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);}document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('text-primary'));var al=document.querySelector('.nav-link[href="#'+id+'"]');if(al)al.classList.add('text-primary');}
 window.addEventListener('hashchange',function(){showPage(window.location.hash.slice(1)||'home');});
 window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');});
+</script>
+<!-- navbar goes here -->
 
 NAVBAR — fixed, glassmorphic, id="navbar". Pick style by brand:
-- SaaS/tech/startup → pill floating: rounded-full, top-4, max-w-5xl centered, backdrop-blur-xl
+- SaaS/tech/startup → pill floating: rounded-full, top-4, max-w-5xl centered, backdrop-blur-xl, sm:px-10, md:px-16, lg:px-24
 - Gym/restaurant/bold → full-width with 2px primary border-bottom
 - Corporate/elegant → full-width minimal border-b border-white/5
 - Navbar CTA button: always hidden lg:flex items-center justify-center.
 Always include: logo (font-display font-black text-primary), centered nav links (Home/Features/Pricing/Contact), CTA button, hamburger for mobile.
 MOBILE MENU — use this exact implementation (one style only, no variations):
-  <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0 opacity-100" x-transition:leave-end="translate-x-full opacity-0" class="fixed top-0 right-0 h-full w-72 z-[999] flex flex-col shadow-2xl" style="background:rgba(15,23,42,0.98);backdrop-filter:blur(20px)">
+  <!-- ⚠️ MOBILE MENU BACKGROUND: ALWAYS use a solid opaque hex color. NEVER use rgba with opacity < 1, transparent, or CSS variables — the menu will appear see-through. Even if user requests glassmorphism, the mobile menu MUST be solid. -->
+  <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0 opacity-100" x-transition:leave-end="translate-x-full opacity-0" class="fixed top-0 right-0 h-full w-72 z-999 flex flex-col shadow-2xl" style="background:#0f172a;backdrop-filter:blur(20px)">
     <div class="flex items-center justify-between p-6 border-b border-white/10">
       <span class="font-display font-black text-lg text-primary">Menu</span>
       <button @click="open=false" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">✕</button>
@@ -44,7 +61,7 @@ MOBILE MENU — use this exact implementation (one style only, no variations):
       <a @click="open=false" href="#contact" class="btn btn-primary w-full rounded-full">Get Started</a>
     </div>
   </div>
-  <div x-show="open" @click="open=false" x-transition:enter="transition duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-[998] bg-black/60 backdrop-blur-sm"></div>
+  <div x-show="open" @click="open=false" x-transition:enter="transition duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-998 bg-black/60 backdrop-blur-sm"></div>
 NAVBAR INTERIOR STRUCTURE — place this INSIDE the nav div, BEFORE the mobile menu:
     <a href="#home" class="font-display font-black text-lg nav-link text-primary">BrandName</a>
     <div class="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6">
@@ -69,7 +86,8 @@ SECTIONS — use these exact patterns:
 
 Social proof strip: py-8 border-y, flex wrap justify-center, "Trusted by teams at" + 5 company names, opacity-50.
 
-Stats: grid-cols-2 md:grid-cols-4, each stat has counter class + data-target="NUMBER", text-primary font-black text-3xl md:text-5xl, label text-xs uppercase tracking-widest opacity-50 mt-2. Each stat in a rounded-3xl card p-6 bg-base-200. Numbers must never overflow — always use text-3xl on mobile.
+VERY IMPORTANT: For the rest of the sections, use the exact class names and structure below to ensure consistent styling and spacing. Do not deviate from these patterns, as they are designed to create a cohesive and visually appealing website. Always follow the specified Tailwind classes for layout, typography, and spacing to maintain a professional look across all sections.
+Stats: grid-cols-2 md:grid-cols-4 gap-4, each stat in a rounded-3xl card p-6 bg-base-200 overflow-hidden text-center.Number element MUST be a <div> (not h1/h2/p) with classes: counter font-black text-primary leading-none. MUST also have inline style="font-size:clamp(1.4rem,4.5vw,2.25rem);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%" on the div. data-target="NUMBER" on the div. Label as separate <div class="text-xs uppercase tracking-widest opacity-50 mt-2 leading-tight">. ⚠️ HARD RULE: NEVER use text-4xl, text-5xl or larger Tailwind classes for stat numbers. Use clamp() inline style ONLY. clamp() automatically scales with screen width — "12,000+" will never clip.
 
 Features: 3-card grid (card bg-base-200 rounded-3xl hover:-translate-y-2) + 1 wide highlight card (grid-cols-2, gradient bg, image right side, benefit list left).
 
@@ -101,8 +119,11 @@ TYPOGRAPHY — always responsive:
 
 JAVASCRIPT — after routing, in this order:
 1. Navbar shrink: window.addEventListener('scroll',function(){var n=document.getElementById('navbar');if(n)n.querySelector('div').style.background=window.scrollY>50?'rgba(15,23,42,0.98)':'rgba(15,23,42,0.85)';});
-2. Counters: var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,t=+el.dataset.target,c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){el.textContent=t>=1000?Math.round(t).toLocaleString()+'+':t+'+';clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
+2. Counters: var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,raw=el.dataset.target,t=parseFloat(raw);if(isNaN(t)){co.unobserve(el);return;}var c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){el.textContent=t>=1000?Math.round(t).toLocaleString()+'+':t+'+';clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
 3. Fade-in: var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.6s ease,transform 0.6s ease';fo.observe(el);});
+4. Mobile menu bg fix: document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var menu=document.querySelector('[x-show="open"].fixed.right-0');if(!menu)return;var bg=window.getComputedStyle(menu).backgroundColor;var isTransparent=!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent'||bg.includes('rgba')&&+bg.split(',')[3]<0.9;if(isTransparent){var primary=getComputedStyle(document.documentElement).getPropertyValue('--p')||'';var hex=document.querySelector('[data-theme]')?.style.getPropertyValue('--p');// Darken primary: parse tailwind config color
+var cfg=window.tailwind?.config?.theme?.extend?.colors?.primary||'#1e293b';// Convert hex to darker shade
+var r=parseInt(cfg.slice(1,3),16),g=parseInt(cfg.slice(3,5),16),b=parseInt(cfg.slice(5,7),16);var dark='rgb('+Math.max(0,Math.round(r*0.4))+','+Math.max(0,Math.round(g*0.4))+','+Math.max(0,Math.round(b*0.4))+')';menu.style.background=dark;console.log('[CrawlCube] Mobile menu bg fixed → '+dark);}},500);});
 
 COLORS — pick creatively per business:
 - SaaS/tech: #6366F1 or #7C3AED or #4F46E5
@@ -115,5 +136,212 @@ COLORS — pick creatively per business:
 
 DaisyUI theme: dark brands → data-theme="dark", light → data-theme="light".
 Zero custom CSS — Tailwind only. <style> only for @keyframes.
-TOKEN BUDGET: Hard limit TARGET_TOKENS tokens. If near limit: cut FAQ, cut alternating rows — but ALWAYS close </script></body></html>.`;
+TOKEN BUDGET: Hard limit TARGET_TOKENS tokens.
+⚠️ WHEN YOU REACH 80% OF YOUR TOKEN BUDGET:
+- Stop adding new sections immediately
+- Skip remaining FAQ items (keep max 2)
+- Skip alternating image+text rows
+- Skip testimonials if not yet written
+- Jump directly to: close current page div → write remaining page divs as MINIMAL stubs (hero band + one CTA only) → write footer → write ALL javascript → close </script></body></html>
+- A minimal but COMPLETE website is infinitely better than a rich but broken one
+- NEVER stop mid-tag, mid-section, or mid-javascript block — always close all open tags and sections properly before ending generation, even if you have to cut content.
+`;
+}
+
+// ══════════════════════════════════════════════════
+// PARALLEL GENERATION PROMPTS (used by Deep Dive v2)
+// ══════════════════════════════════════════════════
+
+export function getShellPrompt(): string {
+  return `You are a world-class frontend developer building a stunning website shell.
+
+OUTPUT RULES — CRITICAL:
+- Start with <!DOCTYPE html>
+- End your output with <!-- PAGES_START --> on its own line, then STOP
+- Do NOT write any page sections or footer content
+- Raw HTML only — no markdown, no backticks, no explanation
+
+STACK (exact CDN links, in this order):
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+GENERATE IN THIS EXACT ORDER:
+
+1. <!DOCTYPE html><html lang="en" data-theme="dark" class="scroll-smooth">
+
+2. <head> containing:
+   - meta charset + viewport + descriptive <title>
+   - CDN links above (in order)
+   - Google Fonts link (pick 2 fonts appropriate for the business type)
+   - tailwind.config script: primary color, secondary color, surface color, display font, body font, any custom keyframes/animations needed
+   - <style> block with ALL shared CSS classes the pages will need:
+     * body { font-family, background-color }
+     * .font-display { font-family }
+     * .glass { background: rgba(...); backdrop-filter: blur(...); border: 1px solid rgba(255,255,255,0.08); }
+     * .page { display: none; }
+     * .fade-in class (opacity, transform — JS will animate these)
+     * .counter class
+     * Any gradient helpers, glow effects, marquee/ticker animation, noise overlay, orb classes
+     * ⚠️ NEVER use external URLs in CSS (no url("https://...") for textures/patterns)
+     *    All textures MUST be CSS-only: use repeating-linear-gradient, SVG data URIs, or
+     *    radial-gradient patterns. External texture URLs block rendering when they fail to load.
+     * pricing-card-pro gradient border if needed
+     * Everything the 4 page sections will reference by class name
+   </head>
+
+3. <body x-data="{ open: false }">
+
+4. ROUTING SCRIPT — IMMEDIATELY after <body>, before navbar — no exceptions:
+<script>
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);}document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('text-primary'));var al=document.querySelector('.nav-link[href="#'+id+'"]');if(al)al.classList.add('text-primary');}
+window.addEventListener('hashchange',function(){showPage(window.location.hash.slice(1)||'home');});
+window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');});
+</script>
+
+5. Complete <nav id="navbar"> — pick style by business type:
+   - SaaS/tech/startup → pill floating: fixed top-4, max-w-5xl mx-auto, rounded-full, backdrop-blur-xl
+   - Gym/restaurant/bold → fixed full-width with 2px primary border-bottom
+   - Corporate/elegant → fixed full-width minimal border-b border-white/5
+   Always include:
+   - Logo: font-display font-black text-primary with nav-link class, href="#home"
+   - Desktop nav: hidden lg:flex centered links (Home/Features/Pricing/Contact) with nav-link class
+   - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full
+   - Hamburger: lg:hidden
+   - Mobile slide-out menu using x-show="open":
+      ⚠️ MOBILE MENU BACKGROUND RULES — both are required:
+     1. ALWAYS use a solid opaque hex color: style="background:#0f172a"
+        NEVER use rgba, CSS variables, or opacity below 1 — menu will appear see-through
+     2. NEVER put "display: none" in the style attribute — Alpine x-show manages display
+        WRONG: style="background:#0f172a; display: none;"
+        RIGHT: style="background:#0f172a"
+   - Backdrop overlay: x-show="open" @click="open=false" fixed inset-0 bg-black/60
+
+6. After </nav>, write this EXACT comment on its own line and then STOP:
+<!-- PAGES_START -->`;
+}
+
+export function getPagePrompt(
+  pageId: "home" | "features" | "pricing" | "contact",
+  businessPrompt: string,
+  designTokens: string,
+  heroImageUrl?: string,
+): string {
+  const pageConfigs = {
+    home: {
+      label: "HOME",
+      content: `Generate a rich, complete home page with ALL of these sections in order:
+1. HERO — split layout for physical businesses (gym/restaurant/hotel/construction): cinematic image card right, bold text left. Centered for digital (SaaS/tech/software). Include: badge pill, h1 with gradient accent span, subtext paragraph, 2 CTA buttons. pt-32 minimum to clear navbar. Use hero image URL provided.
+2. SOCIAL PROOF STRIP — py-8 border-y bg-white/5, marquee/ticker animation with business-type industry names, "Trusted by" label
+3. STATS ROW — grid 2-col mobile, 4-col desktop. Each stat: .glass card, number as <div class="counter" data-target="NUMBER" style="font-size:clamp(1.4rem,4.5vw,2.25rem)">
+   ⚠️ data-target MUST be a plain integer or decimal number ONLY — no units, no symbols, no text.
+   CORRECT: data-target="10000"  data-target="99"  data-target="50"  data-target="2"
+   WRONG:   data-target="99.9%"  data-target="2 min"  data-target="$19"  data-target="10K"
+   The visible text inside the div can say anything ("99.9%" / "2 min") but data-target must be numeric only.
+   Label as small uppercase div below the counter div.
+4. FEATURES PREVIEW — 3 feature cards (icon + title + description) + 1 wide highlight card (grid-cols-2, gradient bg, image right, checkmark list left)
+5. TESTIMONIALS — 3 cards, large quote mark, testimonial text, avatar circle with initials, name + role
+6. CTA BANNER — full-width rounded-3xl gradient primary→secondary, dot grid overlay, centered headline + subtext + white button`,
+    },
+    features: {
+      label: "FEATURES",
+      content: `Generate a complete features page with:
+1. HERO BAND — pt-40 pb-20, gradient bg, centered h1 + subtext paragraph
+2. FEATURE CARDS — 6 cards in grid-cols-3, each: icon (emoji or SVG), title, description. .glass cards with hover:-translate-y-2
+3. ALTERNATING ROWS — 2 rows alternating: image left+text right, then text left+image right. Each with h2, paragraph, stat chips, CTA button. Use .glass card for images.`,
+    },
+    pricing: {
+      label: "PRICING",
+      content: `Generate a complete pricing page with:
+1. HERO BAND — pt-40 pb-20, gradient bg, centered h1 + subtext
+2. PRICING CARDS — 3 cards: Starter (free/outline), Pro (scale-105, gradient border, "Most Popular" badge, shadow-primary/20), Agency (outline). Each: plan name, price, feature list with checkmarks, CTA button. Middle card taller with h-full flex flex-col.
+3. FAQ ACCORDION — 4 questions. Each uses Alpine x-data="{open:false}". Button with @click="open=!open" and a + icon that rotates 45deg when open. Answer div x-show="open". Smooth transitions.`,
+    },
+    contact: {
+      label: "CONTACT",
+      content: `Generate a complete contact page with:
+1. HERO — pt-40, h1 with primary accent span, subtext
+2. TWO-COLUMN LAYOUT — grid lg:grid-cols-2 gap-16:
+   LEFT: h2, subtext, then 3 contact detail rows. Each row: icon in colored rounded-2xl bg, label (small uppercase opacity), value (font-bold). Use: email icon, social/phone icon, location pin icon.
+   RIGHT: .glass card p-10 rounded-3xl with contact form — name + email (side by side grid-cols-2), message textarea, submit button (btn btn-primary w-full). form action="https://formspree.io/f/YOUR_FORM_ID" method="POST"`,
+    },
+  };
+
+  const config = pageConfigs[pageId];
+  const heroNote = heroImageUrl
+    ? `\nHERO IMAGE URL (use exactly as src): ${heroImageUrl}`
+    : "";
+
+  return `You are generating ONE page section for a multi-page website.
+
+BUSINESS: ${businessPrompt}${heroNote}
+
+DESIGN SYSTEM — already in the HTML shell, use these classes and colors exactly:
+${designTokens}
+
+⚠️ OUTPUT RULES — NON-NEGOTIABLE:
+- Your output MUST start with EXACTLY this opening tag (nothing before it, no preamble):
+  <section id="page-${pageId}" class="page">
+- Your output MUST end with EXACTLY this (nothing after it):
+  </section><!-- end page-${pageId} -->
+- No markdown, no code fences, no explanation, no extra text
+
+STYLE RULES:
+- Use .glass for all cards and panels
+- Use .fade-in on cards and section content
+- Use font-display class for all headings (h1, h2, h3)
+- Use text-primary for accent colors and highlights
+- All sections: py-20 or py-24 spacing
+- All containers: max-w-7xl mx-auto px-6
+- Typography: h1 text-4xl sm:text-5xl md:text-6xl lg:text-8xl, h2 text-3xl md:text-5xl
+- Buttons: always <a> tags (not <button>) for navigation, rounded-full
+
+${config.label} PAGE CONTENT:
+${config.content}`;
+}
+
+export function getFooterPrompt(
+  businessPrompt: string,
+  designTokens: string,
+): string {
+  return `You are generating the footer and all JavaScript for a multi-page website.
+
+BUSINESS: ${businessPrompt}
+
+DESIGN SYSTEM:
+${designTokens}
+
+⚠️ OUTPUT RULES — NON-NEGOTIABLE:
+- Your output MUST start with <footer (nothing before it)
+- Your output MUST end with </html> (nothing after it)
+- No prose, no markdown, no code fences
+
+GENERATE IN ORDER:
+
+1. <footer> — Use .glass or bg-black/40 border-t border-white/5 py-20 px-6
+   Inside: max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20
+   Col 1 (span 2 on mobile): Logo (font-display font-black text-primary) + brand tagline + 3 social icon buttons (circular .glass w-10 h-10)
+   Col 2: "Product" heading + 4 links (Features, Pricing, Examples, Changelog)
+   Col 3: "Company" heading + 4 links (About, Blog, Careers, Contact)
+   Col 4: "Legal" heading + 3 links (Privacy Policy, Terms of Service, Cookie Policy)
+   Bottom bar: border-t border-white/5 pt-8 flex justify-between — copyright text + "Status: Healthy 🟢" + region
+   </footer>
+
+2. <script> block with ALL of these in order:
+   a. Navbar scroll shrink:
+      window.addEventListener('scroll',function(){var n=document.getElementById('navbar');if(n){var c=n.querySelector('div');c.style.background=window.scrollY>50?'rgba(15,23,42,0.98)':'rgba(15,23,42,0.85)';}});
+   
+   b. Counter animation:
+      var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,raw=el.dataset.target,t=parseFloat(raw);if(isNaN(t)){co.unobserve(el);return;}var suffix=el.dataset.suffix||'',c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){var display=t>=1000?Math.round(t).toLocaleString():Number.isInteger(t)?t:t;el.textContent=display+(t>=100?'+':'')+suffix;clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
+   
+   c. Fade-in observer:
+      var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.6s ease,transform 0.6s ease';fo.observe(el);});
+   
+   d. Mobile menu background fix (in case of transparent bg):
+      document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var menu=document.querySelector('[x-show="open"].fixed.right-0');if(!menu)return;var bg=window.getComputedStyle(menu).backgroundColor;var isTransparent=!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent';if(isTransparent){var cfg=window.tailwind?.config?.theme?.extend?.colors?.primary||'#1e293b';var r=parseInt(cfg.slice(1,3),16),g=parseInt(cfg.slice(3,5),16),b=parseInt(cfg.slice(5,7),16);var dark='rgb('+Math.max(0,Math.round(r*0.3))+','+Math.max(0,Math.round(g*0.3))+','+Math.max(0,Math.round(b*0.3))+')';menu.style.background=dark;}},500);});
+   
+   e. Mouse parallax for .orb elements (if used in home page):
+      document.addEventListener('mousemove',function(e){document.querySelectorAll('.orb').forEach(function(orb,i){var speed=(i+1)*0.02;orb.style.transform='translate('+(e.clientX*speed)+'px,'+(e.clientY*speed)+'px)';});});
+
+3. </body></html>`;
 }

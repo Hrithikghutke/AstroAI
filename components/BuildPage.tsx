@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Toast } from "@/components/ui/Toast";
 import Header from "@/components/Header";
 import ChatPanel from "@/components/ChatPanel";
 import PreviewPanel from "@/components/PreviewPanel";
@@ -11,6 +12,11 @@ type GenerationMode = "fast" | "deep";
 export default function BuildPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [toast, setToast] = useState<{
+    message: string;
+    submessage?: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
   const [layout, setLayout] = useState<any>(null);
   const [deepHtml, setDeepHtml] = useState<string | null>(null);
   const [deepBrandName, setDeepBrandName] = useState<string | null>(null);
@@ -144,6 +150,38 @@ export default function BuildPage() {
     setReady(true);
   }, [router, searchParams]);
 
+  // Show toast after payment redirect
+  useEffect(() => {
+    const subscribed = searchParams.get("subscribed");
+    const topup = searchParams.get("topup");
+    const cancelled = searchParams.get("cancelled");
+
+    if (subscribed) {
+      setToast({
+        message: "Subscription activated! 🎉",
+        submessage: "Your credits have been added to your account.",
+        type: "success",
+      });
+      // Clean URL without reload
+      router.replace("/build");
+    } else if (topup) {
+      setToast({
+        message: "Credits added successfully!",
+        submessage: "Your top-up credits are ready to use.",
+        type: "info",
+      });
+      router.replace("/build");
+    } else if (cancelled) {
+      setToast({
+        message: "Subscription cancelled",
+        submessage:
+          "You'll retain access until the end of your billing period.",
+        type: "error",
+      });
+      router.replace("/build");
+    }
+  }, [searchParams, router]);
+
   // ── Fast Mode: layout JSON from ChatPanel ──
   const handleChatGenerate = (generatedLayout: any, prompt?: string) => {
     setLayout(generatedLayout);
@@ -194,6 +232,14 @@ export default function BuildPage() {
 
   return (
     <main className="h-screen flex flex-col bg-neutral-950 text-white overflow-hidden">
+      {toast && (
+        <Toast
+          message={toast.message}
+          submessage={toast.submessage}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <Header />
 
       <div className="flex flex-1 overflow-hidden">

@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { normalizeLayout } from "@/lib/normalizeLayout";
+import { rateGeneration, updateRating } from "@/lib/firestore";
 import { THEME_STYLES, getThemeLabel } from "@/lib/themeConfig";
 import { ThemeStyle } from "@/types/layout";
 import { useCredits } from "@/context/CreditsContext";
+import { useAuth } from "@clerk/nextjs";
 import Logo from "@/assets/logo.svg";
 import { DEEP_DIVE_MODELS, CLAUDE_LOGO_SVG } from "@/lib/modelConfig";
 
@@ -196,25 +198,52 @@ export default function ChatPanel({
     initialLayout ?? null,
   );
   const hasAutoStarted = useRef(false);
+  // Hash-like key — length + first 40 chars makes collisions extremely unlikely
+  const autoStartKey = initialPrompt
+    ? `cc_as_${initialPrompt.length}_${initialPrompt.slice(0, 40).replace(/\s+/g, "_")}`
+    : null;
   const typewriterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { userId } = useAuth();
+  const [fixLoading, setFixLoading] = useState(false);
+  const [ratingState, setRatingState] = useState<{
+    prompt: string;
+    html: string;
+    model: string;
+    submitted: boolean;
+    rating: "positive" | "negative" | null;
+    showFeedback: boolean;
+    feedbackItems: string[];
+    feedbackText: string;
+    docId: string | null;
+    submittedFeedback: string[]; // stored after submit for fix button
+  } | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // ── Auto-start Deep Dive if navigated from landing page ──
+
+  const initialPromptRef = useRef(initialPrompt);
+  const initialModeRef = useRef(initialMode);
+  useEffect(() => {
+    initialPromptRef.current = initialPrompt;
+    initialModeRef.current = initialMode;
+  });
+
   useEffect(() => {
     if (
-      initialMode === "deep" &&
-      initialPrompt &&
+      initialModeRef.current === "deep" &&
+      initialPromptRef.current &&
       !initialLayout &&
       !restoredDeepHtml &&
       !hasAutoStarted.current
     ) {
       hasAutoStarted.current = true;
-      handleDeepDive(initialPrompt);
+      handleDeepDive(initialPromptRef.current);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt, initialMode]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -324,7 +353,7 @@ export default function ChatPanel({
   // ════════════════════════════════
   // DEEP DIVE MODE generation
   // ════════════════════════════════
-  const handleDeepDive = async (promptOverride?: string) => {
+  const handleDeepDive = async (promptOverride?: string, fixes?: string[]) => {
     const prompt = promptOverride ?? input.trim();
     if (!prompt || loading) return;
 
@@ -412,8 +441,16 @@ export default function ChatPanel({
     try {
       const res = await fetch("/api/generate-deep", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, model: selectedModel }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-generation-id": Date.now().toString(),
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify({
+          prompt,
+          model: selectedModel,
+          fixes: fixes ?? [],
+        }),
         signal: abortController.signal,
       });
 
@@ -498,8 +535,8 @@ export default function ChatPanel({
               // Show estimated credit range based on model
               const estimates: Record<string, string> = {
                 "anthropic/claude-haiku-4.5": "~5 credits",
-                "anthropic/claude-sonnet-4.5": "~20-30 credits",
-                "anthropic/claude-opus-4": "~150-200 credits",
+                "anthropic/claude-sonnet-4.6": "~20-30 credits",
+                "anthropic/claude-opus-4": "~300-500 credits",
               };
               const estimate = estimates[selectedModel] ?? "variable";
               updateStep(
@@ -562,6 +599,18 @@ export default function ChatPanel({
               }
 
               const thumb = await captureScreenshot(finalHtml);
+              setRatingState({
+                prompt,
+                html: finalHtml,
+                model: selectedModel,
+                submitted: false,
+                rating: null,
+                showFeedback: false,
+                feedbackItems: [],
+                feedbackText: "",
+                docId: null,
+                submittedFeedback: [],
+              });
 
               setMessages((prev) =>
                 prev.map((m) =>
@@ -569,7 +618,7 @@ export default function ChatPanel({
                     ? {
                         ...m,
                         isGenerating: false,
-                        content: `Your **${event.brandName}** website is ready! It's showing in the preview.\n\n${event.creditsUsed ? `**${event.creditsUsed} credits** used for this generation.` : ""}\n\nDescribe changes and I'll rebuild it for you.`,
+                        content: `Your **${event.brandName}** website is ready! It's showing in the preview.\n\n${event.creditsUsed ? `**${event.creditsUsed} credits** used for this generation.` : ""}\n\nDescribe changes and I'll rebuild it for you. modal used was **${activeModel.label}**.`,
                         thumbnail: thumb,
                       }
                     : m,
@@ -577,6 +626,7 @@ export default function ChatPanel({
               );
 
               await refreshCredits();
+              if (autoStartKey) sessionStorage.removeItem(autoStartKey);
               break;
 
             case "ERROR":
@@ -597,6 +647,7 @@ export default function ChatPanel({
                 ),
               );
               await refreshCredits();
+              if (autoStartKey) sessionStorage.removeItem(autoStartKey);
               break;
           }
         }
@@ -900,6 +951,9 @@ export default function ChatPanel({
       abortControllerRef.current = null;
     }
 
+    // Clear the auto-start lock so user can retry from landing page
+    if (autoStartKey) sessionStorage.removeItem(autoStartKey);
+
     setLoading(false);
 
     // Mark any in-progress agent message as stopped
@@ -1056,6 +1110,336 @@ export default function ChatPanel({
               )}
 
               {/* Message text */}
+              {/* Rating UI — shown after Deep Dive completes */}
+              {!message.isGenerating &&
+                message.content?.includes("website is ready") &&
+                ratingState &&
+                (() => {
+                  const FEEDBACK_OPTIONS = [
+                    "Mobile layout broken",
+                    "Navbar not working",
+                    "Wrong colors/theme",
+                    "Missing sections",
+                    "HTML incomplete",
+                    "Content not relevant",
+                    "Poor design quality",
+                    "Page routing broken",
+                  ];
+
+                  const handlePositive = async () => {
+                    setRatingState((r) =>
+                      r
+                        ? {
+                            ...r,
+                            rating: "positive",
+                            submitted: true,
+                            showFeedback: false,
+                          }
+                        : r,
+                    );
+                    try {
+                      if (ratingState.docId) {
+                        // Update existing record
+                        await updateRating(ratingState.docId, "positive", []);
+                      } else {
+                        // First time rating — create record and store doc ID
+                        const docId = await rateGeneration(
+                          userId!,
+                          "positive",
+                          ratingState.prompt,
+                          ratingState.html,
+                          ratingState.model,
+                        );
+                        setRatingState((r) => (r ? { ...r, docId } : r));
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  };
+
+                  const handleNegative = () => {
+                    setRatingState((r) =>
+                      r ? { ...r, rating: "negative", showFeedback: true } : r,
+                    );
+                  };
+
+                  const handleFeedbackSubmit = async () => {
+                    const feedback = [
+                      ...ratingState.feedbackItems,
+                      ...(ratingState.feedbackText.trim()
+                        ? [`Custom: ${ratingState.feedbackText.trim()}`]
+                        : []),
+                    ];
+                    setRatingState((r) =>
+                      r
+                        ? { ...r, submitted: true, submittedFeedback: feedback }
+                        : r,
+                    );
+                    try {
+                      if (ratingState.docId) {
+                        // Update existing record
+                        await updateRating(
+                          ratingState.docId,
+                          "negative",
+                          feedback,
+                        );
+                      } else {
+                        // First time rating — create record and store doc ID
+                        const docId = await rateGeneration(
+                          userId!,
+                          "negative",
+                          ratingState.prompt,
+                          ratingState.html,
+                          ratingState.model,
+                          feedback,
+                        );
+                        setRatingState((r) => (r ? { ...r, docId } : r));
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  };
+
+                  const handleRerate = () => {
+                    setRatingState((r) =>
+                      r
+                        ? {
+                            ...r,
+                            submitted: false,
+                            rating: null,
+                            showFeedback: false,
+                            feedbackItems: [],
+                            feedbackText: "",
+                            submittedFeedback: [],
+                          }
+                        : r,
+                    );
+                  };
+
+                  const toggleFeedbackItem = (item: string) => {
+                    setRatingState((r) =>
+                      r
+                        ? {
+                            ...r,
+                            feedbackItems: r.feedbackItems.includes(item)
+                              ? r.feedbackItems.filter((i) => i !== item)
+                              : [...r.feedbackItems, item],
+                          }
+                        : r,
+                    );
+                  };
+
+                  return (
+                    <div className="mt-3 pt-3 border-t border-neutral-800">
+                      {/* Submitted — positive */}
+                      {ratingState.submitted &&
+                        ratingState.rating === "positive" && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-neutral-600">
+                              ✓ Thanks! This helps train our model.
+                            </span>
+                            <button
+                              onClick={handleRerate}
+                              className="text-[10px] text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer underline"
+                            >
+                              Change rating
+                            </button>
+                          </div>
+                        )}
+
+                      {/* Submitted — negative */}
+                      {ratingState.submitted &&
+                        ratingState.rating === "negative" && (
+                          <div className="space-y-2">
+                            <div className="mb-2 flex items-center justify-between">
+                              <span className="text-xs text-neutral-600">
+                                ✓ Feedback saved — we'll fix this.
+                              </span>
+                              <button
+                                onClick={handleRerate}
+                                className="text-[10px] text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer underline"
+                              >
+                                Change rating
+                              </button>
+                            </div>
+                            {ratingState.submittedFeedback.length > 0 && (
+                              <button
+                                onClick={async () => {
+                                  const fixPrompt = ratingState.prompt;
+                                  const fixes = ratingState.submittedFeedback;
+                                  const currentHtml = ratingState.html;
+
+                                  setFixLoading(true);
+
+                                  // Try surgical fix first
+                                  try {
+                                    const res = await fetch("/api/fix-html", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        html: currentHtml,
+                                        issues: fixes,
+                                      }),
+                                    });
+                                    const data = await res.json();
+
+                                    if (data.requiresFullRegen) {
+                                      // Issues need full rebuild
+                                      handleDeepDive(fixPrompt, fixes);
+                                    } else if (data.html) {
+                                      // Surgical fix succeeded — update preview AND rating state html
+                                      setDeepHtml?.(data.html);
+                                      setRatingState((r) =>
+                                        r
+                                          ? {
+                                              ...r,
+                                              html: data.html,
+                                              submittedFeedback: [],
+                                              submitted: false,
+                                              rating: null,
+                                              showFeedback: false,
+                                            }
+                                          : r,
+                                      );
+                                    }
+                                  } catch {
+                                    // Fallback to full regen
+                                    setRatingState(null); // clear UI before full regen
+                                    handleDeepDive(fixPrompt, fixes);
+                                  } finally {
+                                    setFixLoading(false);
+                                    // Note: ratingState is NOT nulled here — surgical fix
+                                    // already reset it via setRatingState({...r, submitted:false})
+                                    // Full regen path nulls it above before calling handleDeepDive
+                                  }
+                                }}
+                                disabled={fixLoading}
+                                className="w-full mb-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-60"
+                                style={{
+                                  background: "rgba(168,85,247,0.15)",
+                                  border: "1px solid rgba(168,85,247,0.35)",
+                                  color: "#d8b4fe",
+                                }}
+                              >
+                                {fixLoading ? (
+                                  <>
+                                    <LoaderCircle className="w-3 h-3 animate-spin" />
+                                    Applying fix...
+                                  </>
+                                ) : (
+                                  <>✨ Auto-fix and regenerate</>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                      {/* Not yet submitted — show buttons */}
+                      {!ratingState.submitted && !ratingState.showFeedback && (
+                        <div className="my-4 mb-5 flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-neutral-600">
+                            Rate this generation:
+                          </span>
+                          <button
+                            onClick={handlePositive}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer"
+                            style={{
+                              background:
+                                ratingState.rating === "positive"
+                                  ? "rgba(34,197,94,0.25)"
+                                  : "rgba(34,197,94,0.12)",
+                              border: "1px solid rgba(34,197,94,0.3)",
+                              color: "#86efac",
+                            }}
+                          >
+                            👍 Looks great
+                          </button>
+                          <button
+                            onClick={handleNegative}
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer"
+                            style={{
+                              background: "rgba(239,68,68,0.12)",
+                              border: "1px solid rgba(239,68,68,0.3)",
+                              color: "#fca5a5",
+                            }}
+                          >
+                            👎 Needs work
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Negative feedback form */}
+                      {!ratingState.submitted && ratingState.showFeedback && (
+                        <div className="space-y-3">
+                          <p className="text-xs text-neutral-400 font-semibold">
+                            What went wrong? (select all that apply)
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {FEEDBACK_OPTIONS.map((item) => (
+                              <button
+                                key={item}
+                                onClick={() => toggleFeedbackItem(item)}
+                                className="text-[11px] px-2.5 py-1 rounded-full transition-all cursor-pointer"
+                                style={{
+                                  background:
+                                    ratingState.feedbackItems.includes(item)
+                                      ? "rgba(239,68,68,0.2)"
+                                      : "rgba(255,255,255,0.05)",
+                                  border: `1px solid ${ratingState.feedbackItems.includes(item) ? "rgba(239,68,68,0.5)" : "#2a2a2a"}`,
+                                  color: ratingState.feedbackItems.includes(
+                                    item,
+                                  )
+                                    ? "#fca5a5"
+                                    : "#737373",
+                                }}
+                              >
+                                {item}
+                              </button>
+                            ))}
+                          </div>
+                          <textarea
+                            value={ratingState.feedbackText}
+                            onChange={(e) =>
+                              setRatingState((r) =>
+                                r ? { ...r, feedbackText: e.target.value } : r,
+                              )
+                            }
+                            placeholder="Anything else? (optional)"
+                            rows={2}
+                            className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-neutral-300 placeholder:text-neutral-600 outline-none resize-none"
+                          />
+                          <div className="mb-4 flex items-center gap-2">
+                            <button
+                              onClick={handleFeedbackSubmit}
+                              className=" px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all"
+                              style={{
+                                background: "rgba(239,68,68,0.2)",
+                                border: "1px solid rgba(239,68,68,0.4)",
+                                color: "#fca5a5",
+                              }}
+                            >
+                              Submit feedback
+                            </button>
+                            <button
+                              onClick={() =>
+                                setRatingState((r) =>
+                                  r ? { ...r, showFeedback: false } : r,
+                                )
+                              }
+                              className=" text-xs text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+              {/* Message text */}
               {message.isGenerating && !message.agentSteps ? (
                 <div className="flex items-center gap-2 text-neutral-400">
                   <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
@@ -1202,6 +1586,32 @@ export default function ChatPanel({
             {/* Left: model selector (Deep Dive) or fast mode label */}
             {mode === "deep" ? (
               <div className="relative">
+                {selectedModel === "anthropic/claude-opus-4" && !loading && (
+                  <div
+                    className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl text-xs"
+                    style={{
+                      background: "rgba(234,179,8,0.08)",
+                      border: "1px solid rgba(234,179,8,0.25)",
+                      color: "#fde68a",
+                    }}
+                  >
+                    <span className="shrink-0 mt-0.5">⏳</span>
+                    <span>
+                      Opus takes <strong>3–5 minutes</strong> and uses{" "}
+                      <strong>300–500 credits</strong> for a complete site. For
+                      faster results, try{" "}
+                      <button
+                        onClick={() =>
+                          setSelectedModel("anthropic/claude-sonnet-4.6")
+                        }
+                        className="underline cursor-pointer hover:text-yellow-200 transition-colors"
+                      >
+                        Sonnet instead
+                      </button>
+                      .
+                    </span>
+                  </div>
+                )}
                 <button
                   onClick={() => setShowModelPicker(!showModelPicker)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer"
@@ -1268,6 +1678,14 @@ export default function ChatPanel({
                           <span className="text-[10px] text-neutral-500 truncate">
                             {sublabel}
                           </span>
+                          {model === "anthropic/claude-opus-4" && (
+                            <span
+                              className="text-[10px] mt-0.5"
+                              style={{ color: "#fde68a" }}
+                            >
+                              ⏳ 3–5 min · 300–500 credits
+                            </span>
+                          )}
                         </div>
 
                         {/* Credits + checkmark */}

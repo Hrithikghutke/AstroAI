@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import PreviewFrame from "@/components/PreviewFrame";
 import DeepPreview from "@/components/DeepPreview";
 import { Layout } from "@/types/layout";
+
 import {
   Monitor,
   Smartphone,
@@ -15,6 +16,7 @@ import {
   Telescope,
 } from "lucide-react";
 import { generateHtml } from "@/lib/generateHtml";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 // ── VS Code Dark+ syntax highlighter ──
 // ── Simple HTML escaper for code display ──
@@ -445,7 +447,13 @@ export default function PreviewPanel({
                 }}
               />
             ) : (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center justify-center h-full">
+                <DotLottieReact
+                  className="w-40 "
+                  src="https://lottie.host/9343e66e-bf18-4111-ae11-c35e5d37eb01/jgSp07bP0V.lottie"
+                  loop
+                  autoplay
+                />
                 <p
                   style={{ color: "#3a3a3a", fontFamily: "system-ui" }}
                   className="text-sm"

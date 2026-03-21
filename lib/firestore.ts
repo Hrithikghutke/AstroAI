@@ -35,6 +35,14 @@ export async function createUserRecord(clerkUserId: string, email: string) {
     credits: STARTING_CREDITS,
     totalGenerated: 0,
     createdAt: serverTimestamp(),
+    // Add these fields to your existing createUserRecord function
+    // inside the setDoc call — add alongside existing fields:
+    subscription: null, // null = no active subscription
+    subscriptionId: null, // Razorpay subscription ID
+    subscriptionPlan: null, // "starter" | "pro" | "agency"
+    subscriptionStatus: null, // "active" | "cancelled" | "expired"
+    subscriptionPeriod: null, // "monthly" | "annual"
+    creditsRefreshDate: null, // next credits refresh date (timestamp)
   });
 }
 
@@ -71,18 +79,6 @@ export async function deductCredits(
   });
 
   return true;
-}
-/* -------------------------------------------------------
-   Add credits to a user (called after payment).
-------------------------------------------------------- */
-export async function addCredits(
-  clerkUserId: string,
-  amount: number,
-): Promise<void> {
-  const userRef = doc(db, "users", clerkUserId);
-  await updateDoc(userRef, {
-    credits: increment(amount),
-  });
 }
 
 /* -------------------------------------------------------
@@ -205,5 +201,102 @@ export async function updateGeneration(
       : (layout?.branding?.logoText ?? "Untitled"),
     themeStyle: deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate"),
     updatedAt: serverTimestamp(),
+  });
+}
+
+// ── Save rating as training data ──
+export async function rateGeneration(
+  clerkUserId: string,
+  rating: "positive" | "negative",
+  prompt: string,
+  html: string,
+  model: string,
+  feedback?: string[],
+): Promise<string> {
+  const docRef = await addDoc(collection(db, "ratings"), {
+    clerkUserId,
+    rating,
+    prompt,
+    html,
+    model,
+    feedback: feedback ?? [],
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id; // return doc ID for future updates
+}
+
+export async function updateRating(
+  docId: string,
+  rating: "positive" | "negative",
+  feedback?: string[],
+): Promise<void> {
+  const ref = doc(db, "ratings", docId);
+  await updateDoc(ref, {
+    rating,
+    feedback: feedback ?? [],
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// ── Subscription helpers ──
+
+export async function getUserSubscription(clerkUserId: string) {
+  const userRef = doc(db, "users", clerkUserId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    subscription: data.subscription ?? null,
+    subscriptionId: data.subscriptionId ?? null,
+    subscriptionPlan: data.subscriptionPlan ?? null,
+    subscriptionStatus: data.subscriptionStatus ?? null,
+    subscriptionPeriod: data.subscriptionPeriod ?? null,
+    creditsRefreshDate: data.creditsRefreshDate ?? null,
+    subscriptionEndDate: data.subscriptionEndDate ?? null,
+  };
+}
+
+export async function activateSubscription(
+  clerkUserId: string,
+  subscriptionId: string,
+  plan: string,
+  period: string,
+  creditsToAdd: number,
+): Promise<void> {
+  const userRef = doc(db, "users", clerkUserId);
+  const nextRefresh = new Date();
+  nextRefresh.setMonth(nextRefresh.getMonth() + 1);
+
+  await updateDoc(userRef, {
+    subscriptionId,
+    subscriptionPlan: plan,
+    subscriptionStatus: "active",
+    subscriptionPeriod: period,
+    creditsRefreshDate: nextRefresh,
+    credits: increment(creditsToAdd),
+  });
+}
+
+export async function cancelSubscription(
+  clerkUserId: string,
+  endDate?: Date,
+): Promise<void> {
+  const userRef = doc(db, "users", clerkUserId);
+  await updateDoc(userRef, {
+    subscriptionStatus: "cancelled",
+    subscriptionEndDate: endDate ?? null,
+  });
+}
+/* -------------------------------------------------------
+   Add credits to a user (called after payment).
+------------------------------------------------------- */
+
+export async function addCredits(
+  clerkUserId: string,
+  amount: number,
+): Promise<void> {
+  const userRef = doc(db, "users", clerkUserId);
+  await updateDoc(userRef, {
+    credits: increment(amount),
   });
 }

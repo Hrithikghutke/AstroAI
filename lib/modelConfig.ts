@@ -2,7 +2,7 @@ export const CLAUDE_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1
 
 export const DEEPSEEK_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M23.748 10.053c-.028-.058-.081-.098-.144-.108a6.67 6.67 0 0 0-.481-.055c-.364-.032-.614-.05-.75-.055a9.3 9.3 0 0 0-.396-.007c-.165.003-.267.01-.306.02-.24.06-.466.163-.672.303a2.44 2.44 0 0 0-.489.457l-.073.098c-.08.113-.12.17-.12.17a3.52 3.52 0 0 0-.124.204 4.44 4.44 0 0 1-.58.808 5.64 5.64 0 0 1-.695.64c-.245.182-.501.34-.77.471a5.13 5.13 0 0 1-1.649.44 5.14 5.14 0 0 1-1.097-.016 5.38 5.38 0 0 1-1.01-.24 5.55 5.55 0 0 1-.915-.442 5.8 5.8 0 0 1-.792-.63 6.07 6.07 0 0 1-.647-.8 6.38 6.38 0 0 1-.477-.944 6.64 6.64 0 0 1-.285-1.059 6.85 6.85 0 0 1-.083-1.138c.013-.4.067-.797.162-1.185a6.96 6.96 0 0 1 .374-1.097l.037-.08a.16.16 0 0 0-.017-.166.17.17 0 0 0-.154-.065 5.72 5.72 0 0 0-1.311.37 6.67 6.67 0 0 0-1.162.672 7.12 7.12 0 0 0-.985.945 7.38 7.38 0 0 0-.77 1.178 7.45 7.45 0 0 0-.467 1.298 7.36 7.36 0 0 0-.147 1.334c.003.438.053.875.149 1.302.098.433.243.854.432 1.254a7.27 7.27 0 0 0 .69 1.145 7.2 7.2 0 0 0 .928.992 7.12 7.12 0 0 0 1.142.796 7.07 7.07 0 0 0 1.312.547 7.07 7.07 0 0 0 1.405.265 7.13 7.13 0 0 0 1.36-.029 7.11 7.11 0 0 0 1.301-.298 7.13 7.13 0 0 0 1.193-.553 7.2 7.2 0 0 0 1.034-.784 7.32 7.32 0 0 0 .83-.985 7.47 7.47 0 0 0 .592-1.155c.054-.133.1-.27.138-.407.022-.082.066-.156.128-.215.063-.058.14-.097.224-.113l.267-.049a.38.38 0 0 0 .227-.136.36.36 0 0 0 .083-.253l-.022-.413a.18.18 0 0 0-.065-.127zm-12.45-5.21a.17.17 0 0 0 .11-.041.16.16 0 0 0 .054-.103 6.8 6.8 0 0 1 .392-1.65 6.33 6.33 0 0 1 .74-1.398 5.85 5.85 0 0 1 1.052-1.1 5.4 5.4 0 0 1 1.306-.75 5.17 5.17 0 0 1 .728-.213c.253-.054.51-.085.768-.092a5.2 5.2 0 0 1 .773.046c.254.038.504.098.746.18.237.082.466.185.683.308.211.12.412.258.6.412.181.15.35.315.503.493.149.174.282.36.398.555.111.19.205.389.28.594a.17.17 0 0 0 .1.101.18.18 0 0 0 .143-.005l.896-.412a.17.17 0 0 0 .095-.21 6.35 6.35 0 0 0-.388-.81 6.13 6.13 0 0 0-.541-.737 6.1 6.1 0 0 0-.676-.638 6.15 6.15 0 0 0-.79-.507 6.32 6.32 0 0 0-.882-.365 6.54 6.54 0 0 0-.95-.215 6.78 6.78 0 0 0-.994-.062 6.92 6.92 0 0 0-1.01.1 6.87 6.87 0 0 0-.975.274 6.72 6.72 0 0 0-.898.434 6.53 6.53 0 0 0-.782.577 6.32 6.32 0 0 0-.636.702 6.11 6.11 0 0 0-.468.808 5.9 5.9 0 0 0-.286.889 5.71 5.71 0 0 0-.093.949.17.17 0 0 0 .049.12.17.17 0 0 0 .12.05h.977z" fill="#4D6BFE"/></svg>`;
 export const GEMINI_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none"><defs><linearGradient id="geminiGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#8A6FF0"/><stop offset="100%" stop-color="#FF6FBF"/></linearGradient></defs><path d="M 10,1 C 10,5.5 14.5,10 19,10 C 14.5,10 10,14.5 10,19 C 10,14.5 5.5,10 1,10 C 5.5,10 10,5.5 10,1 Z" fill="url(#geminiGrad)"/></svg>`;
-
+export const OPENAI_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14.949 6.547a3.94 3.94 0 0 0-.348-3.273 4.11 4.11 0 0 0-4.4-1.934A4.1 4.1 0 0 0 8.423.2 4.15 4.15 0 0 0 6.305.086a4.1 4.1 0 0 0-1.891.948 4.04 4.04 0 0 0-1.158 1.753 4.1 4.1 0 0 0-1.563.679A4 4 0 0 0 .554 4.72a3.99 3.99 0 0 0 .502 4.731 3.94 3.94 0 0 0 .346 3.274 4.11 4.11 0 0 0 4.402 1.933c.382.425.852.764 1.377.995.526.231 1.095.35 1.67.346 1.78.002 3.358-1.132 3.901-2.804a4.1 4.1 0 0 0 1.563-.68 4 4 0 0 0 1.14-1.253 3.99 3.99 0 0 0-.506-4.716zm-6.097 8.406a3.05 3.05 0 0 1-1.945-.694l.096-.054 3.23-1.838a.53.53 0 0 0 .265-.455v-4.49l1.366.778a.05.05 0 0 1 .025.035v3.722c-.003 1.653-1.361 2.992-3.037 2.996zm-6.53-2.75a2.95 2.95 0 0 1-.36-2.01l.095.057 3.233 1.837a.53.53 0 0 0 .527 0l3.949-2.246v1.555a.05.05 0 0 1-.022.041L6.473 13.3c-1.454.826-3.311.335-4.15-1.098zm-.85-6.94A3.02 3.02 0 0 1 3.07 3.95v3.785a.51.51 0 0 0 .262.451l3.93 2.237-1.366.779a.05.05 0 0 1-.047.005L2.566 9.604a2.98 2.98 0 0 1-1.094-4.341zm11.24 2.58-3.946-2.25 1.366-.778a.05.05 0 0 1 .047-.005l3.184 1.812a2.98 2.98 0 0 1-.462 5.38v-3.786a.51.51 0 0 0-.188-.373zm1.358-2.023-.096-.057-3.228-1.842a.53.53 0 0 0-.528 0L6.27 6.67V5.116a.05.05 0 0 1 .02-.042l3.18-1.809a3.07 3.07 0 0 1 4.587 3.175zm-8.563 2.78-1.366-.779a.05.05 0 0 1-.025-.034V4.063c.002-1.654 1.365-2.994 3.042-2.992.69 0 1.36.244 1.888.686l-.096.054-3.23 1.838a.53.53 0 0 0-.265.455zm.742-1.562 1.757-1 1.754 1v1.995l-1.757 1-1.754-1z" fill="#FFFFFF"/></svg>`;
 export interface ModelOption {
   model: string;
   label: string; // e.g. "Claude 4.5 Haiku"
@@ -16,43 +16,33 @@ export interface ModelOption {
 
 export const DEEP_DIVE_MODELS: ModelOption[] = [
   {
-    model: "anthropic/claude-haiku-4.5",
-    label: "Claude 4.5 Haiku",
-    sublabel: "Anthropic's Fast Model",
-    credits: "2 credits",
-    logo: CLAUDE_LOGO_SVG,
-    costPerOutputToken: 0.000004,
-    minCreditsToStart: 3,
-    maxOutputTokens: 8192,
-  },
-  {
-    model: "anthropic/claude-sonnet-4.5",
-    label: "Claude 4.5 Sonnet",
+    model: "anthropic/claude-sonnet-4.6",
+    label: "Claude 4.6 Sonnet",
     sublabel: "Anthropic's Balanced Model",
-    credits: "5 credits",
+    credits: "150-200 credits",
     logo: CLAUDE_LOGO_SVG,
     costPerOutputToken: 0.000015,
-    minCreditsToStart: 10,
-    maxOutputTokens: 16000,
+    minCreditsToStart: 150,
+    maxOutputTokens: 32000,
   },
   {
     model: "anthropic/claude-opus-4",
     label: "Claude 4 Opus",
     sublabel: "Best quality · May take 3-5 minutes",
-    credits: "12 credits",
+    credits: "300-500 credits",
     logo: CLAUDE_LOGO_SVG,
     costPerOutputToken: 0.000075,
-    minCreditsToStart: 50,
-    maxOutputTokens: 16000,
+    minCreditsToStart: 300,
+    maxOutputTokens: 32000,
   },
   {
     model: "deepseek/deepseek-v3.2",
     label: "DeepSeek V3.2",
     sublabel: "Best value · Fast & powerful coding model",
-    credits: "3 credits",
+    credits: "5-10 credits",
     logo: DEEPSEEK_LOGO_SVG,
     costPerOutputToken: 0.00000038,
-    minCreditsToStart: 3,
+    minCreditsToStart: 5,
     maxOutputTokens: 32000,
   },
 
@@ -60,10 +50,20 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     model: "google/gemini-3-flash-preview",
     label: "Gemini 3 Flash Preview",
     sublabel: "Best value · Fast & powerful coding model",
-    credits: "3 credits",
+    credits: "5-10 credits",
     logo: GEMINI_LOGO_SVG,
     costPerOutputToken: 0.0000004,
-    minCreditsToStart: 3,
+    minCreditsToStart: 5,
+    maxOutputTokens: 32000,
+  },
+  {
+    model: "openai/gpt-5-mini",
+    label: "GPT-5 Mini",
+    sublabel: "Best value · Fast & powerful coding model",
+    credits: "5-10 credits",
+    logo: OPENAI_LOGO_SVG,
+    costPerOutputToken: 0.000002,
+    minCreditsToStart: 5,
     maxOutputTokens: 32000,
   },
 ];

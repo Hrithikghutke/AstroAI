@@ -21,6 +21,7 @@ export default function DeepPreview({
       URL.revokeObjectURL(blobUrlRef.current);
     }
 
+    // No CSS patch needed — generated HTML is complete and correct as-is
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     blobUrlRef.current = url;
@@ -32,7 +33,7 @@ export default function DeepPreview({
         URL.revokeObjectURL(blobUrlRef.current);
       }
     };
-  }, [html]);
+  }, [html]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <iframe
@@ -40,8 +41,10 @@ export default function DeepPreview({
       className="rounded-lg shadow-2xl transition-all duration-300 border-0"
       style={{
         width: viewport === "mobile" ? "390px" : "100%",
-        minHeight: "100%",
+        height: "100%",
+        minHeight: "600px",
         background: "white",
+        display: "block",
       }}
       sandbox="allow-scripts allow-same-origin allow-forms"
       title="Deep Dive Preview"

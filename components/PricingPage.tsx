@@ -1,0 +1,624 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCredits } from "@/context/CreditsContext";
+import { useCurrency } from "@/lib/useCurrency";
+import {
+  SUBSCRIPTION_PLANS,
+  TOPUP_PACKS,
+  formatPrice,
+  getMonthlyEquivalent,
+  getRazorpayPlanId,
+  type BillingPeriod,
+} from "@/lib/razorpay";
+import {
+  Zap,
+  Check,
+  Crown,
+  RefreshCw,
+  X,
+  ArrowLeft,
+  AlertTriangle,
+  TrendingUp,
+} from "lucide-react";
+
+interface Props {
+  isSubscribed: boolean;
+  currentPlan: string | null;
+  currentPeriod: string | null;
+  isCancelled?: boolean;
+  subscriptionEndDate?: Date | null;
+}
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+export default function PricingPage({
+  isSubscribed,
+  currentPlan,
+  currentPeriod,
+  isCancelled,
+  subscriptionEndDate,
+}: Props) {
+  const router = useRouter();
+  const { refreshCredits } = useCredits();
+  const currency = useCurrency();
+  const [period, setPeriod] = useState<BillingPeriod>(
+    (currentPeriod as BillingPeriod) ?? "monthly",
+  );
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  const currentPlanData = SUBSCRIPTION_PLANS.find((p) => p.id === currentPlan);
+
+  // ── Load Razorpay script ──
+  const loadRazorpay = (): Promise<boolean> =>
+    new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  // ── Subscribe / Upgrade ──
+  const handleSubscribe = async (planId: string) => {
+    setLoadingId(planId);
+    const plan = SUBSCRIPTION_PLANS.find((p) => p.id === planId)!;
+    const razorpayPlanId = getRazorpayPlanId(plan, period);
+
+    try {
+      const res = await fetch("/api/razorpay/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: razorpayPlanId,
+          plan: plan.id,
+          period,
+          credits: plan.creditsPerMonth,
+        }),
+      });
+      const { subscriptionId, error } = await res.json();
+      if (error) throw new Error(error);
+
+      const loaded = await loadRazorpay();
+      if (!loaded) throw new Error("Failed to load Razorpay");
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        subscription_id: subscriptionId,
+        name: "CrawlCube",
+        description: `${plan.label} Plan — ${period}`,
+        image: "/assets/logo.svg",
+        theme: { color: "#ec4899" },
+        handler: async (response: any) => {
+          const verifyRes = await fetch("/api/razorpay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "subscription",
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_subscription_id: response.razorpay_subscription_id,
+              razorpay_signature: response.razorpay_signature,
+              plan: plan.id,
+              period,
+              credits: plan.creditsPerMonth,
+            }),
+          });
+          const result = await verifyRes.json();
+          if (result.success) {
+            await refreshCredits();
+            router.push("/build?subscribed=true");
+          }
+        },
+        modal: { ondismiss: () => setLoadingId(null) },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("[Pricing] Subscribe error:", err);
+      setLoadingId(null);
+    }
+  };
+
+  // ── Top-up ──
+  const handleTopUp = async (packId: string) => {
+    setLoadingId(packId);
+    const pack = TOPUP_PACKS.find((p) => p.id === packId)!;
+
+    try {
+      const res = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packId }),
+      });
+      const { orderId, amount, error } = await res.json();
+      if (error) throw new Error(error);
+
+      const loaded = await loadRazorpay();
+      if (!loaded) throw new Error("Failed to load Razorpay");
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        order_id: orderId,
+        amount,
+        currency: "INR",
+        name: "CrawlCube",
+        description: `${pack.label} — ${pack.credits} Credits`,
+        image: "/assets/logo.svg",
+        theme: { color: "#ec4899" },
+        handler: async (response: any) => {
+          const verifyRes = await fetch("/api/razorpay/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "topup",
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              credits: pack.credits,
+            }),
+          });
+          const result = await verifyRes.json();
+          if (result.success) {
+            await refreshCredits();
+            router.push("/build?topup=true");
+          }
+        },
+        modal: { ondismiss: () => setLoadingId(null) },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("[Pricing] Top-up error:", err);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  // ── Cancel subscription ──
+  const handleCancel = async () => {
+    setCancelLoading(true);
+    try {
+      const res = await fetch("/api/razorpay/cancel-subscription", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (data.success) {
+        await refreshCredits();
+        router.push("/build?cancelled=true");
+      }
+    } catch (err) {
+      console.error("[Pricing] Cancel error:", err);
+    } finally {
+      setCancelLoading(false);
+      setShowCancelConfirm(false);
+    }
+  };
+
+  // Plans to show for upgrade (exclude current plan)
+  const upgradePlans = SUBSCRIPTION_PLANS.filter((p) => p.id !== currentPlan);
+
+  return (
+    <div className="min-h-screen bg-neutral-950 text-white">
+      {/* ── Top bar with back button ── */}
+      <div className="border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
+        <button
+          onClick={() => router.push("/build")}
+          className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Builder
+        </button>
+        <button
+          onClick={() => router.push("/build")}
+          className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        {/* ── Header ── */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold mb-2">
+            {isSubscribed ? "Manage Your Plan" : "Choose Your Plan"}
+          </h1>
+          <p className="text-neutral-400">
+            {isSubscribed
+              ? "Top up credits, upgrade, or manage your subscription."
+              : "Start building stunning websites with AI. Cancel anytime."}
+          </p>
+        </div>
+
+        {/* ── Billing toggle (unsubscribed or upgrade view) ── */}
+        {(!isSubscribed || showUpgrade) && (
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-1 bg-neutral-900 border border-neutral-800 rounded-full p-1">
+              <button
+                onClick={() => setPeriod("monthly")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  period === "monthly"
+                    ? "bg-white text-black"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setPeriod("annual")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                  period === "annual"
+                    ? "bg-white text-black"
+                    : "text-neutral-400 hover:text-white"
+                }`}
+              >
+                Annually
+                <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-bold">
+                  Save 17%
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Subscription plans (unsubscribed) ── */}
+        {!isSubscribed && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {SUBSCRIPTION_PLANS.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative rounded-2xl border p-6 flex flex-col gap-5 ${
+                  plan.popular
+                    ? "border-purple-500 bg-neutral-900 shadow-xl shadow-purple-500/10"
+                    : "border-neutral-800 bg-neutral-900/40"
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                      <Crown className="w-3 h-3" /> Most Popular
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-xl font-bold mb-1">{plan.label}</h3>
+                  <p className="text-neutral-400 text-sm">{plan.sublabel}</p>
+                </div>
+
+                <div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black">
+                      {getMonthlyEquivalent(plan, period, currency)}
+                    </span>
+                    <span className="text-neutral-400 text-sm">/mo</span>
+                  </div>
+                  {period === "annual" && (
+                    <p className="text-green-400 text-xs mt-1">
+                      Billed {formatPrice(plan.annualPriceINR, currency)}/year
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 bg-neutral-800 rounded-xl px-4 py-3">
+                  <Zap className="w-4 h-4 text-purple-400" />
+                  <span className="font-semibold text-sm">
+                    {plan.creditsPerMonth.toLocaleString()} credits / month
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handleSubscribe(plan.id)}
+                  disabled={loadingId === plan.id}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
+                    plan.popular
+                      ? "bg-purple-500 hover:bg-purple-400 text-white"
+                      : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {loadingId === plan.id ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />{" "}
+                      Processing...
+                    </span>
+                  ) : (
+                    `Get ${plan.label}`
+                  )}
+                </button>
+
+                <ul className="space-y-2 text-sm text-neutral-300">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    All AI models (DeepSeek, Gemini, Sonnet)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    Unlimited downloads
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    Live preview
+                  </li>
+                  {plan.id !== "starter" && (
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400 shrink-0" />
+                      Priority generation queue
+                    </li>
+                  )}
+                  {plan.id === "agency" && (
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400 shrink-0" />
+                      White-label export
+                    </li>
+                  )}
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    Ability to top-up credits
+                  </li>
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Subscribed view ── */}
+        {isSubscribed && (
+          <div className="space-y-8">
+            {/* Current plan card */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center">
+                    <Crown className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-lg capitalize">
+                        {currentPlan} Plan
+                      </p>
+                      {isCancelled ? (
+                        <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-medium">
+                          Cancels{" "}
+                          {subscriptionEndDate
+                            ? subscriptionEndDate.toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "soon"}
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-medium">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-neutral-400 text-sm capitalize">
+                      {currentPeriod} billing ·{" "}
+                      {currentPlanData?.creditsPerMonth.toLocaleString()}{" "}
+                      credits/month
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black">
+                    {currentPlanData
+                      ? getMonthlyEquivalent(
+                          currentPlanData,
+                          (currentPeriod as BillingPeriod) ?? "monthly",
+                          currency,
+                        )
+                      : ""}
+                  </p>
+                  <p className="text-neutral-400 text-xs">/month</p>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setShowUpgrade(!showUpgrade)}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-xl text-sm font-medium transition-all"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  {showUpgrade ? "Hide Plans" : "Upgrade / Change Plan"}
+                </button>
+                {!isCancelled && (
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 border border-neutral-700 text-neutral-400 rounded-xl text-sm font-medium transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel Subscription
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Upgrade plans */}
+            {showUpgrade && (
+              <div>
+                <h2 className="text-xl font-bold mb-4">
+                  Switch to a Different Plan
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {upgradePlans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className={`relative rounded-2xl border p-5 flex flex-col gap-4 ${
+                        plan.popular
+                          ? "border-purple-500 bg-neutral-900"
+                          : "border-neutral-800 bg-neutral-900/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-lg">{plan.label}</h3>
+                          <p className="text-neutral-400 text-xs">
+                            {plan.sublabel}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-black">
+                            {getMonthlyEquivalent(plan, period, currency)}
+                          </p>
+                          <p className="text-neutral-400 text-xs">/mo</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 bg-neutral-800 rounded-xl px-3 py-2">
+                        <Zap className="w-3.5 h-3.5 text-purple-400" />
+                        <span className="text-sm font-semibold">
+                          {plan.creditsPerMonth.toLocaleString()} credits /
+                          month
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleSubscribe(plan.id)}
+                        disabled={loadingId === plan.id}
+                        className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                          plan.popular
+                            ? "bg-purple-500 hover:bg-purple-400 text-white"
+                            : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                        } disabled:opacity-50`}
+                      >
+                        {loadingId === plan.id ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <RefreshCw className="w-4 h-4 animate-spin" />{" "}
+                            Processing...
+                          </span>
+                        ) : (
+                          `Switch to ${plan.label}`
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Top-up section */}
+            <div>
+              <div className="mb-5">
+                <h2 className="text-xl font-bold mb-1">Top Up Credits</h2>
+                <p className="text-neutral-400 text-sm">
+                  Need more credits this month? Top up instantly.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {TOPUP_PACKS.map((pack) => (
+                  <div
+                    key={pack.id}
+                    className={`relative rounded-2xl border p-5 flex flex-col gap-4 transition-all hover:scale-[1.02] ${
+                      pack.popular
+                        ? "border-purple-500 bg-neutral-900 shadow-lg shadow-purple-500/10"
+                        : "border-neutral-800 bg-neutral-900/40"
+                    }`}
+                  >
+                    {pack.popular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                          Best Value
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold mb-1">{pack.label}</h3>
+                        <div className="flex items-center gap-1.5">
+                          <Zap className="w-3.5 h-3.5 text-purple-400" />
+                          <span className="text-sm text-neutral-300">
+                            {pack.credits.toLocaleString()} credits
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-2xl font-black">
+                        {formatPrice(pack.priceINR, currency)}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleTopUp(pack.id)}
+                      disabled={loadingId === pack.id}
+                      className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                        pack.popular
+                          ? "bg-purple-500 hover:bg-purple-400 text-white"
+                          : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                      } disabled:opacity-50`}
+                    >
+                      {loadingId === pack.id ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <RefreshCw className="w-4 h-4 animate-spin" />{" "}
+                          Processing...
+                        </span>
+                      ) : (
+                        `Buy ${pack.credits} Credits`
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <p className="text-center text-neutral-600 text-xs mt-12">
+          Payments secured by Razorpay · Credits never expire · Cancel anytime
+        </p>
+      </div>
+
+      {/* ── Cancel confirmation modal ── */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="text-xl font-bold">Cancel Subscription?</h3>
+            </div>
+            <p className="text-neutral-400 text-sm mb-6">
+              Your subscription will remain active until the end of the current
+              billing period. After that, you will lose access to your monthly
+              credits. Your existing credits will not be affected.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-neutral-700 text-neutral-300 hover:bg-neutral-800 text-sm font-medium transition-all"
+              >
+                Keep Subscription
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={cancelLoading}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-all disabled:opacity-50"
+              >
+                {cancelLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Cancelling...
+                  </span>
+                ) : (
+                  "Yes, Cancel"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

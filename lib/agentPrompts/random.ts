@@ -13,44 +13,6 @@ import { getModelConfig, calculateCredits } from "@/lib/modelConfig";
 // Increase max duration for Deep Dive — Opus can take 45-60s
 export const maxDuration = 120; // seconds — requires Vercel Pro or hobby with override
 
-// ── Shared OpenRouter fetch helper ──
-async function callOpenRouter(
-  systemPrompt: string,
-  userMessage: string,
-  maxTokens: number = 12000,
-  model: string = "anthropic/claude-haiku-4.5",
-): Promise<{ content: string; outputTokens: number }> {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      temperature: 0.8,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-    }),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(`OpenRouter error: ${JSON.stringify(data)}`);
-  }
-
-  const content = data.choices?.[0]?.message?.content ?? "";
-  const outputTokens = data.usage?.completion_tokens ?? 0;
-
-  console.log(`[OpenRouter] model=${model} | output_tokens=${outputTokens}`);
-
-  return { content, outputTokens };
-}
-
 // ── Streaming version for developer agent ──
 async function callOpenRouterStream(
   systemPrompt: string,
@@ -123,29 +85,6 @@ async function callOpenRouterStream(
 
   onChunk(accumulated); // final
   return { outputTokens };
-}
-
-// ── Strip markdown code fences if AI wraps output ──
-function stripFences(raw: string): string {
-  let result = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```html\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-
-  // Strip any prose preamble before the DOCTYPE/html tag
-  // Model sometimes says "Here's the website:" before the actual HTML
-  const doctypeIndex = result.search(/<!DOCTYPE\s+html/i);
-  const htmlTagIndex = result.search(/<html[\s>]/i);
-  const startIndex =
-    doctypeIndex !== -1 ? doctypeIndex : htmlTagIndex !== -1 ? htmlTagIndex : 0;
-
-  if (startIndex > 0) {
-    result = result.substring(startIndex);
-  }
-
-  return result;
 }
 
 // ── Extract design tokens from shell HTML for page prompts ──
@@ -221,109 +160,6 @@ async function silentStream(
   return { content, outputTokens };
 }
 
-// ── Generate SEO meta tags from available generation data ──
-function buildSeoTags(
-  brandName: string,
-  prompt: string,
-  heroImageUrl: string,
-): string {
-  // Description: clean up prompt to 155 chars max
-  const description = prompt
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 155)
-    .replace(/[^a-zA-Z0-9\s.,'-]*/g, "")
-    .trim();
-
-  // Keywords: extract meaningful words from prompt (skip short/common words)
-  const stopWords = new Set([
-    "a",
-    "an",
-    "the",
-    "and",
-    "or",
-    "but",
-    "in",
-    "on",
-    "at",
-    "to",
-    "for",
-    "of",
-    "with",
-    "is",
-    "are",
-    "was",
-    "were",
-    "be",
-    "been",
-    "have",
-    "has",
-    "do",
-    "does",
-    "did",
-    "we",
-    "our",
-    "their",
-    "this",
-    "that",
-    "they",
-    "you",
-    "your",
-    "its",
-    "it",
-    "want",
-    "need",
-    "build",
-    "create",
-    "make",
-    "website",
-    "page",
-    "site",
-    "also",
-    "very",
-    "just",
-    "about",
-    "from",
-    "into",
-    "through",
-    "will",
-    "can",
-    "should",
-  ]);
-  const keywords = [
-    ...new Set(
-      prompt
-        .toLowerCase()
-        .replace(/[^a-z\s]/g, " ")
-        .split(/\s+/)
-        .filter((w) => w.length > 4 && !stopWords.has(w))
-        .slice(0, 10),
-    ),
-  ].join(", ");
-
-  return `
-  <!-- SEO Meta Tags -->
-  <meta name="description" content="${description}">
-  <meta name="keywords" content="${keywords}">
-  <meta name="robots" content="index, follow">
-  <meta name="author" content="${brandName}">
-
-  <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="${brandName}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${heroImageUrl}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${brandName}">
-  <meta name="twitter:description" content="${description}">
-  <meta name="twitter:image" content="${heroImageUrl}">`.trim();
-}
-
 export async function POST(req: Request) {
   const clientSignal = req.signal; // aborts when client disconnects OR Vercel times out
   let userAborted = false; // only true when user explicitly pressed Stop
@@ -356,8 +192,6 @@ export async function POST(req: Request) {
   // Model config — Architect and QA always use Haiku (JSON only)
   // Developer uses user-selected model
   const DEVELOPER_MODEL = selectedModel ?? "anthropic/claude-haiku-4.5";
-
-  const modelLabel = getModelConfig(DEVELOPER_MODEL).sublabel;
 
   // ── Set up streaming response ──
   const encoder = new TextEncoder();
@@ -527,7 +361,7 @@ export async function POST(req: Request) {
         const maxOut = getModelConfig(DEVELOPER_MODEL).maxOutputTokens;
         // Use 92% of maxOut as ceiling — leaves headroom to avoid tight truncation
         // Footer gets a hard minimum of 4500 tokens — it carries ALL the JS
-        const usable = Math.floor(maxOut * 0.92);
+
         const budgets = {
           shell: 6000, // capped — prevents navbar padding, navbar never needs more than ~4k
           home: maxOut, // full budget — richest page, let it use what it needs
@@ -620,6 +454,14 @@ export async function POST(req: Request) {
           push("HTML_CHUNK", { chunk: assembled });
         };
 
+        // Declare footer vars before parallel block so they're in scope for assembly
+        let footerHtml = "";
+        let footerTokens = 0;
+
+        push("DEVELOPER_FIX", {
+          message: "Building pages and footer in parallel...",
+        });
+
         const pageResults = await Promise.allSettled([
           silentStream(
             getPagePrompt("home", prompt, designTokens, heroImageUrl),
@@ -674,6 +516,17 @@ export async function POST(req: Request) {
             push("DEVELOPER_FIX", { message: "✓ Contact page complete" });
             return r;
           }),
+          // Footer runs in parallel with pages — no sequential dependency
+          silentStream(
+            getFooterPrompt(prompt, designTokens),
+            "Generate the footer and closing scripts.",
+            budgets.footer,
+            DEVELOPER_MODEL,
+            clientSignal,
+          ).then((r) => {
+            push("DEVELOPER_FIX", { message: "✓ Footer and scripts complete" });
+            return r;
+          }),
         ]);
 
         // Extract results — use fallback placeholder if any individual page failed
@@ -682,8 +535,26 @@ export async function POST(req: Request) {
           outputTokens: 0,
         });
 
-        const [homeResult, featuresResult, pricingResult, contactResult] =
-          pageResults;
+        const [
+          homeResult,
+          featuresResult,
+          pricingResult,
+          contactResult,
+          footerResult,
+        ] = pageResults;
+
+        // Extract footer
+        if (footerResult.status === "fulfilled") {
+          footerHtml = footerResult.value.content;
+          footerTokens = footerResult.value.outputTokens;
+        } else {
+          console.warn(
+            "[Footer] failed:",
+            (footerResult as PromiseRejectedResult).reason,
+          );
+          footerHtml = `<footer class="py-12 px-6 text-center opacity-50"><p>© ${new Date().getFullYear()} All rights reserved.</p></footer></body></html>`;
+        }
+        totalOutputTokens += footerTokens;
         const { content: homeHtml, outputTokens: homeTokens } =
           homeResult.status === "fulfilled"
             ? homeResult.value
@@ -729,23 +600,7 @@ export async function POST(req: Request) {
           homeTokens + featuresTokens + pricingTokens + contactTokens;
 
         // ════════════════════════════════════════════
-        // STEP 5 — Footer call (sequential, after pages)
-        // Generates: footer + all JS + </body></html>
-        // ════════════════════════════════════════════
-        push("DEVELOPER_FIX", { message: "Building footer and scripts..." });
-
-        const { content: footerHtml, outputTokens: footerTokens } =
-          await silentStream(
-            getFooterPrompt(prompt, designTokens),
-            "Generate the footer and closing scripts.",
-            budgets.footer,
-            DEVELOPER_MODEL,
-            clientSignal,
-          );
-        totalOutputTokens += footerTokens;
-
-        // ════════════════════════════════════════════
-        // STEP 6 — Validate sections + assemble HTML
+        // STEP 5 — Validate sections + assemble HTML
         // ════════════════════════════════════════════
 
         // Validate each page section has correct wrapper
@@ -762,47 +617,100 @@ export async function POST(req: Request) {
           footerTagStart >= 0 ? footerHtml.slice(footerTagStart) : footerHtml;
 
         // Post-process: fix known model output issues before sending to client
-        const seoTags = buildSeoTags(brandName, prompt, heroImageUrl);
-
         const postProcess = (html: string): string => {
-          const isLightTheme = html.includes('data-theme="light"');
-          const menuBg = isLightTheme ? "#ffffff" : "#0f172a";
+          // Step 1 — regex chain fixes
+          const step1 = html
+            // Fix 1 — mobile menu: remove "display: none" from inline styles
+            .replace(/style="([^"]*?);\s*display:\s*none\s*"/g, 'style="$1"')
+            .replace(/style="display:\s*none\s*;?\s*([^"]*)"/g, 'style="$1"')
+            // Fix 2 — marquee items: ensure they don't wrap on mobile
+            .replace(
+              /class="flex animate-marquee/g,
+              'class="flex animate-marquee whitespace-nowrap',
+            )
+            .replace(/<div class="flex items-center gap-\d+ pr-\d+">/g, (m) =>
+              m.replace(
+                '<div class="flex',
+                '<div class="flex flex-shrink-0 flex-nowrap',
+              ),
+            )
+            // Fix 3 — remove external texture URLs that block rendering
+            .replace(/url\(["']https?:\/\/[^"')]+["']\)/g, "none")
+            // Fix 4 — close any unclosed tag right before <main>
+            .replace(/<[a-z][^>]*\n<main>/gi, "\n<main>")
+            .replace(/class="[^"]*\n<main>/g, 'class="">\n</nav>\n<main>');
 
-          return (
-            html
-              // SEO — inject meta tags before </head>
-              .replace("</head>", `  ${seoTags}\n</head>`)
-              // Fix 1 — mobile menu: remove "display: none" from inline styles
-              .replace(/style="([^"]*?);\s*display:\s*none\s*"/g, 'style="$1"')
-              .replace(/style="display:\s*none\s*;?\s*([^"]*)"/g, 'style="$1"')
-              // Fix 2 — marquee items: ensure they don't wrap on mobile
-              .replace(
-                /class="flex animate-marquee/g,
-                'class="flex animate-marquee whitespace-nowrap',
+          // Step 2 — Fix 5: mobile menu solid background + isolation
+          // Uses regex with 's' flag to match multi-line opening tags
+          // (model spreads attributes across lines so line-by-line won't work)
+          const isLightTheme = step1.includes('data-theme="light"');
+          const menuBg = isLightTheme ? "#ffffff" : "#0f172a";
+          // Step 2 — patch mobile menu divs with solid background + isolation
+          let step2 = step1;
+          let searchFrom = 0;
+          while (true) {
+            const xshowIdx = step2.indexOf('x-show="open"', searchFrom);
+            if (xshowIdx === -1) break;
+
+            // Only look back 500 chars — the opening <div is always nearby
+            const lookbackStart = Math.max(0, xshowIdx - 500);
+            const tagStart = step2.lastIndexOf("<div", xshowIdx);
+
+            // Skip if <div is too far back (not the direct parent tag)
+            if (tagStart === -1 || tagStart < lookbackStart) {
+              searchFrom = xshowIdx + 1;
+              continue;
+            }
+
+            // Walk forward to find closing > — but cap at 1000 chars max
+            let tagEnd = -1;
+            let inQuote = false;
+            let quoteChar = "";
+            const searchLimit = Math.min(step2.length, tagStart + 1000);
+            for (let i = tagStart; i < searchLimit; i++) {
+              const ch = step2[i];
+              if (inQuote) {
+                if (ch === quoteChar) inQuote = false;
+              } else if (ch === '"' || ch === "'") {
+                inQuote = true;
+                quoteChar = ch;
+              } else if (ch === ">") {
+                tagEnd = i;
+                break;
+              }
+            }
+            if (tagEnd === -1) {
+              searchFrom = xshowIdx + 1;
+              continue;
+            }
+
+            const fullTag = step2.slice(tagStart, tagEnd + 1);
+
+            // Only patch menu panels (has 'fixed'), skip FAQ accordions and backdrops
+            if (
+              fullTag.includes("fixed") &&
+              !(
+                fullTag.includes("bg-black/") &&
+                !fullTag.includes("flex-col") &&
+                !fullTag.includes("space-y")
               )
-              .replace(/<div class="flex items-center gap-\d+ pr-\d+">/g, (m) =>
-                m.replace(
-                  '<div class="flex',
-                  '<div class="flex flex-shrink-0 flex-nowrap',
-                ),
-              )
-              // Fix 3 — remove external texture URLs that block rendering
-              .replace(/url\(["']https?:\/\/[^"')]+["']\)/g, "none")
-              // Fix 4 — close any unclosed tag right before <main>
-              .replace(/<[a-z][^>]*\n<main>/gi, "\n<main>")
-              .replace(/class="[^"]*\n<main>/g, 'class="">\n</nav>\n<main>')
-              // Fix 5 — mobile menu: force solid background + isolation
-              // Targets style=" on the same line as x-show="open" and fixed
-              // Simple single-line replace — no loops, no walking, no hangs
-              .replace(
-                /(<div[^>\n]*x-show="open"[^>\n]*fixed[^>\n]*)style="[^"]*"/g,
-                `$1style="background:${menuBg};isolation:isolate;backdrop-filter:none"`,
-              )
-              .replace(
-                /(<div[^>\n]*fixed[^>\n]*x-show="open"[^>\n]*)style="[^"]*"/g,
-                `$1style="background:${menuBg};isolation:isolate;backdrop-filter:none"`,
-              )
-          );
+            ) {
+              const fixedStyle = `style="background:${menuBg};isolation:isolate;backdrop-filter:none"`;
+              let patchedTag: string;
+              if (fullTag.includes('style="')) {
+                patchedTag = fullTag.replace(/style="[^"]*"/, fixedStyle);
+              } else {
+                patchedTag = fullTag.slice(0, -1) + " " + fixedStyle + ">";
+              }
+              step2 =
+                step2.slice(0, tagStart) + patchedTag + step2.slice(tagEnd + 1);
+              searchFrom = tagStart + patchedTag.length;
+            } else {
+              searchFrom = tagEnd + 1;
+            }
+          }
+
+          return step2;
         };
 
         // Final assembly — just string concatenation, no magic

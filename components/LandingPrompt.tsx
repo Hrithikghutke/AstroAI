@@ -67,7 +67,7 @@ export default function LandingPrompt() {
   const [selectedTheme, setSelectedTheme] = useState<ThemeStyle>("corporate");
   const [selectedMode, setSelectedMode] = useState<GenerationMode>("fast");
   const [selectedModel, setSelectedModel] = useState(
-    "anthropic/claude-sonnet-4.5",
+    "anthropic/claude-sonnet-4.6",
   );
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +193,7 @@ export default function LandingPrompt() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-2xl mx-auto">
         <div className="text-center space-y-2">
-          <h2 className="text-4xl lg:text-[52px] font-semibold bg-linear-to-r from-purple-400 via-pink-300 to-white bg-clip-text text-transparent leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-[52px] font-semibold bg-linear-to-r from-purple-400 via-pink-300 to-white bg-clip-text text-transparent leading-tight">
             What will you build today?
           </h2>
           <p className="text-sm text-neutral-500">
@@ -202,7 +202,7 @@ export default function LandingPrompt() {
         </div>
 
         {/* Mode toggle */}
-        <div className="flex items-stretch gap-3 w-full">
+        <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full">
           <button
             onClick={() => setSelectedMode("fast")}
             className="flex-1 flex flex-col items-start gap-1.5 px-4 py-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left"
@@ -326,12 +326,12 @@ export default function LandingPrompt() {
 
         {/* Theme selector — only shown in Fast Mode */}
         {selectedMode === "fast" && (
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-center gap-2 w-full">
             {THEME_STYLES.map((style) => (
               <button
                 key={style}
                 onClick={() => setSelectedTheme(style)}
-                className="flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 cursor-pointer"
+                className="flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 cursor-pointer w-full sm:w-auto"
                 style={{
                   borderColor: selectedTheme === style ? "#a855f7" : "#2a2a2a",
                   background:
@@ -366,6 +366,32 @@ export default function LandingPrompt() {
             {/* Model selector pill — Deep Dive only */}
             {selectedMode === "deep" ? (
               <div className="relative">
+                {selectedModel === "anthropic/claude-opus-4" && !loading && (
+                  <div
+                    className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl text-xs"
+                    style={{
+                      background: "rgba(234,179,8,0.08)",
+                      border: "1px solid rgba(234,179,8,0.25)",
+                      color: "#fde68a",
+                    }}
+                  >
+                    <span className="shrink-0 mt-0.5">⏳</span>
+                    <span>
+                      Opus takes <strong>3–5 minutes</strong> and uses{" "}
+                      <strong>300–500 credits</strong> for a complete site. For
+                      faster results, try{" "}
+                      <button
+                        onClick={() =>
+                          setSelectedModel("anthropic/claude-sonnet-4.6")
+                        }
+                        className="underline cursor-pointer hover:text-yellow-200 transition-colors"
+                      >
+                        Sonnet instead
+                      </button>
+                      .
+                    </span>
+                  </div>
+                )}
                 <button
                   onClick={() => setShowModelPicker(!showModelPicker)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
@@ -429,6 +455,14 @@ export default function LandingPrompt() {
                           <span className="text-[10px] text-neutral-500 truncate">
                             {sublabel}
                           </span>
+                          {model === "anthropic/claude-opus-4" && (
+                            <span
+                              className="text-[10px] mt-0.5"
+                              style={{ color: "#fde68a" }}
+                            >
+                              ⏳ 3–5 min · 300–500 credits
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <span

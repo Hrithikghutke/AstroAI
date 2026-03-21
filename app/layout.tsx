@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Open_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark, neobrutalism, shadesOfPurple } from "@clerk/themes";
 import { CreditsProvider } from "@/context/CreditsContext";
 
 const openSans = Open_Sans({
@@ -21,7 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+      }}
+    >
       <html lang="en">
         <body className={openSans.className}>
           <CreditsProvider>{children}</CreditsProvider>

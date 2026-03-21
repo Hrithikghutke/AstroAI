@@ -5,9 +5,9 @@ import LandingPrompt from "@/components/LandingPrompt";
 
 export default function Home() {
   return (
-    <main className="h-screen flex flex-col bg-neutral-950 text-white overflow-hidden">
+    <main className="min-h-screen flex flex-col bg-neutral-950 text-white">
       <Header />
-      <div className="flex-1 flex items-center justify-center overflow-y-auto">
+      <div className="flex-1 flex items-start sm:items-center justify-center overflow-y-auto">
         <LandingPrompt />
       </div>
     </main>
