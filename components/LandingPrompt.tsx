@@ -136,7 +136,7 @@ export default function LandingPrompt() {
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-6 px-4 w-full min-h-full justify-center py-16 overflow-hidden">
+    <div className="relative flex flex-col items-center gap-6 px-4 w-full min-h-screen justify-center py-16 overflow-hidden">
       {/* Background texture */}
       <div
         className="absolute inset-0 pointer-events-none"

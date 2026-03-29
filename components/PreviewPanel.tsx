@@ -14,9 +14,11 @@ import {
   Check,
   Pencil,
   Telescope,
+  Globe,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { generateHtml } from "@/lib/generateHtml";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 // ── VS Code Dark+ syntax highlighter ──
 // ── Simple HTML escaper for code display ──
@@ -56,6 +58,9 @@ export default function PreviewPanel({
   const [pendingChanges, setPendingChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
   const codeEndRef = useRef<HTMLDivElement>(null);
+  const [deploying, setDeploying] = useState(false);
+  const [deployedUrl, setDeployedUrl] = useState<string | null>(null);
+  const [deployCopied, setDeployCopied] = useState(false);
 
   // Auto-switch to Code tab when generation starts
   useEffect(() => {
@@ -233,6 +238,50 @@ export default function PreviewPanel({
     URL.revokeObjectURL(url);
   };
 
+  // ── Deploy to Netlify ──
+  const handleDeploy = async () => {
+    if (!deepHtml || deploying) return;
+    setDeploying(true);
+
+    try {
+      const res = await fetch("/api/netlify/deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: deepHtml,
+          siteName: deepBrandName ?? brandName,
+          generationId: savedId ?? null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.error === "SUBSCRIPTION_REQUIRED") {
+        alert(
+          "Deploy is available for subscribers only. Upgrade your plan to publish your site.",
+        );
+        return;
+      }
+
+      if (!res.ok || !data.url) throw new Error(data.error ?? "Deploy failed");
+
+      setDeployedUrl(data.url);
+    } catch (err: any) {
+      console.error("[Deploy] Failed:", err);
+      alert("Deploy failed. Please try again.");
+    } finally {
+      setDeploying(false);
+    }
+  };
+
+  // Copy deployed URL
+  const handleCopyDeployUrl = async () => {
+    if (!deployedUrl) return;
+    await navigator.clipboard.writeText(deployedUrl);
+    setDeployCopied(true);
+    setTimeout(() => setDeployCopied(false), 2000);
+  };
+
   const saveLabel = () => {
     if (saving) return "Saving…";
     if (saved && !pendingChanges) return "Saved!";
@@ -347,6 +396,49 @@ export default function PreviewPanel({
             </span>
           </button>
 
+          {/* Deploy to Netlify — Deep Dive only */}
+          {isDeepMode &&
+            (deployedUrl ? (
+              // Show live URL after deploy
+              <div className="flex items-center gap-1">
+                <a
+                  href={deployedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 transition-all"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Live</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <button
+                  onClick={handleCopyDeployUrl}
+                  className="flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-all"
+                >
+                  {deployCopied ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Share2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleDeploy}
+                disabled={deploying || isGenerating || !deepHtml}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deploying ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Globe className="w-3.5 h-3.5" />
+                )}
+                <span className="hidden sm:inline">
+                  {deploying ? "Publishing..." : "Publish"}
+                </span>
+              </button>
+            ))}
+
           {/* Viewport toggle */}
           <div className="flex items-center gap-1 bg-neutral-900 border border-neutral-800 rounded-lg p-1">
             <button
@@ -448,12 +540,6 @@ export default function PreviewPanel({
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
-                <DotLottieReact
-                  className="w-40 "
-                  src="https://lottie.host/9343e66e-bf18-4111-ae11-c35e5d37eb01/jgSp07bP0V.lottie"
-                  loop
-                  autoplay
-                />
                 <p
                   style={{ color: "#3a3a3a", fontFamily: "system-ui" }}
                   className="text-sm"

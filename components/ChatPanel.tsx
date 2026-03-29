@@ -193,6 +193,9 @@ export default function ChatPanel({
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const deepHtmlRef = useRef<string | null>(restoredDeepHtml ?? null);
+  const pendingPromptRef = useRef<string | null>(null);
+  const briefRef = useRef<string>("");
   const { deductCredit, refreshCredits } = useCredits();
   const [currentLayout, setCurrentLayout] = useState<any>(
     initialLayout ?? null,
@@ -205,6 +208,7 @@ export default function ChatPanel({
   const typewriterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { userId } = useAuth();
   const [fixLoading, setFixLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [ratingState, setRatingState] = useState<{
     prompt: string;
     html: string;
@@ -366,9 +370,14 @@ export default function ChatPanel({
       },
       {
         id: "developer",
-        label: "⌨️  Crawl Developer is developing your website.",
+        label: "⌨️  Crawl Developer is building your website.",
         status: "idle",
       },
+      { id: "page-home", label: "   📄  Home page", status: "idle" },
+      { id: "page-2", label: "   📄  Page 2", status: "idle" },
+      { id: "page-3", label: "   📄  Page 3", status: "idle" },
+      { id: "page-contact", label: "   📄  Contact page", status: "idle" },
+      { id: "page-footer", label: "   🔗  Footer & scripts", status: "idle" },
       {
         id: "qa",
         label: "🔍  Crawl QA is testing your website for any bug.",
@@ -522,6 +531,62 @@ export default function ChatPanel({
               updateStep("architect", "running", event.message);
               break;
 
+            case "PAGE_NAMES": {
+              // Architect decided the real page structure — update step labels
+              const pages: string[] = event.pages ?? [];
+              const labels: string[] = event.pageLabels ?? [];
+              // Update each page step with real ID and label
+              // pages[0] is always "home", pages[-1] is always "contact"
+              // Middle pages replace the placeholder page-2, page-3 steps
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === agentMessage.id
+                    ? {
+                        ...m,
+                        agentSteps: m.agentSteps?.map((s) => {
+                          // Find matching page by position
+                          const pageIndex = pages.findIndex(
+                            (p) =>
+                              `page-${p}` === s.id ||
+                              (s.id === "page-2" && pages[1] !== undefined) ||
+                              (s.id === "page-3" && pages[2] !== undefined),
+                          );
+                          if (s.id === "page-2" && pages[1]) {
+                            return {
+                              ...s,
+                              id: `page-${pages[1]}`,
+                              label: `   📄  ${labels[1]} page`,
+                            };
+                          }
+                          if (
+                            s.id === "page-3" &&
+                            pages[2] &&
+                            pages.length > 3
+                          ) {
+                            return {
+                              ...s,
+                              id: `page-${pages[2]}`,
+                              label: `   📄  ${labels[2]} page`,
+                            };
+                          }
+                          if (
+                            s.id === "page-contact" &&
+                            labels[labels.length - 1]
+                          ) {
+                            return {
+                              ...s,
+                              label: `   📄  ${labels[labels.length - 1]} page`,
+                            };
+                          }
+                          return s;
+                        }),
+                      }
+                    : m,
+                ),
+              );
+              break;
+            }
+
             case "ARCHITECT_DONE":
               updateStep(
                 "architect",
@@ -532,11 +597,12 @@ export default function ChatPanel({
               break;
 
             case "DEVELOPER_START":
-              // Show estimated credit range based on model
               const estimates: Record<string, string> = {
                 "anthropic/claude-haiku-4.5": "~5 credits",
                 "anthropic/claude-sonnet-4.6": "~20-30 credits",
                 "anthropic/claude-opus-4": "~300-500 credits",
+                "deepseek/deepseek-v3.2":
+                  "~5 credits · pages generate one by one",
               };
               const estimate = estimates[selectedModel] ?? "variable";
               updateStep(
@@ -544,6 +610,14 @@ export default function ChatPanel({
                 "running",
                 `${event.message} (estimated ${estimate})`,
               );
+              // Mark all page steps as running
+              [
+                "page-home",
+                "page-features",
+                "page-pricing",
+                "page-contact",
+                "page-footer",
+              ].forEach((id) => updateStep(id, "running"));
               break;
             case "DEVELOPER_DONE":
               updateStep("developer", "done", event.message);
@@ -556,6 +630,7 @@ export default function ChatPanel({
 
             case "HTML_PREVIEW":
               // Show HTML in preview immediately — don't wait for QA
+              deepHtmlRef.current = event.html;
               setDeepHtml?.(event.html, event.brandName);
               updateStep(
                 "developer",
@@ -564,9 +639,18 @@ export default function ChatPanel({
               );
               break;
 
-            case "DEVELOPER_FIX":
-              updateStep("developer", "running", event.message);
+            case "DEVELOPER_FIX": {
+              // route.ts now sends stepId directly — no need to parse text
+              const stepId = event.stepId as string | undefined;
+              const msg = event.message ?? "";
+              if (stepId) {
+                updateStep(stepId, "done", "Complete ✓");
+              } else {
+                // Fallback for backwards compat
+                updateStep("developer", "running", msg);
+              }
               break;
+            }
 
             case "QA_START":
               updateStep("qa", "running", event.message);
@@ -586,6 +670,7 @@ export default function ChatPanel({
               onStreamCode?.(event.html); // show final HTML in code tab
               onGeneratingChange?.(false); // unlock Preview tab
 
+              deepHtmlRef.current = event.html;
               setDeepHtml?.(event.html, event.brandName);
 
               const finalHtml = await runVisualQA(
@@ -595,6 +680,7 @@ export default function ChatPanel({
               );
 
               if (finalHtml !== event.html) {
+                deepHtmlRef.current = finalHtml;
                 setDeepHtml?.(finalHtml, event.brandName);
               }
 
@@ -675,18 +761,264 @@ export default function ChatPanel({
     }
   };
 
-  const handleGenerate = (promptOverride?: string) => {
-    if (mode === "deep") {
-      handleDeepDive(promptOverride);
-    } else {
-      handleFastGenerate(promptOverride);
+  // ── Detect if the message is a fix/edit vs new generation ──
+  const isEditRequest = (message: string): boolean => {
+    const lower = message.toLowerCase().trim();
+    const editKeywords = [
+      "fix",
+      "change",
+      "update",
+      "edit",
+      "modify",
+      "adjust",
+      "improve",
+      "make",
+      "add",
+      "remove",
+      "delete",
+      "replace",
+      "move",
+      "resize",
+      "color",
+      "font",
+      "spacing",
+      "padding",
+      "margin",
+      "align",
+      "center",
+      "responsive",
+      "mobile",
+      "header",
+      "footer",
+      "navbar",
+      "button",
+      "broken",
+      "wrong",
+      "issue",
+      "problem",
+      "not working",
+      "looks",
+      "style",
+      "design",
+      "layout",
+      "section",
+      "text",
+      "image",
+      "logo",
+      "bigger",
+      "smaller",
+      "darker",
+      "lighter",
+      "bolder",
+      "thinner",
+    ];
+    return editKeywords.some((kw) => lower.includes(kw));
+  };
+
+  // ── Surgical edit via /api/edit-html ──
+  const handleEditRequest = async (instruction: string) => {
+    const currentHtml = deepHtmlRef.current;
+    if (!currentHtml) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: instruction,
+    };
+    const thinkingMessage: Message = {
+      id: Date.now().toString() + "-editing",
+      role: "assistant",
+      content: "",
+      isGenerating: true,
+    };
+
+    setMessages((prev) => [...prev, userMessage, thinkingMessage]);
+    setInput("");
+    setIsEditing(true);
+    setLoading(true);
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+    try {
+      const res = await fetch("/api/edit-html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html: currentHtml, instruction }),
+      });
+
+      if (res.status === 402) {
+        const errData = await res.json();
+        throw new Error(errData.message ?? "Not enough credits.");
+      }
+      if (!res.ok) throw new Error("Edit failed");
+
+      const data = await res.json();
+      if (!data.html) throw new Error("No HTML returned");
+
+      deepHtmlRef.current = data.html;
+      setDeepHtml?.(data.html);
+      await refreshCredits();
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? {
+                ...m,
+                isGenerating: false,
+                content: `✅ Done! **${data.creditsUsed} credit${data.creditsUsed === 1 ? "" : "s"}** used.\n\nWant to make more changes?`,
+              }
+            : m,
+        ),
+      );
+    } catch (err: any) {
+      await refreshCredits();
+      const errorMsg = err.message.startsWith("Not enough")
+        ? `💳 ${err.message}`
+        : "Edit failed. Want me to regenerate the whole site instead?";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? { ...m, isGenerating: false, content: `❌ ${errorMsg}` }
+            : m,
+        ),
+      );
+    } finally {
+      setLoading(false);
+      setIsEditing(false);
+    }
+  };
+
+  // ── Conversational chat handler — routes through AI brain first ──
+  const handleGenerate = async (promptOverride?: string) => {
+    const prompt = promptOverride ?? input.trim();
+    if (!prompt || loading) return;
+
+    // Suggestion chips + auto-start always bypass conversational layer
+    if (promptOverride) {
+      if (mode === "deep") {
+        handleDeepDive(promptOverride);
+      } else {
+        handleFastGenerate(promptOverride);
+      }
+      return;
+    }
+
+    // Fast mode — no conversational layer, just generate
+    if (mode === "fast") {
+      handleFastGenerate();
+      return;
+    }
+
+    // ── Deep Dive: route through AI brain ──
+
+    // Last 6 non-generating messages for context
+    const recentHistory = messages
+      .filter((m) => !m.isGenerating && m.content)
+      .slice(-6)
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    recentHistory.push({ role: "user", content: prompt });
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: prompt,
+    };
+    const thinkingMsg: Message = {
+      id: Date.now().toString() + "-thinking",
+      role: "assistant",
+      content: "",
+      isGenerating: true,
+    };
+
+    setMessages((prev) => [...prev, userMsg, thinkingMsg]);
+    setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: recentHistory,
+          brief: briefRef.current,
+          hasExistingWebsite: !!deepHtmlRef.current,
+        }),
+      });
+
+      const data = await res.json();
+      const { action, message, prompt: aiPrompt, updatedBrief } = data;
+
+      // Always update running brief if AI returned one
+      if (updatedBrief) briefRef.current = updatedBrief;
+
+      const resolveThinking = (content: string) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.isGenerating ? { ...m, isGenerating: false, content } : m,
+          ),
+        );
+      };
+
+      switch (action) {
+        case "chat":
+          resolveThinking(message);
+          break;
+
+        case "confirm":
+          resolveThinking(message);
+          pendingPromptRef.current = aiPrompt ?? null;
+          break;
+
+        case "build_now":
+          // Rich prompt — show a brief "building now" message then start
+          resolveThinking(
+            message ||
+              "Great, I have everything I need — building your site now! 🚀",
+          );
+          const buildNowPrompt = aiPrompt || briefRef.current || prompt;
+          handleDeepDive(buildNowPrompt);
+          pendingPromptRef.current = null;
+          break;
+
+        case "generate":
+          // User confirmed after a "confirm" — use stored brief or AI prompt
+          resolveThinking(message || "Starting now! 🚀");
+          const buildPrompt =
+            pendingPromptRef.current || aiPrompt || briefRef.current || prompt;
+          handleDeepDive(buildPrompt);
+          pendingPromptRef.current = null;
+          break;
+
+        case "edit":
+          resolveThinking(message);
+          if (aiPrompt) handleEditRequest(aiPrompt);
+          break;
+
+        default:
+          resolveThinking(message || "Something went wrong. Try again!");
+      }
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? {
+                ...m,
+                isGenerating: false,
+                content: "Something went wrong. Try again!",
+              }
+            : m,
+        ),
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleGenerate();
+      void handleGenerate();
     }
   };
 
@@ -701,6 +1033,8 @@ export default function ChatPanel({
     ]);
     setCurrentLayout(null);
     setLayout(null);
+    briefRef.current = "";
+    pendingPromptRef.current = null;
     onNewChat?.();
   };
 
@@ -1572,9 +1906,11 @@ export default function ChatPanel({
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder={
-                mode === "deep"
-                  ? "Describe your website for Deep Dive generation..."
-                  : "Describe your website..."
+                mode === "deep" && deepHtmlRef.current
+                  ? "Describe a change or type a new idea to regenerate..."
+                  : mode === "deep"
+                    ? "Describe your website for Deep Dive generation..."
+                    : "Describe your website..."
               }
               rows={1}
               className="flex-1 bg-transparent text-sm text-neutral-200 placeholder:text-neutral-600 outline-none resize-none max-h-30 scrollbar-none"
@@ -1742,7 +2078,7 @@ export default function ChatPanel({
               </button>
             ) : (
               <button
-                onClick={() => handleGenerate()}
+                onClick={() => void handleGenerate()}
                 disabled={loading || !input.trim()}
                 className="shrink-0 w-8 h-8 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 cursor-pointer"
                 style={{ background: mode === "deep" ? "#ec4899" : "#a855f7" }}

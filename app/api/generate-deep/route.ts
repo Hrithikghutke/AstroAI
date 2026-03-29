@@ -2,54 +2,35 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserCredits, deductCredits } from "@/lib/firestore";
 import {
-  getDeveloperPrompt,
   getShellPrompt,
   getPagePrompt,
   getFooterPrompt,
+  getSinglePageTopPrompt,
+  getSinglePageBottomPrompt,
 } from "@/lib/agentPrompts/developer";
+import {
+  getArchitectPrompt,
+  type ArchitectOutput,
+} from "@/lib/agentPrompts/architect";
 import { fetchUnsplashImage } from "@/lib/fetchUnsplash";
 import { getModelConfig, calculateCredits } from "@/lib/modelConfig";
 
 // Increase max duration for Deep Dive — Opus can take 45-60s
-export const maxDuration = 120; // seconds — requires Vercel Pro or hobby with override
+export const maxDuration = 300;
 
-// ── Shared OpenRouter fetch helper ──
-async function callOpenRouter(
-  systemPrompt: string,
-  userMessage: string,
-  maxTokens: number = 12000,
-  model: string = "anthropic/claude-haiku-4.5",
-): Promise<{ content: string; outputTokens: number }> {
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      temperature: 0.8,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-    }),
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(`OpenRouter error: ${JSON.stringify(data)}`);
-  }
-
-  const content = data.choices?.[0]?.message?.content ?? "";
-  const outputTokens = data.usage?.completion_tokens ?? 0;
-
-  console.log(`[OpenRouter] model=${model} | output_tokens=${outputTokens}`);
-
-  return { content, outputTokens };
-}
+// Minimal fallback footer — used when footer generation fails
+// Contains all essential JS so routing still works
+const FALLBACK_FOOTER = `<footer class="border-t border-white/5 py-16 px-6 bg-black/40">
+  <div class="max-w-7xl mx-auto text-center">
+    <p class="text-white/40 text-sm">© ${new Date().getFullYear()} All rights reserved.</p>
+  </div>
+</footer>
+<script>
+window.addEventListener('scroll',function(){var n=document.getElementById('navbar');if(n){var c=n.querySelector('div');if(c)c.style.background=window.scrollY>50?'rgba(15,23,42,0.98)':'rgba(15,23,42,0.85)';}});
+var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,t=parseFloat(el.dataset.target);if(isNaN(t)){co.unobserve(el);return;}var c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){el.textContent=t>=1000?Math.round(t).toLocaleString()+'+':t+'+';clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
+var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.6s ease,transform 0.6s ease';fo.observe(el);});
+</script>
+</body></html>`;
 
 // ── Streaming version for developer agent ──
 async function callOpenRouterStream(
@@ -125,28 +106,74 @@ async function callOpenRouterStream(
   return { outputTokens };
 }
 
-// ── Strip markdown code fences if AI wraps output ──
-function stripFences(raw: string): string {
-  let result = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```html\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```\s*$/i, "")
-    .trim();
-
-  // Strip any prose preamble before the DOCTYPE/html tag
-  // Model sometimes says "Here's the website:" before the actual HTML
-  const doctypeIndex = result.search(/<!DOCTYPE\s+html/i);
-  const htmlTagIndex = result.search(/<html[\s>]/i);
-  const startIndex =
-    doctypeIndex !== -1 ? doctypeIndex : htmlTagIndex !== -1 ? htmlTagIndex : 0;
-
-  if (startIndex > 0) {
-    result = result.substring(startIndex);
-  }
-
-  return result;
+// ── Non-streaming JSON call — used for Architect (Haiku, fast, cheap) ──
+async function callOpenRouterJson(
+  systemPrompt: string,
+  userMessage: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    signal,
+    headers: {
+      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "anthropic/claude-haiku-4.5", // Always Haiku — fast and cheap for JSON
+      max_tokens: 600,
+      temperature: 0.7,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage },
+      ],
+    }),
+  });
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
 }
+
+// ── Default architect fallback — used if architect call fails ──
+function defaultArchitect(prompt: string): ArchitectOutput {
+  const isTech = /(saas|tech|software|app|startup)/i.test(prompt);
+  const isFood = /(restaurant|cafe|food|dining)/i.test(prompt);
+  const isGym = /(gym|fitness|workout)/i.test(prompt);
+  return {
+    brandName: "Your Brand",
+    theme: "dark",
+    colors: {
+      primary: isTech
+        ? "#6366F1"
+        : isFood
+          ? "#F59E0B"
+          : isGym
+            ? "#EF4444"
+            : "#3B82F6",
+      secondary: "#8B5CF6",
+      background: "#0F172A",
+      surface: "#1E293B",
+    },
+    fonts: {
+      display: isTech ? "Space Grotesk" : isFood ? "Playfair Display" : "Inter",
+      body: "Inter",
+      url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
+    },
+    pages: [
+      "home",
+      isTech ? "features" : isFood ? "menu" : "services",
+      isTech ? "pricing" : "projects",
+      "contact",
+    ],
+    pageLabels: [
+      "Home",
+      isTech ? "Features" : isFood ? "Menu" : "Services",
+      isTech ? "Pricing" : "Projects",
+      "Contact",
+    ],
+  };
+}
+
+// ── Extract design tokens from shell HTML for page prompts ──
 
 // ── Extract design tokens from shell HTML for page prompts ──
 // Passes tailwind config colors + shared CSS classes to each page call
@@ -200,25 +227,77 @@ function validatePageSection(html: string, pageId: string): string {
 
 // ── Silent streaming — streams from OpenRouter (prevents timeouts)
 // but collects full output without pushing chunks to client ──
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+async function silentStreamOnce(
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number,
+  model: string,
+  signal?: AbortSignal,
+  timeoutMs: number = 150000,
+): Promise<{ content: string; outputTokens: number }> {
+  let content = "";
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("silentStream timeout")), timeoutMs),
+  );
+
+  const streamPromise = callOpenRouterStream(
+    systemPrompt,
+    userMessage,
+    maxTokens,
+    model,
+    (accumulated) => {
+      content = accumulated;
+    },
+    signal,
+  );
+
+  const { outputTokens } = await Promise.race([streamPromise, timeoutPromise]);
+  return { content, outputTokens };
+}
+
 async function silentStream(
   systemPrompt: string,
   userMessage: string,
   maxTokens: number,
   model: string,
   signal?: AbortSignal,
+  timeoutMs: number = 150000,
 ): Promise<{ content: string; outputTokens: number }> {
-  let content = "";
-  const { outputTokens } = await callOpenRouterStream(
-    systemPrompt,
-    userMessage,
-    maxTokens,
-    model,
-    (accumulated) => {
-      content = accumulated; // collect without pushing to client
-    },
-    signal,
-  );
-  return { content, outputTokens };
+  try {
+    const result = await silentStreamOnce(
+      systemPrompt,
+      userMessage,
+      maxTokens,
+      model,
+      signal,
+      timeoutMs,
+    );
+    // Sanity check — if content is suspiciously short, treat as failure
+    if (result.content.length < 200) {
+      console.warn(
+        `[silentStream] Suspiciously short response (${result.content.length} chars) — retrying`,
+      );
+      throw new Error("Response too short");
+    }
+    return result;
+  } catch (err: any) {
+    if (signal?.aborted) throw err; // Don't retry on user abort
+    console.warn(
+      `[silentStream] First attempt failed: ${err.message} — retrying after 3s`,
+    );
+    await delay(3000);
+    return silentStreamOnce(
+      systemPrompt,
+      userMessage,
+      maxTokens,
+      model,
+      signal,
+      timeoutMs,
+    );
+  }
 }
 
 // ── Generate SEO meta tags from available generation data ──
@@ -324,9 +403,104 @@ function buildSeoTags(
   <meta name="twitter:image" content="${heroImageUrl}">`.trim();
 }
 
+// ── Pick Unsplash search query from prompt keywords ──
+function getUnsplashQuery(prompt: string): string {
+  const p = prompt.toLowerCase();
+  const h = p.slice(0, 150);
+
+  if (
+    /(saas|software|app|platform|dashboard|tech|startup|ai website|ai tool|ai builder|website builder)/i.test(
+      h,
+    )
+  )
+    return "software saas dashboard technology";
+  if (/(gym|fitness|workout|crossfit|bodybuilding|sport|athletic)/i.test(h))
+    return "gym fitness workout";
+  if (/(restaurant|food|cafe|coffee|dining|cuisine|bistro|bakery)/i.test(h))
+    return "restaurant food dining";
+  if (
+    /(engineer|structural|civil|construction|architect|building|blueprint|consultancy|consulting)/i.test(
+      h,
+    )
+  )
+    return "construction building architecture";
+  if (/(saas|software|app|platform|dashboard|tech|startup|ai|tool)/i.test(p))
+    return "software technology laptop";
+  if (/(law|legal|attorney|lawyer|firm|justice)/i.test(p))
+    return "law office professional";
+  if (/(medical|health|clinic|hospital|doctor|dental|therapy)/i.test(p))
+    return "medical healthcare clinic";
+  if (/(real estate|property|housing|home|realty)/i.test(p))
+    return "real estate property building";
+  if (/(finance|bank|invest|accounting|insurance|wealth)/i.test(p))
+    return "finance business professional";
+  if (/(agency|marketing|creative|design|branding)/i.test(p))
+    return "creative agency office team";
+  if (/(education|school|university|course|learning|tutor)/i.test(p))
+    return "education learning study";
+  if (/(hotel|resort|travel|tourism|hospitality)/i.test(p))
+    return "hotel resort luxury travel";
+
+  // Fallback: extract 2 meaningful words from prompt
+  const stopWords = new Set([
+    "a",
+    "an",
+    "the",
+    "for",
+    "with",
+    "and",
+    "or",
+    "that",
+    "this",
+    "in",
+    "on",
+    "at",
+    "to",
+    "of",
+    "i",
+    "we",
+    "our",
+    "your",
+    "my",
+    "build",
+    "create",
+    "make",
+    "generate",
+    "landing",
+    "page",
+    "website",
+    "site",
+    "want",
+    "need",
+    "called",
+    "named",
+    "please",
+  ]);
+  const words = p
+    .replace(/[^a-z\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => !stopWords.has(w) && w.length > 4)
+    .slice(0, 2)
+    .join(" ");
+  return words || "modern office professional";
+}
+
+// ── Detect if user wants a single page landing page ──
+function detectSinglePage(prompt: string): boolean {
+  const lower = prompt.toLowerCase();
+  // Only trigger on EXPLICIT single/one page requests
+  // Do NOT match "landing page" — AI briefs always include this phrase
+  // even for full multi-page sites
+  return (
+    /\bsingle.?page\b|\bone.?page\b|\b1.?page\b/.test(lower) &&
+    !/(multi.?page|multiple.?page|4.?page|several.?page|pages:|home.*features.*pricing|home page.*features page)/.test(
+      lower,
+    )
+  );
+}
+
 export async function POST(req: Request) {
-  const clientSignal = req.signal; // aborts when client disconnects OR Vercel times out
-  let userAborted = false; // only true when user explicitly pressed Stop
+  const clientSignal = req.signal;
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -356,8 +530,6 @@ export async function POST(req: Request) {
   // Model config — Architect and QA always use Haiku (JSON only)
   // Developer uses user-selected model
   const DEVELOPER_MODEL = selectedModel ?? "anthropic/claude-haiku-4.5";
-
-  const modelLabel = getModelConfig(DEVELOPER_MODEL).sublabel;
 
   // ── Set up streaming response ──
   const encoder = new TextEncoder();
@@ -406,7 +578,6 @@ export async function POST(req: Request) {
       let creditsDone = false;
       let totalOutputTokens = 0;
       let totalCreditsToDeduct = 5;
-      let thinkingPings: ReturnType<typeof setInterval> | null = null;
 
       try {
         // ════════════════════════════════════════════
@@ -415,104 +586,7 @@ export async function POST(req: Request) {
         let heroImageUrl =
           "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1920&q=80&auto=format&fit=crop";
         try {
-          const promptLower = prompt.toLowerCase();
-          const promptHead = promptLower.slice(0, 150);
-          let unsplashQuery = "modern office professional";
-          if (
-            /(saas|software|app|platform|dashboard|tech|startup|ai website|ai tool|ai builder|website builder)/i.test(
-              promptHead,
-            )
-          )
-            unsplashQuery = "software saas dashboard technology";
-          else if (
-            /(gym|fitness|workout|crossfit|bodybuilding|sport|athletic)/i.test(
-              promptHead,
-            )
-          )
-            unsplashQuery = "gym fitness workout";
-          else if (
-            /(restaurant|food|cafe|coffee|dining|cuisine|bistro|bakery)/i.test(
-              promptHead,
-            )
-          )
-            unsplashQuery = "restaurant food dining";
-          else if (
-            /(engineer|structural|civil|construction|architect|building|blueprint|consultancy|consulting)/i.test(
-              promptHead,
-            )
-          )
-            unsplashQuery = "construction building architecture";
-          else if (
-            /(saas|software|app|platform|dashboard|tech|startup|ai|tool)/i.test(
-              prompt,
-            )
-          )
-            unsplashQuery = "software technology laptop";
-          else if (/(law|legal|attorney|lawyer|firm|justice)/i.test(prompt))
-            unsplashQuery = "law office professional";
-          else if (
-            /(medical|health|clinic|hospital|doctor|dental|therapy)/i.test(
-              prompt,
-            )
-          )
-            unsplashQuery = "medical healthcare clinic";
-          else if (/(real estate|property|housing|home|realty)/i.test(prompt))
-            unsplashQuery = "real estate property building";
-          else if (
-            /(finance|bank|invest|accounting|insurance|wealth)/i.test(prompt)
-          )
-            unsplashQuery = "finance business professional";
-          else if (/(agency|marketing|creative|design|branding)/i.test(prompt))
-            unsplashQuery = "creative agency office team";
-          else if (
-            /(education|school|university|course|learning|tutor)/i.test(prompt)
-          )
-            unsplashQuery = "education learning study";
-          else if (/(hotel|resort|travel|tourism|hospitality)/i.test(prompt))
-            unsplashQuery = "hotel resort luxury travel";
-          else {
-            const stopWords = [
-              "a",
-              "an",
-              "the",
-              "for",
-              "with",
-              "and",
-              "or",
-              "that",
-              "this",
-              "in",
-              "on",
-              "at",
-              "to",
-              "of",
-              "i",
-              "we",
-              "our",
-              "your",
-              "my",
-              "build",
-              "create",
-              "make",
-              "generate",
-              "landing",
-              "page",
-              "website",
-              "site",
-              "want",
-              "need",
-              "called",
-              "named",
-              "please",
-            ];
-            const words = promptLower
-              .replace(/[^a-z\s]/g, "")
-              .split(/\s+/)
-              .filter((w: string) => !stopWords.includes(w) && w.length > 4)
-              .slice(0, 2)
-              .join(" ");
-            if (words) unsplashQuery = words;
-          }
+          const unsplashQuery = getUnsplashQuery(prompt);
           console.log("[Unsplash] Query:", unsplashQuery);
           const image = await fetchUnsplashImage(unsplashQuery);
           if (image) heroImageUrl = image;
@@ -527,30 +601,79 @@ export async function POST(req: Request) {
         const maxOut = getModelConfig(DEVELOPER_MODEL).maxOutputTokens;
         // Use 92% of maxOut as ceiling — leaves headroom to avoid tight truncation
         // Footer gets a hard minimum of 4500 tokens — it carries ALL the JS
-        const usable = Math.floor(maxOut * 0.92);
-        const budgets = {
-          shell: 6000, // capped — prevents navbar padding, navbar never needs more than ~4k
-          home: maxOut, // full budget — richest page, let it use what it needs
-          features: maxOut,
-          pricing: maxOut,
-          contact: maxOut,
-          footer: maxOut, // full budget — needs footer HTML + all JS
-        };
-        console.log(
-          `[Budgets] maxOut:${maxOut} shell:${budgets.shell} home:${budgets.home} features:${budgets.features} pricing:${budgets.pricing} contact:${budgets.contact} footer:${budgets.footer}`,
-        );
 
         // ════════════════════════════════════════════
         // STEP 3 — Shell call (sequential, must finish first)
         // Generates: head + CSS system + navbar
         // ════════════════════════════════════════════
+        const isSinglePage = detectSinglePage(prompt);
+        const isDeepSeek = DEVELOPER_MODEL.includes("deepseek");
+        console.log(
+          `[Mode] Single page: ${isSinglePage} | Model: ${isDeepSeek ? "DeepSeek (sequential)" : "Fast (parallel)"}`,
+        );
+
+        const budgets = {
+          shell: 6000,
+          page: isSinglePage ? 12000 : maxOut,
+          footer: maxOut,
+        };
+        console.log(
+          `[Budgets] maxOut:${maxOut} shell:${budgets.shell} page:${budgets.page} footer:${budgets.footer}`,
+        );
+
+        // ════════════════════════════════════════════
+        // STEP 2 — REAL Architect call (Haiku, ~3s)
+        // Decides: brand, colors, fonts, page structure
+        // ════════════════════════════════════════════
         push("ARCHITECT_START", {
-          message: "Building design system and navbar...",
+          message: "Analyzing business and planning website structure...",
         });
 
+        let architect: ArchitectOutput;
+        try {
+          const rawArchitect = await callOpenRouterJson(
+            getArchitectPrompt(),
+            `Business to build a website for: ${prompt}`,
+            clientSignal,
+          );
+          const clean = rawArchitect
+            .replace(/^```json\s*/i, "")
+            .replace(/```\s*$/i, "")
+            .trim();
+          const parsed = JSON.parse(clean);
+          // Validate required fields
+          if (
+            !parsed.pages?.length ||
+            !parsed.colors?.primary ||
+            !parsed.fonts?.display
+          ) {
+            throw new Error("Incomplete architect output");
+          }
+          architect = parsed as ArchitectOutput;
+          console.log(
+            `[Architect] Pages: ${architect.pages.join(", ")} | Brand: ${architect.brandName} | Primary: ${architect.colors.primary}`,
+          );
+        } catch (err) {
+          console.warn(
+            "[Architect] Failed or incomplete — using smart fallback:",
+            err,
+          );
+          architect = defaultArchitect(prompt);
+        }
+
+        // Tell ChatPanel the real page names so step labels update
+        push("PAGE_NAMES", {
+          pages: architect.pages,
+          pageLabels: architect.pageLabels,
+        });
+
+        // ════════════════════════════════════════════
+        // STEP 3 — Shell call (sequential, must finish first)
+        // Now receives architect output — just implements, doesn't decide
+        // ════════════════════════════════════════════
         const { content: shellHtml, outputTokens: shellTokens } =
           await silentStream(
-            getShellPrompt(),
+            getShellPrompt(isSinglePage, architect),
             `Business: ${prompt}\nHero image URL: ${heroImageUrl}${fixes?.length ? `\nFixes to address: ${fixes.map((f: string) => `- ${f}`).join("\n")}` : ""}`,
             budgets.shell,
             DEVELOPER_MODEL,
@@ -566,25 +689,23 @@ export async function POST(req: Request) {
           return;
         }
 
-        // Compute shellBase here — needed by pushProgressiveHtml during parallel calls
         const pagesMarkerEarly = shellHtml.indexOf("<!-- PAGES_START -->");
         const shellBase =
           pagesMarkerEarly !== -1
             ? shellHtml.slice(0, pagesMarkerEarly).trimEnd()
             : shellHtml.trimEnd();
 
-        // Extract design tokens (colors + CSS classes) to give context to page calls
         const designTokens = extractDesignTokens(shellHtml);
 
-        // Extract brand name from <title> for COMPLETE event
-        const titleMatch = shellHtml.match(/<title>([^<]+)<\/title>/i);
-        const brandName = titleMatch
-          ? titleMatch[1].split("—")[0].split("-")[0].trim()
-          : "Your Website";
+        // Use architect's brandName — more reliable than parsing <title>
+        const brandName = architect.brandName;
 
         push("ARCHITECT_DONE", {
-          message: "Design system ready! Building all 4 pages in parallel...",
-          plan: { brandName },
+          message: `Structure ready! Building ${architect.pages.length} pages: ${architect.pageLabels.join(", ")}`,
+          plan: {
+            brandName,
+            overallStyle: `${architect.fonts.display} · ${architect.colors.primary}`,
+          },
         });
 
         // ════════════════════════════════════════════
@@ -597,22 +718,21 @@ export async function POST(req: Request) {
         });
 
         // Push shell immediately so code tab shows something right away
+        // Push shell immediately so code tab shows something right away
         push("HTML_CHUNK", {
           chunk:
             shellBase +
-            "\n<main>\n<!-- Building pages in parallel... -->\n</main>\n</body></html>",
+            "\n<main>\n<!-- Building pages... -->\n</main>\n</body></html>",
         });
 
-        // Track validated pages as they complete for progressive streaming
+        // Track completed pages for progressive preview streaming
         const completedPages: Record<string, string> = {};
-
         const pushProgressiveHtml = (pageId: string, validatedHtml: string) => {
           completedPages[pageId] = validatedHtml;
-          const order = ["home", "features", "pricing", "contact"];
           const assembled =
             shellBase +
             "\n<main>" +
-            order
+            architect.pages
               .filter((id) => completedPages[id])
               .map((id) => "\n" + completedPages[id])
               .join("") +
@@ -620,148 +740,248 @@ export async function POST(req: Request) {
           push("HTML_CHUNK", { chunk: assembled });
         };
 
-        const pageResults = await Promise.allSettled([
-          silentStream(
-            getPagePrompt("home", prompt, designTokens, heroImageUrl),
-            "Generate the complete home page section.",
-            budgets.home,
-            DEVELOPER_MODEL,
-            clientSignal,
-          ).then((r) => {
-            pushProgressiveHtml("home", validatePageSection(r.content, "home"));
-            push("DEVELOPER_FIX", { message: "✓ Home page complete" });
-            return r;
-          }),
-          silentStream(
-            getPagePrompt("features", prompt, designTokens),
-            "Generate the complete features page section.",
-            budgets.features,
-            DEVELOPER_MODEL,
-            clientSignal,
-          ).then((r) => {
-            pushProgressiveHtml(
-              "features",
-              validatePageSection(r.content, "features"),
-            );
-            push("DEVELOPER_FIX", { message: "✓ Features page complete" });
-            return r;
-          }),
-          silentStream(
-            getPagePrompt("pricing", prompt, designTokens),
-            "Generate the complete pricing page section.",
-            budgets.pricing,
-            DEVELOPER_MODEL,
-            clientSignal,
-          ).then((r) => {
-            pushProgressiveHtml(
-              "pricing",
-              validatePageSection(r.content, "pricing"),
-            );
-            push("DEVELOPER_FIX", { message: "✓ Pricing page complete" });
-            return r;
-          }),
-          silentStream(
-            getPagePrompt("contact", prompt, designTokens),
-            "Generate the complete contact page section.",
-            budgets.contact,
-            DEVELOPER_MODEL,
-            clientSignal,
-          ).then((r) => {
-            pushProgressiveHtml(
-              "contact",
-              validatePageSection(r.content, "contact"),
-            );
-            push("DEVELOPER_FIX", { message: "✓ Contact page complete" });
-            return r;
-          }),
-        ]);
+        const staggerMs = isDeepSeek ? 0 : 400;
+        const stagger = (index: number) => delay(index * staggerMs);
+        const callTimeout = isDeepSeek ? 200000 : 150000;
 
-        // Extract results — use fallback placeholder if any individual page failed
+        let pageResults: PromiseSettledResult<{
+          content: string;
+          outputTokens: number;
+        }>[];
+
+        if (isSinglePage) {
+          // ── Single page: 3 parallel calls (top half + bottom half + footer) ──
+          const singleCalls = [
+            stagger(0)
+              .then(() =>
+                silentStream(
+                  getSinglePageTopPrompt(prompt, designTokens, heroImageUrl),
+                  "Generate the top half.",
+                  budgets.page,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                ),
+              )
+              .then((r) => {
+                pushProgressiveHtml("home", r.content);
+                push("DEVELOPER_FIX", {
+                  stepId: "page-home",
+                  message: "✓ Home complete",
+                });
+                return r;
+              }),
+            stagger(1)
+              .then(() =>
+                silentStream(
+                  getSinglePageBottomPrompt(prompt, designTokens),
+                  "Generate the bottom half.",
+                  budgets.page,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                ),
+              )
+              .then((r) => {
+                pushProgressiveHtml("features", r.content);
+                push("DEVELOPER_FIX", {
+                  stepId: "page-2",
+                  message: "✓ Bottom half complete",
+                });
+                return r;
+              }),
+            stagger(2)
+              .then(() =>
+                silentStream(
+                  getFooterPrompt(prompt, designTokens, true),
+                  "Generate footer and scripts.",
+                  budgets.footer,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                ),
+              )
+              .then((r) => {
+                push("DEVELOPER_FIX", {
+                  stepId: "page-footer",
+                  message: "✓ Footer complete",
+                });
+                return r;
+              }),
+          ];
+          pageResults = await Promise.allSettled(singleCalls);
+        } else if (isDeepSeek) {
+          // ── DeepSeek: SEQUENTIAL to avoid rate limiting ──
+          pageResults = [];
+          for (let i = 0; i < architect.pages.length; i++) {
+            const pageId = architect.pages[i];
+            const pageLabel = architect.pageLabels[i];
+            const heroUrl = pageId === "home" ? heroImageUrl : undefined;
+            try {
+              const r = await silentStream(
+                getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl),
+                `Generate the complete ${pageLabel} page section.`,
+                budgets.page,
+                DEVELOPER_MODEL,
+                clientSignal,
+                callTimeout,
+              );
+              pushProgressiveHtml(
+                pageId,
+                validatePageSection(r.content, pageId),
+              );
+              push("DEVELOPER_FIX", {
+                stepId: `page-${pageId}`,
+                message: `✓ ${pageLabel} page complete`,
+              });
+              pageResults.push({ status: "fulfilled", value: r });
+            } catch (err: any) {
+              console.error(
+                `[Page ${pageId}] Sequential failed:`,
+                err?.message,
+              );
+              push("DEVELOPER_FIX", {
+                stepId: `page-${pageId}`,
+                message: `⚠ ${pageLabel} page failed`,
+              });
+              pageResults.push({ status: "rejected", reason: err });
+            }
+          }
+          // Footer — always last for DeepSeek
+          try {
+            const footerR = await silentStream(
+              getFooterPrompt(prompt, designTokens, false),
+              "Generate the footer and closing scripts.",
+              budgets.footer,
+              DEVELOPER_MODEL,
+              clientSignal,
+              callTimeout,
+            );
+            push("DEVELOPER_FIX", {
+              stepId: "page-footer",
+              message: "✓ Footer & scripts complete",
+            });
+            pageResults.push({ status: "fulfilled", value: footerR });
+          } catch (err: any) {
+            console.error("[Page footer] Sequential failed:", err?.message);
+            pageResults.push({ status: "rejected", reason: err });
+          }
+        } else {
+          // ── Claude / fast models: PARALLEL generation ──
+          const parallelPageCalls = architect.pages.map((pageId, index) => {
+            const pageLabel = architect.pageLabels[index];
+            const heroUrl = pageId === "home" ? heroImageUrl : undefined;
+            return stagger(index)
+              .then(() =>
+                silentStream(
+                  getPagePrompt(
+                    pageId,
+                    pageLabel,
+                    prompt,
+                    designTokens,
+                    heroUrl,
+                  ),
+                  `Generate the complete ${pageLabel} page section.`,
+                  budgets.page,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                ),
+              )
+              .then((r) => {
+                pushProgressiveHtml(
+                  pageId,
+                  validatePageSection(r.content, pageId),
+                );
+                push("DEVELOPER_FIX", {
+                  stepId: `page-${pageId}`,
+                  message: `✓ ${pageLabel} page complete`,
+                });
+                return r;
+              });
+          });
+          // Footer runs in parallel at the end index
+          parallelPageCalls.push(
+            stagger(architect.pages.length)
+              .then(() =>
+                silentStream(
+                  getFooterPrompt(prompt, designTokens, false),
+                  "Generate the footer and closing scripts.",
+                  budgets.footer,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                ),
+              )
+              .then((r) => {
+                push("DEVELOPER_FIX", {
+                  stepId: "page-footer",
+                  message: "✓ Footer & scripts complete",
+                });
+                return r;
+              }),
+          );
+          pageResults = await Promise.allSettled(parallelPageCalls);
+        }
+
+        // Log results for debugging
+        const pageLabelsForLog = isSinglePage
+          ? ["home", "bottom", "footer"]
+          : [...architect.pages, "footer"];
+        pageResults.forEach((r, i) => {
+          if (r.status === "fulfilled") {
+            console.log(
+              `[Page ${pageLabelsForLog[i] ?? i}] ✓ ${r.value.content.length} chars, ${r.value.outputTokens} tokens`,
+            );
+          } else {
+            console.error(
+              `[Page ${pageLabelsForLog[i] ?? i}] ✗ FAILED:`,
+              r.reason?.message ?? r.reason,
+            );
+          }
+        });
+
+        // Fallback placeholder for failed pages
         const fallback = (pageId: string) => ({
           content: `<section id="page-${pageId}" class="page"><div class="min-h-screen flex items-center justify-center py-40"><div class="text-center"><h2 class="font-display text-4xl font-bold mb-4 opacity-50">Content unavailable</h2><p class="text-white/40">This page failed to generate. Try regenerating.</p></div></div></section>`,
           outputTokens: 0,
         });
 
-        const [homeResult, featuresResult, pricingResult, contactResult] =
-          pageResults;
-        const { content: homeHtml, outputTokens: homeTokens } =
-          homeResult.status === "fulfilled"
-            ? homeResult.value
-            : (() => {
-                console.warn(
-                  "[Page home] failed:",
-                  (homeResult as PromiseRejectedResult).reason,
-                );
-                return fallback("home");
-              })();
-        const { content: featuresHtml, outputTokens: featuresTokens } =
-          featuresResult.status === "fulfilled"
-            ? featuresResult.value
-            : (() => {
-                console.warn(
-                  "[Page features] failed:",
-                  (featuresResult as PromiseRejectedResult).reason,
-                );
-                return fallback("features");
-              })();
-        const { content: pricingHtml, outputTokens: pricingTokens } =
-          pricingResult.status === "fulfilled"
-            ? pricingResult.value
-            : (() => {
-                console.warn(
-                  "[Page pricing] failed:",
-                  (pricingResult as PromiseRejectedResult).reason,
-                );
-                return fallback("pricing");
-              })();
-        const { content: contactHtml, outputTokens: contactTokens } =
-          contactResult.status === "fulfilled"
-            ? contactResult.value
-            : (() => {
-                console.warn(
-                  "[Page contact] failed:",
-                  (contactResult as PromiseRejectedResult).reason,
-                );
-                return fallback("contact");
-              })();
+        // Extract page HTML results — dynamic, based on architect.pages
+        const footerResultIndex = isSinglePage ? 2 : architect.pages.length;
+        const footerResult = pageResults[footerResultIndex];
+        const { content: footerContent, outputTokens: footerTokens } =
+          footerResult?.status === "fulfilled"
+            ? footerResult.value
+            : { content: "", outputTokens: 0 };
 
-        totalOutputTokens +=
-          homeTokens + featuresTokens + pricingTokens + contactTokens;
+        if (!footerContent || footerContent.length < 200) {
+          console.warn("[Footer] Generation failed — using fallback footer");
+        }
 
-        // ════════════════════════════════════════════
-        // STEP 5 — Footer call (sequential, after pages)
-        // Generates: footer + all JS + </body></html>
-        // ════════════════════════════════════════════
-        push("DEVELOPER_FIX", { message: "Building footer and scripts..." });
+        // Build validated page HTML array
+        const pagesToAssemble = isSinglePage
+          ? ["home", "features"] // single page uses top+bottom halves
+          : architect.pages;
 
-        const { content: footerHtml, outputTokens: footerTokens } =
-          await silentStream(
-            getFooterPrompt(prompt, designTokens),
-            "Generate the footer and closing scripts.",
-            budgets.footer,
-            DEVELOPER_MODEL,
-            clientSignal,
-          );
+        const validPageHtmls = pagesToAssemble.map((pageId, i) => {
+          const result = pageResults[i];
+          const { content } =
+            result?.status === "fulfilled" ? result.value : fallback(pageId);
+          const tokens =
+            result?.status === "fulfilled" ? result.value.outputTokens : 0;
+          totalOutputTokens += tokens;
+          return isSinglePage ? content : validatePageSection(content, pageId);
+        });
+
         totalOutputTokens += footerTokens;
 
-        // ════════════════════════════════════════════
-        // STEP 6 — Validate sections + assemble HTML
-        // ════════════════════════════════════════════
-
-        // Validate each page section has correct wrapper
-        const validHome = validatePageSection(homeHtml, "home");
-        const validFeatures = validatePageSection(featuresHtml, "features");
-        const validPricing = validatePageSection(pricingHtml, "pricing");
-        const validContact = validatePageSection(contactHtml, "contact");
-
-        // shellBase already computed above after shell call
-
-        // Clean footer: strip any prose before <footer tag
-        const footerTagStart = footerHtml.search(/<footer/i);
+        // Clean footer
+        const footerTagStart = footerContent.search(/<footer/i);
         const cleanFooter =
-          footerTagStart >= 0 ? footerHtml.slice(footerTagStart) : footerHtml;
-
-        // Post-process: fix known model output issues before sending to client
+          footerTagStart >= 0
+            ? footerContent.slice(footerTagStart)
+            : FALLBACK_FOOTER;
         const seoTags = buildSeoTags(brandName, prompt, heroImageUrl);
 
         const postProcess = (html: string): string => {
@@ -802,25 +1022,37 @@ export async function POST(req: Request) {
                 /(<div[^>\n]*fixed[^>\n]*x-show="open"[^>\n]*)style="[^"]*"/g,
                 `$1style="background:${menuBg};isolation:isolate;backdrop-filter:none"`,
               )
+            // Fix 6 — single page: remove .page class and show the section
+            // In multipage, .page { display:none } hides everything until showPage() runs
+            // In single page, there's no routing so content must always be visible
           );
         };
 
-        // Final assembly — just string concatenation, no magic
+        const pageParts = validPageHtmls.map((html) => "\n" + html);
         const htmlOutput = postProcess(
           [
             shellBase,
             "\n<main>",
-            "\n" + validHome,
-            "\n" + validFeatures,
-            "\n" + validPricing,
-            "\n" + validContact,
+            ...pageParts,
             "\n</main>",
             "\n" + cleanFooter,
           ].join(""),
         );
 
+        // For single page — remove .page class so content is always visible
+        // In multipage .page { display:none } hides everything until showPage() runs
+        // In single page there's no routing so content must always be visible
+        const finalHtml = isSinglePage
+          ? htmlOutput
+              .replace(
+                /(<section[^>]*)\bclass="([^"]*\b)page\b([^"]*)"/g,
+                '$1class="$2$3"',
+              )
+              .replace(/(<section[^>]*)class="page"/g, '$1class=""')
+          : htmlOutput;
+
         // Quality check log
-        const pageCount = (htmlOutput.match(/id="page-/g) || []).length;
+        const pageCount = (finalHtml.match(/id="page-/g) || []).length;
         const hasFooter = htmlOutput.includes("<footer");
         const hasRouting = htmlOutput.includes("showPage");
         const hasClosingTag = htmlOutput.toLowerCase().includes("</html>");
@@ -838,7 +1070,7 @@ export async function POST(req: Request) {
         });
 
         push("HTML_PREVIEW", {
-          html: htmlOutput,
+          html: finalHtml,
           brandName,
           message: "Preview ready!",
         });
@@ -853,7 +1085,7 @@ export async function POST(req: Request) {
 
         push("COMPLETE", {
           message: "Your website is ready!",
-          html: htmlOutput,
+          html: finalHtml,
           brandName,
           modelUsed: DEVELOPER_MODEL,
           creditsUsed: totalCreditsToDeduct,
@@ -871,11 +1103,9 @@ export async function POST(req: Request) {
         }
       } catch (err: any) {
         if (err.name === "AbortError" || clientSignal.aborted) {
-          if (userAborted) {
-            console.log("[Pipeline] User pressed Stop — generation cancelled");
-          } else {
+          {
             console.log(
-              "[Pipeline] Connection dropped (Vercel timeout or network) — generation was running",
+              "[Pipeline] Connection dropped or aborted — generation was running",
             );
             // Still try to deduct credits if we generated content
             if (!creditsDone && totalOutputTokens > 0) {
@@ -898,7 +1128,7 @@ export async function POST(req: Request) {
         });
       } finally {
         clearInterval(keepalive);
-        if (thinkingPings) clearInterval(thinkingPings);
+
         closeStream();
       }
     },

@@ -51,7 +51,7 @@ MOBILE MENU — use this exact implementation (one style only, no variations):
       <span class="font-display font-black text-lg text-primary">Menu</span>
       <button @click="open=false" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">✕</button>
     </div>
-    <div class="flex flex-col p-4 gap-1 flex-1">
+  <div class="flex flex-col p-4 gap-1 flex-1">
       <a @click="open=false" href="#home" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Home</a>
       <a @click="open=false" href="#features" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Features</a>
       <a @click="open=false" href="#pricing" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Pricing</a>
@@ -152,7 +152,36 @@ TOKEN BUDGET: Hard limit TARGET_TOKENS tokens.
 // PARALLEL GENERATION PROMPTS (used by Deep Dive v2)
 // ══════════════════════════════════════════════════
 
-export function getShellPrompt(): string {
+export function getShellPrompt(
+  isSinglePage = false,
+  architect?: import("./architect").ArchitectOutput,
+): string {
+  // Build nav links from architect pages if available, else fall back to generic
+  const navLinks = architect
+    ? architect.pages.map((id, i) => architect.pageLabels[i]).join(" / ")
+    : "Home / Features / Pricing / Contact";
+
+  const navLinkDetails = architect
+    ? architect.pages
+        .map((id, i) => `href="#${id}" label="${architect.pageLabels[i]}"`)
+        .join(", ")
+    : `href="#home" label="Home", href="#features" label="Features", href="#pricing" label="Pricing", href="#contact" label="Contact"`;
+
+  const designSystem = architect
+    ? `DESIGN SYSTEM — use THESE EXACT VALUES, do not change them:
+- data-theme="${architect.theme}"
+- Tailwind primary color: "${architect.colors.primary}"
+- Tailwind secondary color: "${architect.colors.secondary}"
+- Tailwind background color: "${architect.colors.background}"
+- Tailwind surface color: "${architect.colors.surface}"
+- Display font: "${architect.fonts.display}"
+- Body font: "${architect.fonts.body}"
+- Google Fonts URL: "${architect.fonts.url}"`
+    : `DESIGN SYSTEM — choose creatively based on business type:
+- Pick a vivid primary color appropriate to the business
+- Pick matching secondary, background, surface colors
+- Pick 2 Google Fonts appropriate for the business personality`;
+
   return `You are a world-class frontend developer building a stunning website shell.
 
 OUTPUT RULES — CRITICAL:
@@ -173,8 +202,14 @@ GENERATE IN THIS EXACT ORDER:
 2. <head> containing:
    - meta charset + viewport + descriptive <title>
    - CDN links above (in order)
-   - Google Fonts link (pick 2 fonts appropriate for the business type)
-   - tailwind.config script: primary color, secondary color, surface color, display font, body font, any custom keyframes/animations needed
+   - Google Fonts link: USE EXACTLY THIS URL: ${architect?.fonts.url ?? "pick 2 fonts appropriate for the business type"}
+   - tailwind.config script with THESE EXACT color and font values (do not substitute or change them):
+     primary: '${architect?.colors.primary ?? "choose vivid brand color"}',
+     secondary: '${architect?.colors.secondary ?? "choose complement color"}',
+     surface: '${architect?.colors.surface ?? "choose card background color"}',
+     display font: '${architect?.fonts.display ?? "choose heading font"}',
+     body font: '${architect?.fonts.body ?? "choose body font"}',
+     Plus any custom keyframes/animations needed for the design (e.g. marquee, gradient animation, fade-in, etc). Remember: zero custom CSS outside of keyframes — use Tailwind classes for everything else.
    - <style> block with ALL shared CSS classes the pages will need:
      * body { font-family, background-color }
      * .font-display { font-family }
@@ -203,9 +238,10 @@ window.addEventListener('load',function(){showPage(window.location.hash.slice(1)
    - SaaS/tech/startup → pill floating: fixed top-4, max-w-5xl mx-auto, rounded-full, backdrop-blur-xl
    - Gym/restaurant/bold → fixed full-width with 2px primary border-bottom
    - Corporate/elegant → fixed full-width minimal border-b border-white/5
+   - if not pill floating, navbar should be full-width with w-100% and either border-b or bottom-blur, never both
    Always include:
    - Logo: font-display font-black text-primary with nav-link class, href="#home"
-   - Desktop nav: hidden lg:flex centered links (Home/Features/Pricing/Contact) with nav-link class
+   - Desktop nav: hidden lg:flex centered links. ${isSinglePage ? "Single page — use anchor links: #hero, #features, #pricing, #contact (smooth scroll sections, NOT separate pages)" : `Multi-page — use EXACTLY these nav links in this exact order: ${navLinkDetails}. Each gets class="nav-link". Active page link gets text-primary.`}
    - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full
    - Hamburger: lg:hidden
    - Mobile slide-out menu using x-show="open":
@@ -216,75 +252,83 @@ window.addEventListener('load',function(){showPage(window.location.hash.slice(1)
         WRONG: style="background:#0f172a; display: none;"
         RIGHT: style="background:#0f172a"
    - Backdrop overlay: x-show="open" @click="open=false" fixed inset-0 bg-black/60
+   CRITICAL: never use backdrop-blur property on the mobile menu itself — it must be solid. Even if the user requests a glassmorphic design, the mobile menu MUST have a solid background for readability and usability.
 
 6. After </nav>, write this EXACT comment on its own line and then STOP:
 <!-- PAGES_START -->`;
 }
 
 export function getPagePrompt(
-  pageId: "home" | "features" | "pricing" | "contact",
+  pageId: string,
+  pageLabel: string,
   businessPrompt: string,
   designTokens: string,
   heroImageUrl?: string,
 ): string {
-  const pageConfigs = {
-    home: {
-      label: "HOME",
-      content: `Generate a rich, complete home page with ALL of these sections in order:
-1. HERO — split layout for physical businesses (gym/restaurant/hotel/construction): cinematic image card right, bold text left. Centered for digital (SaaS/tech/software). Include: badge pill, h1 with gradient accent span, subtext paragraph, 2 CTA buttons. pt-32 minimum to clear navbar. Use hero image URL provided.
-2. SOCIAL PROOF STRIP — py-8 border-y bg-white/5, marquee/ticker animation with business-type industry names, "Trusted by" label
-3. STATS ROW — grid 2-col mobile, 4-col desktop. Each stat: .glass card, number as <div class="counter" data-target="NUMBER" style="font-size:clamp(1.4rem,4.5vw,2.25rem)">
-   ⚠️ data-target MUST be a plain integer or decimal number ONLY — no units, no symbols, no text.
-   CORRECT: data-target="10000"  data-target="99"  data-target="50"  data-target="2"
-   WRONG:   data-target="99.9%"  data-target="2 min"  data-target="$19"  data-target="10K"
-   The visible text inside the div can say anything ("99.9%" / "2 min") but data-target must be numeric only.
-   Label as small uppercase div below the counter div.
-4. FEATURES PREVIEW — 3 feature cards (icon + title + description) + 1 wide highlight card (grid-cols-2, gradient bg, image right, checkmark list left)
-5. TESTIMONIALS — 3 cards, large quote mark, testimonial text, avatar circle with initials, name + role
-6. CTA BANNER — full-width rounded-3xl gradient primary→secondary, dot grid overlay, centered headline + subtext + white button`,
-    },
-    features: {
-      label: "FEATURES",
-      content: `Generate a complete features page with:
-1. HERO BAND — pt-40 pb-20, gradient bg, centered h1 + subtext paragraph
-2. FEATURE CARDS — 6 cards in grid-cols-3, each: icon (emoji or SVG), title, description. .glass cards with hover:-translate-y-2
-3. ALTERNATING ROWS — 2 rows alternating: image left+text right, then text left+image right. Each with h2, paragraph, stat chips, CTA button. Use .glass card for images.`,
-    },
-    pricing: {
-      label: "PRICING",
-      content: `Generate a complete pricing page with:
-1. HERO BAND — pt-40 pb-20, gradient bg, centered h1 + subtext
-2. PRICING CARDS — 3 cards: Starter (free/outline), Pro (scale-105, gradient border, "Most Popular" badge, shadow-primary/20), Agency (outline). Each: plan name, price, feature list with checkmarks, CTA button. Middle card taller with h-full flex flex-col.
-3. FAQ ACCORDION — 4 questions. Each uses Alpine x-data="{open:false}". Button with @click="open=!open" and a + icon that rotates 45deg when open. Answer div x-show="open". Smooth transitions.`,
-    },
-    contact: {
-      label: "CONTACT",
-      content: `Generate a complete contact page with:
-1. HERO — pt-40, h1 with primary accent span, subtext
-2. TWO-COLUMN LAYOUT — grid lg:grid-cols-2 gap-16:
-   LEFT: h2, subtext, then 3 contact detail rows. Each row: icon in colored rounded-2xl bg, label (small uppercase opacity), value (font-bold). Use: email icon, social/phone icon, location pin icon.
-   RIGHT: .glass card p-10 rounded-3xl with contact form — name + email (side by side grid-cols-2), message textarea, submit button (btn btn-primary w-full). form action="https://formspree.io/f/YOUR_FORM_ID" method="POST"`,
-    },
-  };
-
-  const config = pageConfigs[pageId];
   const heroNote = heroImageUrl
     ? `\nHERO IMAGE URL (use exactly as src): ${heroImageUrl}`
     : "";
+
+  const isHome = pageId === "home";
+  const isContact = pageId === "contact";
+
+  const homeContent = `Generate a rich home page with ALL of these sections in order:
+1. HERO — split layout for physical businesses (gym/restaurant/hotel/construction): image card right, bold text left. Centered for digital (SaaS/tech/software). Include: badge pill, h1 with gradient accent span, subtext, 2 CTA buttons. pt-32 minimum to clear navbar. Use hero image URL provided.
+2. SOCIAL PROOF STRIP — py-8 border-y bg-white/5, marquee/ticker animation, "Trusted by" label + 5 industry names, opacity-50
+3. STATS ROW — grid 2-col mobile, 4-col desktop. Each stat: .glass card, counter div with data-target="NUMBER" (plain integer only, no units, no symbols), label below
+4. FEATURES PREVIEW — 3 feature cards (.glass, icon + title + description) + 1 wide highlight card (gradient bg, image right, checkmark list left)
+5. TESTIMONIALS — 3 cards, large " quote mark, testimonial text, avatar circle initials, name + role
+6. CTA BANNER — rounded-3xl gradient primary→secondary, dot grid overlay, centered headline + subtext + white button`;
+
+  const contactContent = `Generate a complete contact page with:
+1. HERO — pt-40, h1 with primary accent span, subtext paragraph
+2. TWO-COLUMN LAYOUT — grid lg:grid-cols-2 gap-16:
+   LEFT: h2, subtext, then 3 contact detail rows. Each: icon in colored rounded-2xl bg, label small uppercase, value font-bold. Use: email, phone, location icons.
+   RIGHT: .glass card p-10 rounded-3xl with contact form — name + email (grid-cols-2), message textarea, submit button btn-primary w-full. form action="https://formspree.io/f/YOUR_FORM_ID" method="POST"
+3. CTA BAND — py-20 gradient rounded-3xl, closing message relevant to business`;
+
+  const genericContent = `Generate a complete, rich ${pageLabel} page tailored specifically to this business.
+Think carefully: what would a visitor to the "${pageLabel}" page of THIS specific business expect and need?
+Design sections that are genuinely relevant to "${pageLabel}" for this type of business — NOT generic placeholders.
+
+REQUIRED structure (adapt content to suit "${pageLabel}"):
+1. HERO BAND — pt-40 pb-16, gradient or dark bg, centered h1 (primary accent span on key word), compelling subtext
+2. MAIN CONTENT — 2 to 3 rich sections relevant to "${pageLabel}":
+   - Use real placeholder content specific to this business type (invent realistic details)
+   - .glass cards in grids with hover:-translate-y-2 where appropriate
+   - At least one section with a strong visual element (image card, icon grid, or data display)
+   - For a "services" page: service cards with icons, process steps, or methodology
+   - For a "projects" page: portfolio grid with project cards, stats, case study highlights
+   - For a "menu" page: menu categories, featured dishes, pricing
+   - For a "classes" page: class schedule cards, instructor profiles, class types
+   - For a "pricing" page: 3 pricing tiers with features list, FAQ accordion
+   - For a "work" page: case study cards, client logos, results metrics
+   - For a "team" or "our-team" page: team member cards with photos (placeholder), role, bio
+   - For a "rooms" page: room type cards with amenities, gallery style layout
+   - For any other page: use your best judgment for what makes sense
+3. CTA BAND — py-20 gradient rounded-3xl, headline and button relevant to ${pageLabel}`;
+
+  const pageContent = isHome
+    ? homeContent
+    : isContact
+      ? contactContent
+      : genericContent;
 
   return `You are generating ONE page section for a multi-page website.
 
 BUSINESS: ${businessPrompt}${heroNote}
 
+PAGE YOU ARE BUILDING: ${pageLabel} (id: ${pageId})
+
 DESIGN SYSTEM — already in the HTML shell, use these classes and colors exactly:
 ${designTokens}
 
 ⚠️ OUTPUT RULES — NON-NEGOTIABLE:
-- Your output MUST start with EXACTLY this opening tag (nothing before it, no preamble):
+- Your output MUST start with EXACTLY this tag (nothing before it, no preamble):
   <section id="page-${pageId}" class="page">
 - Your output MUST end with EXACTLY this (nothing after it):
   </section><!-- end page-${pageId} -->
-- No markdown, no code fences, no explanation, no extra text
+- No markdown, no code fences, no explanation, no extra text outside the section tags
 
 STYLE RULES:
 - Use .glass for all cards and panels
@@ -294,15 +338,16 @@ STYLE RULES:
 - All sections: py-20 or py-24 spacing
 - All containers: max-w-7xl mx-auto px-6
 - Typography: h1 text-4xl sm:text-5xl md:text-6xl lg:text-8xl, h2 text-3xl md:text-5xl
-- Buttons: always <a> tags (not <button>) for navigation, rounded-full
+- Buttons: <a> tags for navigation (not <button>), rounded-full
 
-${config.label} PAGE CONTENT:
-${config.content}`;
+${pageLabel.toUpperCase()} PAGE CONTENT:
+${pageContent}`;
 }
 
 export function getFooterPrompt(
   businessPrompt: string,
   designTokens: string,
+  isSinglePage = false,
 ): string {
   return `You are generating the footer and all JavaScript for a multi-page website.
 
@@ -321,11 +366,23 @@ GENERATE IN ORDER:
 1. <footer> — Use .glass or bg-black/40 border-t border-white/5 py-20 px-6
    Inside: max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20
    Col 1 (span 2 on mobile): Logo (font-display font-black text-primary) + brand tagline + 3 social icon buttons (circular .glass w-10 h-10)
-   Col 2: "Product" heading + 4 links (Features, Pricing, Examples, Changelog)
-   Col 3: "Company" heading + 4 links (About, Blog, Careers, Contact)
+   Col 2: Heading + 4 relevant page links appropriate for this specific business (e.g. for a restaurant: Menu, Reservations, Gallery, Events — for SaaS: Features, Pricing, Docs, Changelog) 
+   Col 3: "Company" heading + 4 links (About, Blog, Careers, Contact)   
    Col 4: "Legal" heading + 3 links (Privacy Policy, Terms of Service, Cookie Policy)
    Bottom bar: border-t border-white/5 pt-8 flex justify-between — copyright text + "Status: Healthy 🟢" + region
    </footer>
+
+${
+  isSinglePage
+    ? `
+⚠️ SINGLE PAGE MODE — JavaScript rules:
+- Do NOT include showPage() function
+- Do NOT include hashchange or load event listeners for routing  
+- Navbar links use smooth scroll: document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'}); }));
+- Replace navbar scroll shrink with active section highlighting using IntersectionObserver
+`
+    : ""
+}   
 
 2. <script> block with ALL of these in order:
    a. Navbar scroll shrink:
@@ -344,4 +401,76 @@ GENERATE IN ORDER:
       document.addEventListener('mousemove',function(e){document.querySelectorAll('.orb').forEach(function(orb,i){var speed=(i+1)*0.02;orb.style.transform='translate('+(e.clientX*speed)+'px,'+(e.clientY*speed)+'px)';});});
 
 3. </body></html>`;
+}
+export function getSinglePageTopPrompt(
+  businessPrompt: string,
+  designTokens: string,
+  heroImageUrl?: string,
+): string {
+  const heroNote = heroImageUrl
+    ? `\nHERO IMAGE URL (use exactly as src): ${heroImageUrl}`
+    : "";
+
+  return `You are generating the TOP HALF of a single-page website.
+
+BUSINESS: ${businessPrompt}${heroNote}
+
+DESIGN SYSTEM — use these classes and colors exactly:
+${designTokens}
+
+⚠️ OUTPUT RULES:
+- Output raw HTML only — no markdown, no fences, no explanation
+- Start with: <section id="hero" class="hero-section">
+- End after the Features section — stop there, do NOT write pricing or contact
+- No closing </body> or </html> tags — another call handles that
+
+GENERATE IN ORDER:
+1. HERO SECTION — id="hero", pt-32 min. Split layout for physical business (image card right, bold text left). Centered for digital/SaaS. Include: badge pill, h1 with primary accent span, subtext, 2 CTA buttons. Use hero image URL provided.
+
+2. SOCIAL PROOF STRIP — py-8 border-y bg-white/5, marquee animation, "Trusted by" + 5 industry names, opacity-50.
+
+3. STATS ROW — id="stats", grid 2-col mobile 4-col desktop. Each stat: .glass card, counter div with data-target (numbers only, no symbols), label below.
+
+4. FEATURES SECTION — id="features", py-24. 6 feature cards in grid-cols-3, each .glass card with icon (emoji or SVG), h3 title, description. Add hover:-translate-y-2.
+
+STYLE RULES:
+- Use .glass for all cards
+- Use .fade-in on section content  
+- Use font-display for all headings
+- Use text-primary for accents
+- All containers: max-w-7xl mx-auto px-6`;
+}
+
+export function getSinglePageBottomPrompt(
+  businessPrompt: string,
+  designTokens: string,
+): string {
+  return `You are generating the BOTTOM HALF of a single-page website.
+
+BUSINESS: ${businessPrompt}
+
+DESIGN SYSTEM — use these classes and colors exactly:
+${designTokens}
+
+⚠️ OUTPUT RULES:
+- Output raw HTML only — no markdown, no fences, no explanation
+- Start directly with: <section id="pricing" class="pricing-section">
+- End after the Contact section closing tag
+- Do NOT write <footer>, </body> or </html> — another call handles that
+
+GENERATE IN ORDER:
+1. PRICING SECTION — id="pricing", py-24. 3 cards: Starter (outline), Pro (scale-105, gradient, "Most Popular" badge), Enterprise (outline). Each: plan name, price, 4 feature bullets, CTA button.
+
+2. TESTIMONIALS SECTION — id="testimonials", py-24. 3 cards grid-cols-3, large " quote mark, testimonial text, avatar circle initials, name + role.
+
+3. CTA BANNER — rounded-3xl mx-4 md:mx-8, gradient primary→secondary, dot overlay, centered headline + subtext + white button.
+
+4. CONTACT SECTION — id="contact", py-24. Two columns: LEFT: contact details (email, phone, location) each with icon in colored rounded-2xl. RIGHT: .glass card with contact form (name, email, message textarea, submit button).
+
+STYLE RULES:
+- Use .glass for all cards
+- Use .fade-in on section content
+- Use font-display for all headings
+- Use text-primary for accents
+- All containers: max-w-7xl mx-auto px-6`;
 }

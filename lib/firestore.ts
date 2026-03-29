@@ -300,3 +300,20 @@ export async function addCredits(
     credits: increment(amount),
   });
 }
+
+export async function saveDeployedUrl(
+  docId: string,
+  clerkUserId: string,
+  deployedUrl: string,
+): Promise<void> {
+  const ref = doc(db, "generations", docId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) throw new Error("Not found");
+  if (snap.data().clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+
+  await updateDoc(ref, {
+    deployedUrl,
+    deployedAt: serverTimestamp(),
+  });
+}
