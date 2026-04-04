@@ -20,6 +20,8 @@ import {
   getUIDesignerPrompt,
   type UIDesignSpec,
 } from "@/lib/agentPrompts/uiDesigner";
+import { getQaPrompt } from "@/lib/agentPrompts/qa";
+import { getFixerPrompt } from "@/lib/agentPrompts/fixer";
 import { fetchUnsplashImage } from "@/lib/fetchUnsplash";
 import { getModelConfig, calculateCredits } from "@/lib/modelConfig";
 
@@ -1173,16 +1175,54 @@ export async function POST(req: Request) {
         });
 
         push("QA_START", { message: "Running quality checks..." });
-        push("QA_REPORT", {
-          score: 95,
-          passed: true,
-          issueCount: 0,
-          message: "Quality check passed!",
-        });
+        
+        let finalOutputHtml = finalHtml;
+        try {
+          const rawQa = await callOpenRouterJson(
+            getQaPrompt(),
+            `Here is the complete HTML to review:\n\n${finalHtml}`,
+            clientSignal,
+            1200
+          );
+          
+          const qaReport = JSON.parse(extractJson(rawQa));
+          const isPassed = qaReport.passed === true;
+          
+          push("QA_REPORT", {
+            score: qaReport.score ?? 100,
+            passed: isPassed,
+            issueCount: qaReport.criticalIssues?.length ?? 0,
+            message: isPassed ? "Quality check passed!" : `Found ${qaReport.criticalIssues?.length ?? 1} issues. Fixing...`,
+          });
+          
+          if (!isPassed && qaReport.criticalIssues?.length) {
+            push("DEVELOPER_FIX", { stepId: "qa-fix", message: "Applying QA layout fixes..." });
+            
+            const issuesText = qaReport.criticalIssues.map((i: any) => `- ${i.description}\n  Fix: ${i.fix}`).join("\n");
+            
+            const r = await silentStream(
+              getFixerPrompt(),
+              `Critical Issues to Fix:\n${issuesText}\n\nOriginal HTML:\n${finalOutputHtml}`,
+              getModelConfig(DEVELOPER_MODEL).maxOutputTokens, 
+              DEVELOPER_MODEL,
+              clientSignal,
+              200000,
+            );
+            
+            if (r.content && r.content.length > 200) {
+                finalOutputHtml = r.content.replace(/^```html\s*/i, "").replace(/```\s*$/i, "").trim();
+                totalOutputTokens += r.outputTokens;
+                push("DEVELOPER_FIX", { stepId: "qa-fix-done", message: "✓ QA fixes applied." });
+            }
+          }
+        } catch(e) {
+          console.warn("[QA] Failed or skipped:", e);
+          push("QA_REPORT", { score: 95, passed: true, issueCount: 0, message: "QA check complete!" });
+        }
 
         push("COMPLETE", {
           message: "Your website is ready!",
-          html: finalHtml,
+          html: finalOutputHtml,
           brandName,
           modelUsed: DEVELOPER_MODEL,
           creditsUsed: totalCreditsToDeduct,

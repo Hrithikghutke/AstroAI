@@ -103,7 +103,12 @@ async function callModel(
 }
 
 function stripFences(raw: string): string {
-  return raw
+  let cleaned = raw;
+  const match = cleaned.match(/```(?:html)?\s*([\s\S]*?)\s*```/i);
+  if (match) {
+    cleaned = match[1];
+  }
+  return cleaned
     .replace(/^```html\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```\s*$/i, "")

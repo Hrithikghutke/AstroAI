@@ -1644,7 +1644,10 @@ export default function ChatPanel({
   };
 
   // ── Conversational chat handler — routes through AI brain first ──
-  const handleGenerate = async (promptOverride?: string) => {
+  const handleGenerate = async (
+    promptOverride?: string,
+    fromQuestionChip?: boolean,
+  ) => {
     const prompt = promptOverride ?? input.trim();
     if (!prompt || loading) return;
 
@@ -1661,7 +1664,7 @@ export default function ChatPanel({
     const isOptionChip =
       promptOverride === "Yes, start the build" ||
       promptOverride === "Not yet, I want to change something";
-    if (promptOverride && !isOptionChip) {
+    if (promptOverride && !isOptionChip && !fromQuestionChip) {
       if (mode === "deep") {
         handleDeepDive(promptOverride);
       } else {
@@ -1922,7 +1925,7 @@ export default function ChatPanel({
         width,
         height: captureHeight,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         logging: false,
         windowWidth: width,
         windowHeight: captureHeight,
@@ -1946,7 +1949,8 @@ export default function ChatPanel({
 
       // JPEG at 70% quality — much smaller than PNG, still readable by vision model
       return scaled.toDataURL("image/jpeg", 0.7);
-    } catch {
+    } catch (err) {
+      console.error("[html2canvas] error:", err);
       return null;
     }
   };
@@ -1960,29 +1964,32 @@ export default function ChatPanel({
       const iframe = document.createElement("iframe");
       iframe.style.cssText = `position:fixed;left:-9999px;top:0;width:${width}px;height:900px;opacity:0;pointer-events:none;border:none;`;
 
-      const blob = new Blob([html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-
       const cleanup = () => {
         if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        URL.revokeObjectURL(url);
       };
 
-      const timeout = setTimeout(() => {
-        cleanup();
-        resolve(null);
-      }, 15000);
+      let isResolved = false;
 
-      iframe.onload = async () => {
+      const finishAndCapture = async () => {
+        if (isResolved) return;
+        isResolved = true;
         clearTimeout(timeout);
-        await new Promise((r) => setTimeout(r, 4000)); // wait for fonts + images
-        const doc = iframe.contentDocument;
-        if (!doc?.body) {
+        
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc || !doc.body) {
           cleanup();
           resolve(null);
           return;
         }
         resolve({ doc, cleanup });
+      };
+
+      // Force capture after 10s even if onload is blocked by hanging fonts/scripts
+      const timeout = setTimeout(finishAndCapture, 10000);
+
+      iframe.onload = async () => {
+        await new Promise((r) => setTimeout(r, 3000)); // wait for fonts + images
+        finishAndCapture();
       };
 
       iframe.onerror = () => {
@@ -1991,7 +1998,17 @@ export default function ChatPanel({
         resolve(null);
       };
       document.body.appendChild(iframe);
-      iframe.src = url;
+
+      // Write HTML directly to the iframe document to guarantee exact same-origin
+      // and ensure onload fires reliably across all browsers.
+      const idoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (idoc) {
+        idoc.open();
+        idoc.write(html);
+        idoc.close();
+      } else {
+        iframe.srcdoc = html; // fallback
+      }
     });
   };
 
@@ -2240,7 +2257,7 @@ export default function ChatPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-neutral-800 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-[#262626] scrollbar-track-transparent">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -2779,7 +2796,7 @@ export default function ChatPanel({
                           : m,
                       ),
                     );
-                    handleGenerate(compiled);
+                    handleGenerate(compiled, true);
                   }}
                 />
               ) : (

@@ -46,6 +46,16 @@ export type AccentUsage =
   | "moderate"            // primary on CTAs, key headline word, overline labels
   | "expressive";         // primary on large graphic elements, section accents
 
+export type TypographyWeight =
+  | "medium"              // font-medium (luxury, tech, elegant)
+  | "bold"                // font-bold (standard corporate, clean)
+  | "black";              // font-black (only for athletic, intense events)
+
+export type TypographyTracking =
+  | "relaxed"             // tracking-wide (good for heavy/condensed fonts, uppercase)
+  | "normal"              // tracking-normal (standard reading)
+  | "tight";              // tracking-tight (only for thin serif/elegant fonts)
+
 export interface UIDesignSpec {
   heroVariant: HeroVariant;
   featuresVariant: FeaturesVariant;
@@ -53,6 +63,8 @@ export interface UIDesignSpec {
   cardStyle: CardStyle;
   imageStyle: ImageStyle;
   typographyScale: TypographyScale;
+  typographyWeight: TypographyWeight;
+  typographyTracking: TypographyTracking;
   accentUsage: AccentUsage;
   sectionSpacing: "generous" | "standard" | "dense";
   heroOverlayStyle: "cinematic-dark" | "tinted-primary" | "subtle" | "none";
@@ -71,6 +83,8 @@ Return EXACTLY this shape:
   "cardStyle": "<one of: borderless-hover | glass-elevated | solid-dark | outlined>",
   "imageStyle": "<one of: grayscale-hover-color | full-color-cinematic | full-color-clean>",
   "typographyScale": "<one of: display-dominant | balanced | editorial>",
+  "typographyWeight": "<one of: medium | bold | black>",
+  "typographyTracking": "<one of: relaxed | normal | tight>",
   "accentUsage": "<one of: minimal | moderate | expressive>",
   "sectionSpacing": "<one of: generous | standard | dense>",
   "heroOverlayStyle": "<one of: cinematic-dark | tinted-primary | subtle | none>"
@@ -124,6 +138,16 @@ typographyScale:
   balanced:          restaurant, law, medical, real estate, finance
   editorial:         hotel, luxury, creative, agency, SaaS
 
+typographyWeight:
+  medium:            luxury, hotel, minimalist agency, high-end real estate
+  bold:              law, finance, consulting, tech, SaaS, medical
+  black:             USE RARELY. Only for aggressive contexts (gym, nightclub, extreme sports)
+
+typographyTracking:
+  relaxed:           construction, industrial, gym, tech (prevents squishing on heavy fonts)
+  normal:            standard default for almost everything
+  tight:             luxury, hotel, editorial (only works well on thinner/medium weights)
+
 accentUsage:
   minimal:     law, finance, medical, hotel, luxury, corporate
   moderate:    restaurant, real estate, SaaS, tech, consulting
@@ -139,5 +163,6 @@ CRITICAL RULES:
 - Read the business brief carefully — a high-end restaurant and a fast-casual diner get different specs
 - For "minimal-text-only" hero: heroOverlayStyle MUST be "none"
 - NavbarStyle MUST be "full-border-bottom" or "full-minimal" if heroVariant is NOT "pill-floating"
+- NEVER pair "black" typography weight with "tight" tracking (creates illegible, squished blobs) — use "relaxed" or "normal"
 - Aim for maximum variety — avoid always defaulting to the same layout combination`;
 }

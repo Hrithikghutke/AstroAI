@@ -113,7 +113,7 @@ GLOBAL DESIGN PHILOSOPHY:
    }
 
    Always include:
-   - Logo: font-display ${isSinglePage || !architect ? "font-black" : (architect.visualMood === "luxury-minimal" || architect.visualMood === "cinematic-dark" || architect.visualMood === "corporate-precision") ? "font-medium text-xl tracking-tighter" : "font-black text-2xl"} text-primary with nav-link class, href="#home"
+   - Logo: font-display ${uiSpec?.typographyWeight === "medium" ? "font-medium text-xl" : uiSpec?.typographyWeight === "black" ? "font-black text-2xl" : "font-bold text-2xl"} ${uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : "tracking-tighter"} text-primary with nav-link class, href="#home"
      ${(architect?.visualMood === "luxury-minimal") ? "Luxury logo style: small dot (w-2 h-2 rounded-full bg-secondary mr-2) + brand name in font-medium text-lg tracking-tighter uppercase" : ""}
    - Desktop nav: hidden lg:flex centered links. ${isSinglePage ? "Single page — anchor links #hero #features #pricing #contact" : `Multi-page — use EXACTLY: ${navLinkDetails}. Each gets class="nav-link". Active gets text-primary.`}
    - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full with subtle box-shadow glow
@@ -198,20 +198,20 @@ export function getPagePrompt(
   const isLuxury = mood === "luxury-minimal" || mood === "editorial-clean";
   const isBold = mood === "bold-energy";
 
-  const headingWeight = isLuxury ? "font-medium" : isBold ? "font-black" : "font-semibold";
-  const headingTracking = isLuxury ? "tracking-tighter" : isBold ? "tracking-tight" : "tracking-tight";
+  const headingWeight = uiSpec?.typographyWeight === "black" ? "font-black" : uiSpec?.typographyWeight === "bold" ? "font-bold" : uiSpec?.typographyWeight === "medium" ? "font-medium" : (isLuxury ? "font-medium" : isBold ? "font-black" : "font-semibold");
+  const headingTracking = uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : uiSpec?.typographyTracking === "tight" ? "tracking-tight" : (isLuxury ? "tracking-tighter" : isBold ? "tracking-tight" : "tracking-tight");
   const bodyTextColor = isLuxury ? "text-zinc-400" : "text-white/60";
   const bodyFontWeight = isLuxury ? "font-light" : "font-normal";
   const accentOnHeadline = isLuxury ? "text-white/50" : "text-primary";
   const ctaClass = isLuxury
-    ? `inline-flex items-center gap-2 px-8 py-4 bg-primary text-background text-sm ${headingWeight} tracking-[0.15em] uppercase hover:bg-white transition-all duration-500 shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.3)]`
-    : `inline-flex items-center gap-2 px-8 py-4 bg-primary text-background text-sm font-bold tracking-widest uppercase hover:opacity-90 transition-all duration-300 rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.4)]`;
+    ? `inline-flex items-center justify-center gap-2 h-14 px-8 bg-primary text-background text-sm ${headingWeight} tracking-[0.15em] uppercase leading-none hover:bg-white transition-all duration-500 shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.3)]`
+    : `inline-flex items-center justify-center gap-2 h-14 px-8 bg-primary text-background text-sm font-bold tracking-widest uppercase leading-none hover:opacity-90 transition-all duration-300 rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.4)]`;
   const outlineCta = isLuxury
-    ? `inline-flex items-center gap-2 px-8 py-4 border border-white/20 text-white text-sm ${bodyFontWeight} tracking-[0.15em] uppercase hover:border-primary hover:text-primary transition-all duration-500`
-    : `inline-flex items-center gap-2 px-8 py-4 border border-white/30 text-white text-sm font-medium tracking-widest uppercase hover:border-primary hover:text-primary transition-all duration-300 rounded-full`;
+    ? `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/20 text-white text-sm ${bodyFontWeight} tracking-[0.15em] uppercase leading-none hover:border-primary hover:text-primary transition-all duration-500`
+    : `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/30 text-white text-sm font-medium tracking-widest uppercase leading-none hover:border-primary hover:text-primary transition-all duration-300 rounded-full`;
   const statNumberClass = isLuxury
     ? `font-display ${headingWeight} text-6xl md:text-7xl text-primary`
-    : `counter font-display font-black text-7xl md:text-8xl lg:text-9xl text-primary`;
+    : `counter font-display ${headingWeight} ${headingTracking} text-6xl md:text-8xl lg:text-9xl text-primary`;
   const imageHover = isLuxury
     ? `grayscale-[20%] group-hover:grayscale-0 transition-all duration-700`
     : `transition-transform duration-700 group-hover:scale-105`;
@@ -247,7 +247,7 @@ export function getPagePrompt(
   <!-- Left: Text panel -->
   <div class="flex flex-col justify-center px-6 md:px-16 py-24 fade-in">
     <span class="inline-block text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 mb-8 self-start">${valueProps[0]}</span>
-    <h1 class="font-display ${headingWeight} ${h1Size} leading-none ${headingTracking} mb-6">
+    <h1 class="font-display ${headingWeight} ${h1Size} leading-tight ${headingTracking} mb-6">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}<br>
       <span class="${accentOnHeadline}">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -267,7 +267,7 @@ export function getPagePrompt(
     ${heroOverlay === "cinematic-dark" ? `<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>` : ""}
     <!-- Floating stat card -->
     <div class="absolute bottom-8 left-8 glass border border-white/10 rounded-2xl px-6 py-4">
-      <div class="font-display font-black text-4xl text-primary">${stats[0]?.value ?? "500+"}</div>
+      <div class="font-display \ text-4xl text-primary">${stats[0]?.value ?? "500+"}</div>
       <div class="text-xs tracking-[0.2em] uppercase text-white/50 mt-1">${stats[0]?.label ?? "Projects"}</div>
     </div>
   </div>
@@ -282,14 +282,14 @@ export function getPagePrompt(
     ${heroOverlay === "tinted-primary" ? `<div class="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none"></div>` : ""}
     <!-- Floating stat -->
     <div class="absolute top-8 right-8 glass border border-white/10 rounded-2xl px-6 py-4 text-center">
-      <div class="font-display font-black text-5xl text-primary">${stats[0]?.value ?? "500+"}</div>
+      <div class="font-display \ text-5xl text-primary">${stats[0]?.value ?? "500+"}</div>
       <div class="text-xs tracking-[0.25em] uppercase text-white/50">${stats[0]?.label ?? "Projects"}</div>
     </div>
   </div>
   <!-- Right: Text panel -->
   <div class="flex flex-col justify-center px-8 md:px-16 lg:px-20 py-32 lg:pt-40 fade-in">
     <span class="inline-block text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 mb-8 self-start">${valueProps[0]}</span>
-    <h1 class="font-display font-black ${h1Size} leading-none tracking-tight mb-6">
+    <h1 class="font-display \ ${h1Size} leading-tight \ mb-6">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}<br>
       <span class="text-primary">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -314,7 +314,7 @@ export function getPagePrompt(
       <span class="text-xs ${bodyFontWeight} tracking-[0.3em] uppercase text-primary">${valueProps[0]}</span>
       <div class="w-8 h-[1px] bg-primary"></div>
     </div>
-    <h1 class="font-display ${headingWeight} ${h1Size} leading-none ${headingTracking} mb-6 text-white">
+    <h1 class="font-display ${headingWeight} ${h1Size} leading-tight ${headingTracking} mb-6 text-white">
       ${tagline}
     </h1>
     <p class="${bodyTextColor} text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed ${bodyFontWeight}">${subtagline}</p>
@@ -325,18 +325,17 @@ export function getPagePrompt(
 </section><!-- /CC:hero -->`,
 
     "minimal-text-only": `
-<!-- CC:hero --><section class="relative min-h-screen flex flex-col justify-center px-6 md:px-16 max-w-7xl mx-auto pt-32 overflow-hidden">
-  <div class="fade-in">
-    <span class="inline-block text-xs tracking-[0.5em] uppercase text-primary mb-10">${valueProps[0]}</span>
-    <h1 class="font-display font-black text-6xl sm:text-8xl md:text-[110px] lg:text-[150px] leading-[0.9] tracking-tight mb-8 break-words">
-      ${tagline.split(" ").map((word, i) => i === 1 ? `<span class="text-primary">${word}</span>` : word).join("<br>")}
+<!-- CC:hero --><section class="relative min-h-screen flex items-center justify-center px-6 md:px-16 max-w-7xl mx-auto pt-24 overflow-hidden text-center">
+  <div class="fade-in flex flex-col items-center">
+    <span class="inline-block text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-8 px-4 py-1.5 border border-primary/30 rounded-full">${valueProps[0]}</span>
+    <h1 class="font-display ${headingWeight} ${h1Size} leading-tight ${headingTracking} max-w-5xl mx-auto mb-8">
+      ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}
+      <span class="text-primary/90">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
-    <div class="flex flex-col md:flex-row md:items-end gap-8 mt-16 pt-16 border-t border-white/10">
-      <p class="text-white/50 text-xl max-w-md leading-relaxed md:flex-1">${subtagline}</p>
-      <div class="flex gap-4 flex-shrink-0">
-        <a href="#contact" class="${ctaClass}">${ctaButtonText}</a>
-        <a href="#" class="${outlineCta}">Our Work</a>
-      </div>
+    <p class="text-white/60 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-12">${subtagline}</p>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-5">
+      <a href="#contact" class="${ctaClass}">${ctaButtonText}</a>
+      <a href="#" class="${outlineCta}">Our Work</a>
     </div>
   </div>
 </section><!-- /CC:hero -->`,
@@ -351,13 +350,13 @@ export function getPagePrompt(
     <!-- Bottom-left overline in image -->
     <div class="absolute bottom-10 left-10">
       <div class="text-xs tracking-[0.4em] uppercase text-white/60 mb-2">${valueProps[1] ?? "Since " + new Date().getFullYear()}</div>
-      <div class="font-display font-black text-4xl text-white">${stats[0]?.value ?? "250+"}<span class="text-xs font-normal tracking-widest text-white/50 ml-2">${stats[0]?.label ?? "Projects"}</span></div>
+      <div class="font-display \ text-4xl text-white">${stats[0]?.value ?? "250+"}<span class="text-xs font-normal tracking-widest text-white/50 ml-2">${stats[0]?.label ?? "Projects"}</span></div>
     </div>
   </div>
   <!-- Right: Text panel -->
   <div class="flex flex-col justify-center bg-surface px-10 md:px-16 py-24 pt-40 lg:pt-40 fade-in">
     <span class="inline-block text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 mb-8 self-start">${valueProps[0]}</span>
-    <h1 class="font-display font-black ${h1Size} leading-none tracking-tight mb-6 text-white">
+    <h1 class="font-display \ ${h1Size} leading-tight \ mb-6 text-white">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}<br>
       <span class="text-primary">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -368,7 +367,7 @@ export function getPagePrompt(
     </div>
     <!-- Stat list below CTA -->
     <div class="mt-12 pt-8 border-t border-white/10 flex gap-8">
-      ${stats.slice(1, 3).map(s => `<div><div class="font-display font-black text-3xl text-primary">${s.value}</div><div class="text-xs tracking-[0.25em] uppercase text-white/40">${s.label}</div></div>`).join("")}
+      ${stats.slice(1, 3).map(s => `<div><div class="font-display \ text-3xl text-primary">${s.value}</div><div class="text-xs tracking-[0.25em] uppercase text-white/40">${s.label}</div></div>`).join("")}
     </div>
   </div>
 </section><!-- /CC:hero -->`,
@@ -387,7 +386,7 @@ export function getPagePrompt(
     </div>
     <div class="flex flex-col justify-center px-10 md:px-16 lg:px-20 py-20 bg-surface fade-in">
       <span class="text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 inline-block mb-8 self-start">Our DNA</span>
-      <h2 class="font-display font-black ${h2Size} leading-tight mb-6">${featureNames[0]}<br><span class="text-primary">${featureNames[1]}</span></h2>
+      <h2 class="font-display \ ${h2Size} leading-tight mb-6">${featureNames[0]}<br><span class="text-primary">${featureNames[1]}</span></h2>
       <p class="text-white/60 leading-relaxed mb-10 max-w-sm">${featureDescriptions[0]}</p>
       <a href="#contact" class="btn btn-outline btn-primary rounded-none self-start px-8">${ctaButtonText}</a>
     </div>
@@ -396,7 +395,7 @@ export function getPagePrompt(
   <div class="grid lg:grid-cols-[45%_55%] min-h-[70vh] group">
     <div class="flex flex-col justify-center px-10 md:px-16 lg:px-20 py-20 bg-black/20 fade-in order-last lg:order-first">
       <span class="text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 inline-block mb-8 self-start">Methodology</span>
-      <h2 class="font-display font-black ${h2Size} leading-tight mb-6">${featureNames[2]}<br><span class="text-white/40">${featureNames[3]}</span></h2>
+      <h2 class="font-display \ ${h2Size} leading-tight mb-6">${featureNames[2]}<br><span class="text-white/40">${featureNames[3]}</span></h2>
       <p class="text-white/60 leading-relaxed mb-10 max-w-sm">${featureDescriptions[2]}</p>
       <a href="#" class="btn btn-outline rounded-none self-start px-8">Learn More</a>
     </div>
@@ -416,7 +415,7 @@ export function getPagePrompt(
     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 pointer-events-none"></div>
     <div class="relative z-10 p-10 md:p-16 pb-16 fade-in max-w-2xl">
       <span class="text-xs tracking-[0.5em] uppercase text-primary mb-4 block">0${i + 1}</span>
-      <h2 class="font-display font-black text-5xl md:text-6xl leading-none text-white mb-4">${featureNames[i]}</h2>
+      <h2 class="font-display ${headingWeight} ${headingTracking} text-5xl md:text-6xl leading-tight text-white mb-4">${featureNames[i]}</h2>
       <p class="text-white/60 text-base leading-relaxed mb-6 max-w-md">${featureDescriptions[i]}</p>
       <a href="#contact" class="btn btn-outline btn-sm rounded-none px-8 text-white border-white/40 hover:border-primary hover:text-primary">${ctaButtonText}</a>
     </div>
@@ -428,7 +427,7 @@ export function getPagePrompt(
 <section class="py-24 max-w-7xl mx-auto px-6">
   <div class="mb-16 fade-in">
     <span class="text-xs tracking-[0.4em] uppercase text-primary mb-4 block">What We Do</span>
-    <h2 class="font-display font-black ${h2Size} max-w-xl">${featureNames[0]} &amp; <span class="text-primary">${featureNames[1]}</span></h2>
+    <h2 class="font-display \ ${h2Size} max-w-xl">${featureNames[0]} &amp; <span class="text-primary">${featureNames[1]}</span></h2>
   </div>
   <div class="grid grid-cols-12 gap-4">
     <!-- Large card spanning 8 cols -->
@@ -436,7 +435,7 @@ export function getPagePrompt(
       <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80" alt="${featureNames[0]}" class="w-full h-full object-cover ${imgHoverClass}" ${imgGrayscaleStyle}>
       ${featureOverlay}
       <div class="absolute bottom-0 left-0 right-0 p-8">
-        <h3 class="font-display font-black text-3xl text-white">${featureNames[0]}</h3>
+        <h3 class="font-display \ text-3xl text-white">${featureNames[0]}</h3>
         <p class="text-white/60 mt-2">${featureDescriptions[0]}</p>
       </div>
     </div>
@@ -445,7 +444,7 @@ export function getPagePrompt(
       <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=80" alt="${featureNames[1]}" class="w-full h-full object-cover ${imgHoverClass}" ${imgGrayscaleStyle}>
       ${featureOverlay}
       <div class="absolute bottom-0 left-0 right-0 p-8">
-        <h3 class="font-display font-black text-2xl text-white">${featureNames[1]}</h3>
+        <h3 class="font-display \ text-2xl text-white">${featureNames[1]}</h3>
         <p class="text-white/60 mt-2 text-sm">${featureDescriptions[1]}</p>
       </div>
     </div>
@@ -455,7 +454,7 @@ export function getPagePrompt(
       <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80" alt="${featureNames[i]}" class="w-full h-full object-cover ${imgHoverClass}" ${imgGrayscaleStyle}>
       ${featureOverlay}
       <div class="absolute bottom-0 left-0 right-0 p-6">
-        <h3 class="font-display font-bold text-xl text-white">${featureNames[i]}</h3>
+        <h3 class="font-display \ text-xl text-white">${featureNames[i]}</h3>
         <p class="text-white/50 mt-1 text-sm">${featureDescriptions[i]}</p>
       </div>
     </div>`).join("")}
@@ -467,14 +466,14 @@ export function getPagePrompt(
 <section class="py-24 max-w-7xl mx-auto px-6">
   <div class="mb-16 text-center fade-in">
     <span class="text-xs tracking-[0.4em] uppercase text-primary mb-4 block">What We Offer</span>
-    <h2 class="font-display font-black ${h2Size}">Built for <span class="text-primary">${featureNames[0]}</span></h2>
+    <h2 class="font-display \ ${h2Size}">Built for <span class="text-primary">${featureNames[0]}</span></h2>
     <p class="text-white/50 max-w-xl mx-auto mt-4">${subtagline}</p>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10">
     ${featureNames.slice(0, 6).map((name, i) => `
     <div class="${cardCss} ${i % 3 !== 2 ? "border-r border-white/10" : ""} p-10 fade-in">
       <div class="text-3xl mb-6">${["⚡","🎯","🔥","💎","🚀","⚙️"][i]}</div>
-      <h3 class="font-display font-bold text-xl mb-3">${name}</h3>
+      <h3 class="font-display \ text-xl mb-3">${name}</h3>
       <p class="text-white/50 text-sm leading-relaxed">${featureDescriptions[i]}</p>
     </div>`).join("")}
   </div>
@@ -482,8 +481,8 @@ export function getPagePrompt(
   <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
     ${valueProps.map((vp, i) => `
     <div class="fade-in">
-      <div class="font-display font-black text-6xl text-primary/20 mb-4">0${i + 1}</div>
-      <h3 class="font-display font-bold text-xl mb-2">${vp}</h3>
+      <div class="font-display \ text-6xl text-primary/20 mb-4">0${i + 1}</div>
+      <h3 class="font-display \ text-xl mb-2">${vp}</h3>
       <p class="text-white/40 text-sm">${featureDescriptions[i] ?? ""}</p>
     </div>`).join("")}
   </div>
@@ -500,7 +499,7 @@ export function getPagePrompt(
     </div>
     <div class="flex flex-col justify-center px-12 md:px-24 py-32 fade-in bg-black/20">
       <span class="text-xs tracking-[0.5em] uppercase text-primary mb-10 block">${valueProps[0]}</span>
-      <h2 class="font-display font-black ${h2Size} leading-tight mb-8">${featureNames[0]}<br><span class="text-primary">${featureNames[1]}</span></h2>
+      <h2 class="font-display \ ${h2Size} leading-tight mb-8">${featureNames[0]}<br><span class="text-primary">${featureNames[1]}</span></h2>
       <p class="text-white/60 text-lg leading-loose mb-12 max-w-md">${featureDescriptions[0]}</p>
       <a href="#contact" class="btn btn-outline btn-primary rounded-none self-start px-10">${ctaButtonText}</a>
     </div>
@@ -509,7 +508,7 @@ export function getPagePrompt(
   <div class="grid lg:grid-cols-2 min-h-screen">
     <div class="flex flex-col justify-center px-12 md:px-24 py-32 fade-in order-last lg:order-first">
       <span class="text-xs tracking-[0.5em] uppercase text-primary mb-10 block">${valueProps[1] ?? "Approach"}</span>
-      <h2 class="font-display font-black ${h2Size} leading-tight mb-8">${featureNames[2]}<br><span class="text-white/40">${featureNames[3]}</span></h2>
+      <h2 class="font-display \ ${h2Size} leading-tight mb-8">${featureNames[2]}<br><span class="text-white/40">${featureNames[3]}</span></h2>
       <p class="text-white/60 text-lg leading-loose mb-12 max-w-md">${featureDescriptions[2]}</p>
       <a href="#" class="btn btn-ghost border border-white/20 rounded-none self-start px-10 hover:border-primary hover:text-primary">Explore More</a>
     </div>
@@ -528,7 +527,7 @@ export function getPagePrompt(
   <p class="text-center text-xs tracking-[0.4em] uppercase text-white/30 mb-8">Trusted by Industry Leaders</p>
   <div class="overflow-hidden" style="mask-image:linear-gradient(to right,transparent,black 15%,black 85%,transparent)">
     <div class="flex gap-12 animate-marquee whitespace-nowrap" style="animation:marquee 30s linear infinite">
-      ${[...socialProofNames, ...socialProofNames].map(name => `<span class="font-display font-bold text-xl text-white/20 tracking-wider">${name}</span>`).join("")}
+      ${[...socialProofNames, ...socialProofNames].map(name => `<span class="font-display ${headingWeight} tracking-wider text-xl text-white/40">${name}</span>`).join("")}
     </div>
   </div>
 </section><!-- /CC:social-proof -->`;
@@ -540,7 +539,7 @@ const statsRow = `
   <div class="max-w-7xl mx-auto px-6 grid divide-x divide-white/8" style="grid-template-columns:repeat(${Math.min(stats.length, 4)},1fr)">
     ${stats.map(s => `
     <div class="text-center px-4 md:px-8 fade-in min-w-0">
-      <div class="${statNumberClass.replace("text-7xl md:text-8xl lg:text-9xl", "text-5xl md:text-6xl lg:text-7xl")} truncate" data-target="${s.value.replace(/[^0-9.]/g, "")}">${s.value}</div>
+      <div class="${statNumberClass.replace("text-7xl md:text-8xl lg:text-9xl", "text-5xl md:text-6xl lg:text-7xl")}" data-target="${s.value.replace(/[^0-9.]/g, "")}">${s.value}</div>
       <div class="text-[10px] md:text-xs tracking-[0.3em] uppercase text-white/35 mt-3 md:mt-4 ${bodyFontWeight}">${s.label}</div>
     </div>`).join("")}
   </div>
@@ -553,7 +552,7 @@ const statsRow = `
   <div class="max-w-7xl mx-auto">
     <div class="mb-12 text-center fade-in">
       <span class="text-xs tracking-[0.4em] uppercase text-primary mb-4 block">Social Proof</span>
-      <h2 class="font-display font-black ${h2Size}">What Clients <span class="text-primary">Say</span></h2>
+      <h2 class="font-display \ ${h2Size}">What Clients <span class="text-primary">Say</span></h2>
     </div>
     <div class="overflow-hidden">
       <div class="flex transition-transform duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
@@ -561,12 +560,12 @@ const statsRow = `
         ${testimonials.map(t => `
         <div class="min-w-[33.333%] px-4 flex-shrink-0">
           <div class="${cardCss} p-10 rounded-2xl h-full flex flex-col">
-            <div class="font-display text-6xl text-primary opacity-40 leading-none mb-6">❝</div>
+            <div class="font-display text-6xl text-primary opacity-40 leading-tight mb-6">❝</div>
             <p class="text-white/70 text-base leading-relaxed italic flex-1">${t.quote}</p>
             <div class="flex items-center gap-4 mt-8 pt-6 border-t border-white/10">
-              <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">${t.name.split(" ").map(n => n[0]).join("")}</div>
+              <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center \ text-primary">${t.name.split(" ").map(n => n[0]).join("")}</div>
               <div>
-                <div class="font-bold text-sm">${t.name}</div>
+                <div class="\ text-sm">${t.name}</div>
                 <div class="text-xs text-white/40 tracking-widest uppercase">${t.role}, ${t.company}</div>
               </div>
             </div>
@@ -601,7 +600,7 @@ const ctaBanner = isLuxury ? `
     <div class="rounded-3xl p-16 text-center relative overflow-hidden fade-in" style="background:linear-gradient(135deg,${architect?.colors.primary ?? "#6366f1"},${architect?.colors.secondary ?? "#8b5cf6"})">
       <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle,rgba(255,255,255,0.4) 1px,transparent 1px);background-size:24px 24px"></div>
       <div class="relative z-10">
-        <h2 class="font-display font-black text-5xl md:text-6xl text-white mb-4">${ctaHeadline}</h2>
+        <h2 class="font-display \ text-5xl md:text-6xl text-white mb-4">${ctaHeadline}</h2>
         <p class="text-white/80 text-lg mb-10">${ctaSubtext}</p>
         <a href="#contact" class="${ctaClass}">${ctaButtonText}</a>
       </div>
@@ -610,11 +609,13 @@ const ctaBanner = isLuxury ? `
 </section><!-- /CC:cta-banner -->`;
 
   // ── FULL HOME PAGE ──
-  const homeContent = `Generate the home page section. Use ONLY the HTML below — do not add extra sections or change any class names. The content is already written; your job is to assemble it faithfully.
+  const homeContent = `Generate the home page section based on the core templates below.
 
-⚠️ SECTION MARKERS — REQUIRED: keep all <!-- CC:xyz --> and <!-- /CC:xyz --> comments exactly as provided below. Do NOT remove or modify them.
+⚠️ SECTION MARKERS — REQUIRED: keep all <!-- CC:xyz --> and <!-- /CC:xyz --> comments exactly as provided in the core sections. Do NOT remove or modify them.
 
-Section order:
+Your job is to assemble these core sections faithfully. HOWEVER, if the BUSINESS prompt specifically requests custom sections (like a masonry grid, pricing table, FAQ, or any other unique layout) that are not covered by these core templates, you MUST write them and insert them in the appropriate order based on the prompt. For any custom section you write, wrap it with a contextual marker (e.g., <!-- CC:custom-masonry --> ... <!-- /CC:custom-masonry -->) and ensure it perfectly matches the DESIGN SYSTEM classes and tokens.
+
+Core section order:
 1. HERO (variant: ${heroVariant})
 2. SOCIAL PROOF STRIP
 3. STATS ROW

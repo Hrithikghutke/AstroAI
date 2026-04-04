@@ -47,8 +47,10 @@ export default function BuildPage() {
       typewriterTimer.current = null;
       return;
     }
-    // Advance by 8-20 chars per tick for fast but visible typing
-    const charsPerTick = Math.floor(Math.random() * 12) + 8;
+    // Advance dynamically based on backlog so it never takes more than ~30 frames (500ms) to catch up
+    const missing = queue.length - displayed.length;
+    const baseChars = Math.floor(Math.random() * 12) + 8;
+    const charsPerTick = Math.max(baseChars, Math.ceil(missing / 15));
     const next = queue.slice(0, displayed.length + charsPerTick);
     typewriterDisplayed.current = next;
     setStreamingCode(next);
@@ -463,7 +465,7 @@ export default function BuildPage() {
           />
         </div>
 
-        <div className="hidden md:flex flex-1 flex-col">
+        <div className="hidden md:flex flex-1 flex-col min-w-0">
           <PreviewPanel
             layout={layout}
             deepHtml={deepHtml}

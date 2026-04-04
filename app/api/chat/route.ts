@@ -56,22 +56,19 @@ Action decision rules:
   Example of correct "chat" response:
   { "action": "chat", "message": "Love it! Quick questions to nail the design.", "questions": [{"id": "vibe", "text": "What's the gym's vibe?", "options": ["High-energy CrossFit", "Luxury wellness", "Community-focused", "Other"]}, {"id": "colors", "text": "Color scheme preference?", "options": ["Dark & bold", "Light & clean", "Vibrant & colorful", "Other"]}] }
 
-"build_now" → Use when EITHER:
-  A) User gives a detailed prompt (mentions colors, fonts, layout, specific sections, or content details — any 2 of these), OR
-  B) User says "just build it" / "don't ask questions", OR  
-  C) User has answered your clarifying questions and you now have business type + style
-  Do NOT wait for all 3 criteria — a detailed prompt is enough on its own.
+"build_now" → Use when you want to build a site FROM SCRATCH.
+  A) User gives a detailed prompt (mentions colors, fonts, layout, specific content), OR
+  B) User has answered your clarifying questions and you now have business type + style.
+  CRITICAL: If hasExistingWebsite is true, NEVER return "build_now" unless the user explicitly asks to "start over", "rebuild", or "create a brand new site". If they are answering a clarification question about changing their current site, return "edit" instead!
 
-"confirm" → Use when you have business type + at least one style hint. This is a LOW bar — if user gave you a paragraph or more, use "confirm" not "chat". Summarize in one sentence and ask "Should I start?"
-  IMPORTANT: If user gave a detailed brief (2+ sentences with specifics), prefer "build_now" over "confirm" — don't make them click Yes.
+"confirm" → Use when you have business type + at least one style hint, and you want to start from scratch. 
+  IMPORTANT: If hasExistingWebsite is true, avoid "confirm".
 
-"generate" — user says yes/yep/sure/go/build/start/ok/okay/let's go/do it/proceed 
-  after ANY prior confirm. Even if the last message wasn't a confirm, 
-  if the conversation contains a prior confirm and the user's current 
-  message is an affirmative single word or short phrase, return "generate".
-  When in doubt between "chat" and "generate", always prefer "generate".
+"generate" — user says yes/go/start after a confirm. 
+  CRITICAL: If hasExistingWebsite is true, and the user says "yes" to an edit question, return "edit".
 
-"edit" → hasExistingWebsite is true AND user wants to change something.
+"edit" → hasExistingWebsite is true AND user wants to change something OR is answering a clarification question about a change.
+  If the user is answering a clarification question to a previous edit request, combine the context into the "prompt" field so the edit action understands the full request!
   Also populate editMeta:
   - section: map the user's words to a CC section name:
     "stats/numbers/counters" → "stats"

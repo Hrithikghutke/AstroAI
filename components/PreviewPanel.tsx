@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import PreviewFrame from "@/components/PreviewFrame";
 import DeepPreview from "@/components/DeepPreview";
 import { Layout } from "@/types/layout";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import {
   Monitor,
@@ -530,7 +532,7 @@ export default function PreviewPanel({
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === "code" ? (
           <div
-            className="flex-1 overflow-auto p-15"
+            className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-thumb-[#404040] scrollbar-track-transparent hover:scrollbar-thumb-[#525252] [&>pre]:!scrollbar-thin [&>pre]:!scrollbar-thumb-[#404040] [&>pre]:!scrollbar-track-transparent [&>pre]:hover:!scrollbar-thumb-[#525252]"
             style={{
               background: "#141414",
               fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
@@ -539,16 +541,29 @@ export default function PreviewPanel({
             }}
           >
             {streamingCode ? (
-              <pre
-                style={{
-                  color: "#d4d4d4",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-all",
+              <SyntaxHighlighter
+                language="html"
+                style={vscDarkPlus}
+                customStyle={{
+                  margin: 0,
+                  background: 'transparent',
+                  padding: 0,
+                  fontSize: '13px',
+                  fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
                 }}
-                dangerouslySetInnerHTML={{
-                  __html: escapeHtml(streamingCode),
+                wrapLines={true}
+                wrapLongLines={true}
+                showLineNumbers={true}
+                lineNumberStyle={{
+                  minWidth: "3.5em",
+                  paddingRight: "1.5em",
+                  color: "#858585",
+                  textAlign: "right",
+                  userSelect: "none"
                 }}
-              />
+              >
+                {streamingCode}
+              </SyntaxHighlighter>
             ) : (
               <div className="flex flex-col items-center justify-center h-full">
                 <p

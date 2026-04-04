@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-haiku-4.5",
+        model: "google/gemini-1.5-flash",
         max_tokens: 1000,
         messages: [
           {
@@ -101,6 +101,7 @@ WHAT TO FLAG additionally:
 - Profile image placeholders that are rectangle instead of circle
 - Text that looks like default browser styling (no custom font applied)
 - Heading and body text too similar in size — no visual hierarchy
+- Fonts that look excessively bold, squished, condensed, or overlapping (adjust tracking/letter-spacing or font-weight if so)
 
 WHAT TO IGNORE:
 - Color palette preferences
