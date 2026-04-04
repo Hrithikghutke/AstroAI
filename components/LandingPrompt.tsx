@@ -83,10 +83,26 @@ export default function LandingPrompt() {
     setError(null);
 
     // ── DEEP DIVE MODE ──
-    // Route through /api/chat first. If it wants to build immediately,
-    // navigate with the enriched prompt. If it wants to chat/confirm,
-    // navigate with seed messages so ChatPanel starts in conversation mode.
+    // For very detailed prompts (>500 chars), skip the chat roundtrip entirely —
+    // the user already told us everything, no need to compress/summarize it.
     if (selectedMode === "deep") {
+      const isDetailedPrompt = prompt.trim().length > 500;
+
+      sessionStorage.setItem("crawlcube_mode", "deep");
+      sessionStorage.setItem("crawlcube_model", selectedModel);
+      sessionStorage.removeItem("crawlcube_layout");
+      sessionStorage.removeItem("crawlcube_deep_html");
+      sessionStorage.removeItem("crawlcube_messages");
+      sessionStorage.removeItem("crawlcube_brief");
+
+      if (isDetailedPrompt) {
+        // Pass the full original prompt directly — do NOT let Haiku compress it
+        sessionStorage.setItem("crawlcube_prompt", prompt);
+        sessionStorage.removeItem("crawlcube_seed_messages");
+        router.push("/build");
+        return;
+      }
+
       try {
         const chatRes = await fetch("/api/chat", {
           method: "POST",
@@ -102,15 +118,8 @@ export default function LandingPrompt() {
         const chatData = await chatRes.json();
         const action = chatData.action ?? "chat";
 
-        sessionStorage.setItem("crawlcube_mode", "deep");
-        sessionStorage.setItem("crawlcube_model", selectedModel);
-        sessionStorage.removeItem("crawlcube_layout");
-        sessionStorage.removeItem("crawlcube_deep_html");
-        sessionStorage.removeItem("crawlcube_messages");
-        sessionStorage.removeItem("crawlcube_brief");
-
         if (action === "build_now" || action === "generate") {
-          // Ready to build — let ChatPanel auto-start with the enriched prompt
+          // Ready to build — use enriched prompt if available, else original
           sessionStorage.setItem(
             "crawlcube_prompt",
             chatData.prompt ?? chatData.updatedBrief ?? prompt,

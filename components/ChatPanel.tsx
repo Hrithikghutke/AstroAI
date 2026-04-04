@@ -935,6 +935,8 @@ export default function ChatPanel({
     // Pages are not included here — they're added dynamically when PAGE_NAMES event fires
     const initialSteps: AgentStep[] = [
       { id: "architect", label: "Architect", status: "idle" },
+      { id: "content-strategist", label: "Content Strategist", status: "idle" },
+      { id: "ui-designer", label: "UI Designer", status: "idle" },
       { id: "developer", label: "Developer", status: "idle" },
       { id: "qa", label: "QA", status: "idle" },
       { id: "visual-qa", label: "Visual QA", status: "idle" },
@@ -1119,6 +1121,9 @@ export default function ChatPanel({
 
             case "ARCHITECT_DONE":
               updateStep("architect", "done", event.message);
+              // Trigger content strategist + ui designer as running simultaneously
+              updateStep("content-strategist", "running", "Writing copy & brand voice...");
+              updateStep("ui-designer", "running", "Designing layout & visual system...");
               // Store architect data in message for the dropdown
               if (event.architectData) {
                 setMessages((prev) =>
@@ -1135,6 +1140,24 @@ export default function ChatPanel({
               }
               break;
 
+            case "CONTENT_STRATEGIST_DONE":
+              updateStep(
+                "content-strategist",
+                "done",
+                event.tagline ? `"${event.tagline}"` : "Copy ready",
+              );
+              break;
+
+            case "UI_DESIGNER_DONE":
+              updateStep(
+                "ui-designer",
+                "done",
+                event.heroVariant && event.featuresVariant
+                  ? `${event.heroVariant.replace(/-/g, " ")} · ${event.featuresVariant.replace(/-/g, " ")}`
+                  : "Layout spec ready",
+              );
+              break;
+
             case "DEVELOPER_START": {
               const estimates: Record<string, string> = {
                 "anthropic/claude-haiku-4.5": "~5 credits",
@@ -1143,6 +1166,25 @@ export default function ChatPanel({
                 "deepseek/deepseek-v3.2": "~5 credits · sequential",
               };
               const estimate = estimates[selectedModel] ?? "variable";
+              // Ensure both spec agents are marked done before developer starts
+              // (covers edge case where their _DONE events hadn't been received yet)
+              setMessages((prev) =>
+                prev.map((m) => {
+                  if (m.id !== agentMessage.id) return m;
+                  return {
+                    ...m,
+                    agentSteps: m.agentSteps?.map((s) => {
+                      if (
+                        (s.id === "content-strategist" || s.id === "ui-designer") &&
+                        (s.status === "idle" || s.status === "running")
+                      ) {
+                        return { ...s, status: "done" as AgentStatus, message: "Ready" };
+                      }
+                      return s;
+                    }),
+                  };
+                }),
+              );
               updateStep("developer", "running", `est. ${estimate}`);
               break;
             }

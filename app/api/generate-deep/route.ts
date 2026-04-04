@@ -12,6 +12,14 @@ import {
   getArchitectPrompt,
   type ArchitectOutput,
 } from "@/lib/agentPrompts/architect";
+import {
+  getContentStrategistPrompt,
+  type ContentBrief,
+} from "@/lib/agentPrompts/contentStrategist";
+import {
+  getUIDesignerPrompt,
+  type UIDesignSpec,
+} from "@/lib/agentPrompts/uiDesigner";
 import { fetchUnsplashImage } from "@/lib/fetchUnsplash";
 import { getModelConfig, calculateCredits } from "@/lib/modelConfig";
 
@@ -111,6 +119,7 @@ async function callOpenRouterJson(
   systemPrompt: string,
   userMessage: string,
   signal?: AbortSignal,
+  maxTokens: number = 1000,
 ): Promise<string> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -121,7 +130,7 @@ async function callOpenRouterJson(
     },
     body: JSON.stringify({
       model: "anthropic/claude-haiku-4.5", // Always Haiku — fast and cheap for JSON
-      max_tokens: 600,
+      max_tokens: maxTokens,
       temperature: 0.7,
       messages: [
         { role: "system", content: systemPrompt },
@@ -133,29 +142,57 @@ async function callOpenRouterJson(
   return data.choices?.[0]?.message?.content ?? "";
 }
 
-// ── Default architect fallback — used if architect call fails ──
+// ── Robustly extract a JSON object from a model response ──
+// Uses proper brace-depth tracking so trailing commentary containing {}
+// does not corrupt the extracted slice.
+function extractJson(raw: string): string {
+  const firstBrace = raw.indexOf("{");
+  if (firstBrace === -1) {
+    // No JSON object found — strip fences and return as-is
+    return raw.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+  }
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = firstBrace; i < raw.length; i++) {
+    const ch = raw[i];
+    if (escape) { escape = false; continue; }
+    if (ch === "\\" && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    if (ch === "}") {
+      depth--;
+      if (depth === 0) return raw.slice(firstBrace, i + 1);
+    }
+  }
+
+  // Brace mismatch (truncated JSON) — return best effort
+  return raw.slice(firstBrace);
+}
+
+// ── Default architect fallback ──
 function defaultArchitect(prompt: string): ArchitectOutput {
   const isTech = /(saas|tech|software|app|startup)/i.test(prompt);
   const isFood = /(restaurant|cafe|food|dining)/i.test(prompt);
   const isGym = /(gym|fitness|workout)/i.test(prompt);
+  const isConstruction = /(construction|engineering|architect|structural)/i.test(prompt);
+  const isLaw = /(law|legal|attorney|lawyer)/i.test(prompt);
   return {
     brandName: "Your Brand",
     theme: "dark",
+    visualMood: isTech ? "editorial-clean" : isGym ? "bold-energy" : isConstruction ? "cinematic-dark" : isLaw ? "corporate-precision" : "cinematic-dark",
     colors: {
-      primary: isTech
-        ? "#6366F1"
-        : isFood
-          ? "#F59E0B"
-          : isGym
-            ? "#EF4444"
-            : "#3B82F6",
+      primary: isTech ? "#7C3AED" : isFood ? "#C8956C" : isGym ? "#E8FF47" : isConstruction ? "#7FA67A" : isLaw ? "#8BA3BE" : "#6366F1",
       secondary: "#8B5CF6",
-      background: "#0F172A",
-      surface: "#1E293B",
+      background: "#060606",
+      surface: "#0F0F0F",
     },
     fonts: {
-      display: isTech ? "Space Grotesk" : isFood ? "Playfair Display" : "Inter",
-      body: "Inter",
+      display: isTech ? "Space Grotesk" : isFood ? "Cormorant Garamond" : isGym ? "Barlow Condensed" : isConstruction ? "Bebas Neue" : "Inter",
+      body: isTech ? "DM Sans" : isFood ? "Lato" : isGym ? "Barlow" : "Inter",
       url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
     },
     pages: [
@@ -636,10 +673,7 @@ export async function POST(req: Request) {
             `Business to build a website for: ${prompt}`,
             clientSignal,
           );
-          const clean = rawArchitect
-            .replace(/^```json\s*/i, "")
-            .replace(/```\s*$/i, "")
-            .trim();
+          const clean = extractJson(rawArchitect);
           const parsed = JSON.parse(clean);
           // Validate required fields
           if (
@@ -668,12 +702,62 @@ export async function POST(req: Request) {
         });
 
         // ════════════════════════════════════════════
-        // STEP 3 — Shell call (sequential, must finish first)
-        // Now receives architect output — just implements, doesn't decide
+        // STEP 2b + 2c — Content Strategist + UI Designer
+        // Run in parallel with each other, THEN shell uses UI spec.
+        // Both are cheap Haiku calls (<1 credit each).
+        // ════════════════════════════════════════════
+        let contentBrief: ContentBrief | undefined;
+        let uiSpec: UIDesignSpec | undefined;
+
+        try {
+          const [rawContent, rawUISpec] = await Promise.all([
+            callOpenRouterJson(
+              getContentStrategistPrompt(),
+              `Business: ${prompt}`,
+              clientSignal,
+              1400, // Full ContentBrief (3 testimonials + 6 features + stats) needs ~900-1100 tokens
+            ),
+            callOpenRouterJson(
+              getUIDesignerPrompt(),
+              `Business: ${prompt}\n\nBrand plan from Architect:\n${JSON.stringify({ brandName: architect.brandName, visualMood: architect.visualMood, colors: architect.colors, fonts: { display: architect.fonts.display, body: architect.fonts.body } }, null, 2)}`,
+              clientSignal,
+              1000,
+            ),
+          ]);
+
+          try {
+            contentBrief = JSON.parse(extractJson(rawContent)) as ContentBrief;
+            console.log(`[ContentStrategist] tagline: "${contentBrief.tagline}"`);
+            push("CONTENT_STRATEGIST_DONE", { tagline: contentBrief.tagline });
+          } catch (e) {
+            console.warn("[ContentStrategist] Failed to parse:", (e as Error).message, "\nRaw:", rawContent.slice(0, 200));
+            push("CONTENT_STRATEGIST_DONE", { tagline: null });
+          }
+
+          try {
+            uiSpec = JSON.parse(extractJson(rawUISpec)) as UIDesignSpec;
+            console.log(`[UIDesigner] hero: ${uiSpec.heroVariant} | features: ${uiSpec.featuresVariant} | navbar: ${uiSpec.navbarStyle}`);
+            push("UI_DESIGNER_DONE", {
+              heroVariant: uiSpec.heroVariant,
+              featuresVariant: uiSpec.featuresVariant,
+              navbarStyle: uiSpec.navbarStyle,
+            });
+          } catch (e) {
+            console.warn("[UIDesigner] Failed to parse:", (e as Error).message, "\nRaw:", rawUISpec.slice(0, 200));
+            push("UI_DESIGNER_DONE", { heroVariant: null, featuresVariant: null });
+          }
+        } catch (err) {
+          console.warn("[Parallel agents] Failed:", err);
+          push("CONTENT_STRATEGIST_DONE", { tagline: null });
+          push("UI_DESIGNER_DONE", { heroVariant: null, featuresVariant: null });
+        }
+
+        // ════════════════════════════════════════════
+        // STEP 3 — Shell call (receives UI spec for navbar style)
         // ════════════════════════════════════════════
         const { content: shellHtml, outputTokens: shellTokens } =
           await silentStream(
-            getShellPrompt(isSinglePage, architect),
+            getShellPrompt(isSinglePage, architect, uiSpec),
             `Business: ${prompt}\nHero image URL: ${heroImageUrl}${fixes?.length ? `\nFixes to address: ${fixes.map((f: string) => `- ${f}`).join("\n")}` : ""}`,
             budgets.shell,
             DEVELOPER_MODEL,
@@ -829,7 +913,7 @@ export async function POST(req: Request) {
             const heroUrl = pageId === "home" ? heroImageUrl : undefined;
             try {
               const r = await silentStream(
-                getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl),
+                getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
                 `Generate the complete ${pageLabel} page section.`,
                 budgets.page,
                 DEVELOPER_MODEL,
@@ -860,7 +944,7 @@ export async function POST(req: Request) {
           // Footer — always last for DeepSeek
           try {
             const footerR = await silentStream(
-              getFooterPrompt(prompt, designTokens, false),
+              getFooterPrompt(prompt, designTokens, false, architect),
               "Generate the footer and closing scripts.",
               budgets.footer,
               DEVELOPER_MODEL,
@@ -890,6 +974,9 @@ export async function POST(req: Request) {
                     prompt,
                     designTokens,
                     heroUrl,
+                    architect,
+                    uiSpec,
+                    contentBrief,
                   ),
                   `Generate the complete ${pageLabel} page section.`,
                   budgets.page,
@@ -915,7 +1002,7 @@ export async function POST(req: Request) {
             stagger(architect.pages.length)
               .then(() =>
                 silentStream(
-                  getFooterPrompt(prompt, designTokens, false),
+                  getFooterPrompt(prompt, designTokens, false, architect),
                   "Generate the footer and closing scripts.",
                   budgets.footer,
                   DEVELOPER_MODEL,
