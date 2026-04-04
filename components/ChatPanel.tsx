@@ -5,8 +5,6 @@ import {
   Send,
   LoaderCircle,
   RotateCcw,
-  CheckCircle,
-  XCircle,
   Zap,
   Telescope,
   Eye,
@@ -21,7 +19,82 @@ import { ThemeStyle } from "@/types/layout";
 import { useCredits } from "@/context/CreditsContext";
 import { useAuth } from "@clerk/nextjs";
 import Logo from "@/assets/logo.svg";
-import { DEEP_DIVE_MODELS, CLAUDE_LOGO_SVG } from "@/lib/modelConfig";
+import { DEEP_DIVE_MODELS, CLAUDE_LOGO_SVG, getModelConfig } from "@/lib/modelConfig";
+
+// ── Shimmer "Thinking" animation — matches Claude UI ──
+const shimmerStyle = `
+  @keyframes cc-shimmer {
+    0%   { background-position: -400px center; }
+    100% { background-position: 400px center; }
+  }
+  .cc-thinking {
+    background: linear-gradient(
+      90deg,
+      #4b5563 0%,
+      #4b5563 30%,
+      #d1d5db 50%,
+      #4b5563 70%,
+      #4b5563 100%
+    );
+    background-size: 400px 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: cc-shimmer 2s ease-in-out infinite;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+`;
+
+// ── Derive current thinking label from live agent steps ──
+function getThinkingLabel(agentSteps?: AgentStep[]): string {
+  if (!agentSteps) return "Thinking";
+
+  const running = agentSteps.find((s) => s.status === "running");
+  if (!running) return "Thinking";
+
+  // Architect phase
+  if (running.id === "architect") return "Planning architecture";
+
+  // Developer phase — shell/design system (developer step running but no page running yet)
+  if (running.id === "developer") {
+    const anyPageRunning = agentSteps.some(
+      (s) => s.id.startsWith("page-") && s.status === "running",
+    );
+    return anyPageRunning ? "Assembling pages" : "Designing system";
+  }
+
+  // Individual page steps
+  if (running.id.startsWith("page-")) {
+    const raw = running.id.replace("page-", "");
+    if (raw === "footer") return "Writing scripts";
+    // Use the step label if it's a real page name, else format the id
+    const label = running.label?.trim();
+    if (label && label.length > 0) {
+      // label is like "Services" or "Home" — already clean
+      return `Building ${label}`;
+    }
+    // Fallback: format the id
+    const name = raw.charAt(0).toUpperCase() + raw.slice(1).replace(/-/g, " ");
+    return `Building ${name}`;
+  }
+
+  // QA phases
+  if (running.id === "qa") return "Testing website";
+  if (running.id === "visual-qa") return "Reviewing visuals";
+
+  return "Working on it";
+}
+
+function ThinkingText({ label = "Thinking" }: { label?: string }) {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: shimmerStyle }} />
+      <span className="cc-thinking">{label}</span>
+    </>
+  );
+}
 
 type GenerationMode = "fast" | "deep";
 
@@ -36,13 +109,30 @@ interface AgentStep {
   detail?: string;
 }
 
+interface ArchitectData {
+  brandName: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    surface: string;
+  };
+  fonts: { display: string; body: string };
+  pages: string[];
+  pageLabels: string[];
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   isGenerating?: boolean;
   agentSteps?: AgentStep[];
-  thumbnail?: string | null; // base64 screenshot shown in chat bubble
+  architectData?: ArchitectData; // populated from ARCHITECT_DONE event
+  architectOpen?: boolean; // accordion open state
+  thumbnail?: string | null;
+  options?: { label: string; value: string }[];
+  questions?: { id: string; text: string; options: string[] }[];
 }
 
 const THEME_DESCRIPTIONS: Record<ThemeStyle, string> = {
@@ -62,47 +152,452 @@ const SUGGESTIONS = [
 ];
 
 // ── Agent step progress UI ──
-function AgentStepRow({ step }: { step: AgentStep }) {
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="shrink-0 mt-0.5">
-        {step.status === "idle" && (
-          <div className="w-4 h-4 rounded-full border border-neutral-700" />
-        )}
-        {step.status === "running" && (
-          <LoaderCircle className="w-4 h-4 text-pink-400 animate-spin" />
-        )}
-        {step.status === "done" && (
-          <CheckCircle className="w-4 h-4 text-green-400" />
-        )}
-        {step.status === "error" && (
-          <XCircle className="w-4 h-4 text-red-400" />
-        )}
+// ── Status dot/icon for each step ──
+function StepIcon({ status }: { status: AgentStatus }) {
+  if (status === "done")
+    return (
+      <svg
+        className="w-3.5 h-3.5 text-emerald-500 shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2.5}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    );
+  if (status === "running")
+    return (
+      <div className="w-3.5 h-3.5 shrink-0 flex items-center justify-center">
+        <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
       </div>
-      <div className="flex flex-col gap-0.5">
-        <span
-          className="text-xs font-semibold"
-          style={{
-            color:
-              step.status === "idle"
-                ? "#404040"
-                : step.status === "running"
-                  ? "#f9a8d4"
-                  : step.status === "done"
-                    ? "#86efac"
-                    : "#fca5a5",
-          }}
-        >
-          {step.label}
-        </span>
-        {step.message && (
-          <span className="text-xs text-neutral-500 leading-relaxed">
-            {step.message}
+    );
+  if (status === "error")
+    return (
+      <div className="w-3.5 h-3.5 shrink-0 rounded-full bg-red-500/20 border border-red-500/50" />
+    );
+  return (
+    <div className="w-3.5 h-3.5 shrink-0 rounded-full border border-neutral-700" />
+  );
+}
+
+// ── Color swatch ──
+function ColorSwatch({ hex }: { hex: string }) {
+  return (
+    <span
+      className="inline-block w-3 h-3 rounded-sm border border-white/10 align-middle mr-1"
+      style={{ background: hex }}
+    />
+  );
+}
+
+// ── New generation progress UI ──
+function GenerationProgress({
+  message,
+  onToggleArchitect,
+}: {
+  message: Message;
+  onToggleArchitect: (msgId: string) => void;
+}) {
+  const steps = message.agentSteps ?? [];
+  const architectStep = steps.find((s) => s.id === "architect");
+  const developerStep = steps.find((s) => s.id === "developer");
+  const pageSteps = steps.filter((s) => s.id.startsWith("page-"));
+  const qaStep = steps.find((s) => s.id === "qa");
+  const visualQaStep = steps.find((s) => s.id === "visual-qa");
+
+  const ad = message.architectData;
+
+  return (
+    <div className="space-y-px text-[11px] font-mono">
+      {/* ── Architect block ── */}
+      {architectStep && (
+        <div className="rounded-lg overflow-hidden border border-neutral-800/60">
+          {/* Header row — always visible */}
+          <button
+            onClick={() => onToggleArchitect(message.id)}
+            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/2 transition-colors"
+          >
+            <StepIcon status={architectStep.status} />
+            <span
+              className={`font-semibold tracking-wide flex-1 ${
+                architectStep.status === "done"
+                  ? "text-neutral-300"
+                  : architectStep.status === "running"
+                    ? "text-blue-300"
+                    : architectStep.status === "error"
+                      ? "text-red-400"
+                      : "text-neutral-600"
+              }`}
+            >
+              ARCHITECT
+            </span>
+            {/* Summary when done */}
+            {architectStep.status === "done" && ad && (
+              <span className="text-neutral-500 truncate max-w-40">
+                {ad.brandName} · {ad.fonts.display} · {ad.colors.primary}
+              </span>
+            )}
+            {/* Running message */}
+            {architectStep.status === "running" && (
+              <span className="text-neutral-600">
+                {architectStep.message ?? "Analyzing..."}
+              </span>
+            )}
+            {/* Chevron */}
+            {architectStep.status === "done" && (
+              <svg
+                className={`w-3 h-3 text-neutral-600 shrink-0 transition-transform ${message.architectOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            )}
+          </button>
+
+          {/* Expanded architect details */}
+          {message.architectOpen && ad && (
+            <div className="px-3 pb-3 pt-1 border-t border-neutral-800/60 space-y-1.5">
+              <div className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-1">
+                <span className="text-neutral-600 uppercase tracking-widest text-[10px]">
+                  Brand
+                </span>
+                <span className="text-neutral-300">{ad.brandName}</span>
+
+                <span className="text-neutral-600 uppercase tracking-widest text-[10px]">
+                  Primary
+                </span>
+                <span className="text-neutral-300">
+                  <ColorSwatch hex={ad.colors.primary} />
+                  {ad.colors.primary}
+                  <span className="text-neutral-600 mx-2">·</span>
+                  <ColorSwatch hex={ad.colors.secondary} />
+                  {ad.colors.secondary}
+                </span>
+
+                <span className="text-neutral-600 uppercase tracking-widest text-[10px]">
+                  Background
+                </span>
+                <span className="text-neutral-300">
+                  <ColorSwatch hex={ad.colors.background} />
+                  {ad.colors.background}
+                  <span className="text-neutral-600 mx-2">·</span>
+                  <ColorSwatch hex={ad.colors.surface} />
+                  {ad.colors.surface}
+                </span>
+
+                <span className="text-neutral-600 uppercase tracking-widest text-[10px]">
+                  Fonts
+                </span>
+                <span className="text-neutral-300">
+                  {ad.fonts.display} / {ad.fonts.body}
+                </span>
+
+                <span className="text-neutral-600 uppercase tracking-widest text-[10px]">
+                  Pages
+                </span>
+                <span className="text-neutral-300">
+                  {ad.pageLabels.join(" · ")}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Developer block ── */}
+      {developerStep &&
+        (developerStep.status !== "idle" || pageSteps.length > 0) && (
+          <div className="rounded-lg border border-neutral-800/60 overflow-hidden">
+            <div className="flex items-center gap-2 px-3 py-2">
+              <StepIcon status={developerStep.status} />
+              <span
+                className={`font-semibold tracking-wide flex-1 ${
+                  developerStep.status === "done"
+                    ? "text-neutral-300"
+                    : developerStep.status === "running"
+                      ? "text-blue-300"
+                      : "text-neutral-600"
+                }`}
+              >
+                DEVELOPER
+              </span>
+              {developerStep.status === "running" && developerStep.message && (
+                <span className="text-neutral-600 truncate max-w-45">
+                  {developerStep.message}
+                </span>
+              )}
+              {developerStep.status === "done" && (
+                <span className="text-neutral-500">Complete</span>
+              )}
+            </div>
+
+            {/* Page sub-items */}
+            {pageSteps.length > 0 && (
+              <div className="px-3 pb-2 border-t border-neutral-800/40 space-y-0.5 pt-1.5">
+                {pageSteps.map((page) => (
+                  <div
+                    key={page.id}
+                    className="flex items-center gap-2 py-0.5 pl-2"
+                  >
+                    <StepIcon status={page.status} />
+                    <span
+                      className={`${
+                        page.status === "done"
+                          ? "text-neutral-400"
+                          : page.status === "running"
+                            ? "text-blue-300/80"
+                            : "text-neutral-700"
+                      }`}
+                    >
+                      {page.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+      {/* ── QA rows ── */}
+      {[qaStep, visualQaStep].filter(Boolean).map(
+        (step) =>
+          step &&
+          step.status !== "idle" && (
+            <div
+              key={step.id}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-800/60"
+            >
+              <StepIcon status={step.status} />
+              <span
+                className={`font-semibold tracking-wide ${
+                  step.status === "done"
+                    ? "text-neutral-300"
+                    : step.status === "running"
+                      ? "text-blue-300"
+                      : "text-neutral-600"
+                }`}
+              >
+                {step.id === "qa" ? "QA" : "VISUAL QA"}
+              </span>
+              {step.message && (
+                <span className="text-neutral-600">{step.message}</span>
+              )}
+            </div>
+          ),
+      )}
+    </div>
+  );
+}
+
+// ── Structured question cards — shown when AI returns questions array ──
+function QuestionCards({
+  intro,
+  questions,
+  onSubmit,
+}: {
+  intro: string;
+  questions: { id: string; text: string; options: string[] }[];
+  onSubmit: (answers: string) => void;
+}) {
+  const [page, setPage] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [customInputs, setCustomInputs] = useState<Record<string, string>>({});
+  const [showCustom, setShowCustom] = useState<Record<string, boolean>>({});
+
+  const current = questions[page];
+  const total = questions.length;
+  const currentAnswer = answers[current.id];
+  const isLastPage = page === total - 1;
+  const allAnswered = questions.every((q) => answers[q.id]);
+
+  const pickOption = (qId: string, opt: string) => {
+    if (opt === "Other") {
+      setShowCustom((p) => ({ ...p, [qId]: true }));
+      setAnswers((p) => ({ ...p, [qId]: "" }));
+    } else {
+      setShowCustom((p) => ({ ...p, [qId]: false }));
+      setAnswers((p) => ({ ...p, [qId]: opt }));
+    }
+  };
+
+  const handleDone = () => {
+    // Compile all answers into a natural message
+    const compiled = questions
+      .map((q) => {
+        const ans = answers[q.id] || customInputs[q.id] || "";
+        return `${q.text} ${ans}`;
+      })
+      .join(" ");
+    onSubmit(compiled);
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Intro text */}
+      {intro && (
+        <p className="text-[13px] text-neutral-300 px-1 leading-relaxed">
+          {intro}
+        </p>
+      )}
+
+      {/* Question card */}
+      <div
+        className="rounded-xl border border-neutral-800 overflow-hidden"
+        style={{ background: "rgba(255,255,255,0.02)" }}
+      >
+        {/* Card header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800/60">
+          <span className="text-[11px] font-mono text-neutral-600 tracking-widest uppercase">
+            {page + 1} / {total}
           </span>
-        )}
-        {step.detail && (
-          <span className="text-xs text-neutral-600 italic">{step.detail}</span>
-        )}
+          <div className="flex gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-600 hover:text-neutral-300 disabled:opacity-20 transition-colors cursor-pointer"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(total - 1, p + 1))}
+              disabled={page === total - 1}
+              className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-600 hover:text-neutral-300 disabled:opacity-20 transition-colors cursor-pointer"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Question + options */}
+        <div className="px-3 py-3 space-y-2.5">
+          <p className="text-[13px] text-neutral-200 font-medium leading-snug">
+            {current.text}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {current.options.map((opt) => {
+              const isSelected =
+                currentAnswer === opt ||
+                (opt === "Other" && showCustom[current.id]);
+              return (
+                <button
+                  key={opt}
+                  onClick={() => pickOption(current.id, opt)}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all cursor-pointer"
+                  style={{
+                    background: isSelected
+                      ? "rgba(168,85,247,0.15)"
+                      : "rgba(255,255,255,0.03)",
+                    borderColor: isSelected ? "#a855f7" : "#2a2a2a",
+                    color: isSelected ? "#d8b4fe" : "#737373",
+                  }}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom input for "Other" */}
+          {showCustom[current.id] && (
+            <input
+              autoFocus
+              type="text"
+              placeholder="Describe your preference..."
+              value={customInputs[current.id] ?? ""}
+              onChange={(e) => {
+                setCustomInputs((p) => ({
+                  ...p,
+                  [current.id]: e.target.value,
+                }));
+                setAnswers((p) => ({ ...p, [current.id]: e.target.value }));
+              }}
+              className="w-full bg-transparent border border-neutral-700 focus:border-purple-500/60 rounded-lg px-3 py-2 text-[12px] text-neutral-200 placeholder:text-neutral-600 outline-none transition-colors"
+            />
+          )}
+        </div>
+
+        {/* Footer — next or done */}
+        <div className="px-3 pb-3 flex justify-between items-center">
+          {!isLastPage ? (
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!currentAnswer}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer disabled:opacity-30"
+              style={{
+                background: "rgba(168,85,247,0.15)",
+                border: "1px solid rgba(168,85,247,0.3)",
+                color: "#d8b4fe",
+              }}
+            >
+              Next
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={handleDone}
+              disabled={!allAnswered}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all cursor-pointer disabled:opacity-30"
+              style={{
+                background: allAnswered
+                  ? "linear-gradient(135deg, #a855f7, #ec4899)"
+                  : "rgba(168,85,247,0.1)",
+                border: "1px solid rgba(168,85,247,0.3)",
+                color: "#fff",
+              }}
+            >
+              Done
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -145,6 +640,17 @@ export default function ChatPanel({
   const activeModel =
     MODELS.find((m) => m.model === selectedModel) ?? MODELS[0];
   const [messages, setMessages] = useState<Message[]>(() => {
+    // Check sessionStorage first — survives page refresh
+    try {
+      const stored = sessionStorage.getItem("crawlcube_messages");
+      if (stored) {
+        const parsed = JSON.parse(stored) as Message[];
+        if (parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+
     // Restored from dashboard — show continuation message
     if (restoredDeepHtml && initialPrompt) {
       return [
@@ -209,6 +715,12 @@ export default function ChatPanel({
   const { userId } = useAuth();
   const [fixLoading, setFixLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [pagePicker, setPagePicker] = useState<{
+    instruction: string;
+    section: string;
+    pages: { id: string; label: string }[];
+    editMeta: any;
+  } | null>(null);
   const [ratingState, setRatingState] = useState<{
     prompt: string;
     html: string;
@@ -226,6 +738,28 @@ export default function ChatPanel({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Persist messages + brief to sessionStorage so refresh doesn't lose state
+  useEffect(() => {
+    if (messages.length === 0) return;
+    // Don't persist the synthetic welcome message — it would fill crawlcube_messages
+    // before the auto-start useEffect runs, causing the auto-start guard to bail early
+    // and the deep-dive pipeline never triggering for detailed landing-page prompts.
+    const isOnlyWelcome =
+      messages.length === 1 && messages[0].id === "welcome";
+    if (isOnlyWelcome) return;
+    try {
+      // Strip completedHtml from messages — it's saved separately as crawlcube_deep_html
+      const stripped = messages.map((m) => ({
+        ...m,
+        completedHtml: undefined,
+      }));
+      sessionStorage.setItem("crawlcube_messages", JSON.stringify(stripped));
+      if (briefRef.current) {
+        sessionStorage.setItem("crawlcube_brief", briefRef.current);
+      }
+    } catch {}
+  }, [messages]);
+
   // ── Auto-start Deep Dive if navigated from landing page ──
 
   const initialPromptRef = useRef(initialPrompt);
@@ -236,6 +770,42 @@ export default function ChatPanel({
   });
 
   useEffect(() => {
+    // Check for seed messages from LandingPrompt conversation flow
+    const seedRaw = sessionStorage.getItem("crawlcube_seed_messages");
+    if (
+      seedRaw &&
+      initialModeRef.current === "deep" &&
+      !hasAutoStarted.current
+    ) {
+      try {
+        const seeded: { role: string; content: string }[] = JSON.parse(seedRaw);
+        sessionStorage.removeItem("crawlcube_seed_messages");
+        setMessages(
+          seeded.map((m, i) => ({
+            id: `seed-${i}`,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            questions: (m as any).questions ?? undefined,
+          })),
+        );
+        briefRef.current = seeded.find((m) => m.role === "user")?.content ?? "";
+        return; // Don't auto-start — wait for user to respond
+      } catch {
+        sessionStorage.removeItem("crawlcube_seed_messages");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt, initialMode]);
+  useEffect(() => {
+    // Restore brief from previous session
+    const storedBrief = sessionStorage.getItem("crawlcube_brief");
+    if (storedBrief && !briefRef.current) {
+      briefRef.current = storedBrief;
+    }
+
+    // Don't auto-start if messages were restored from a previous session
+    if (sessionStorage.getItem("crawlcube_messages")) return;
+
     if (
       initialModeRef.current === "deep" &&
       initialPromptRef.current &&
@@ -295,11 +865,11 @@ export default function ChatPanel({
         }),
       });
 
-      const data = await res.json();
       if (res.status === 402) {
         const errData = await res.json();
         throw new Error(errData.message ?? "Not enough credits.");
       }
+      const data = await res.json();
       if (!res.ok || !data.layout) throw new Error("Generation failed");
 
       const normalized = normalizeLayout(data.layout);
@@ -362,33 +932,12 @@ export default function ChatPanel({
     if (!prompt || loading) return;
 
     // Initial agent steps — all idle
+    // Pages are not included here — they're added dynamically when PAGE_NAMES event fires
     const initialSteps: AgentStep[] = [
-      {
-        id: "architect",
-        label: "🏗️  Crawl Architect is designing your website.",
-        status: "idle",
-      },
-      {
-        id: "developer",
-        label: "⌨️  Crawl Developer is building your website.",
-        status: "idle",
-      },
-      { id: "page-home", label: "   📄  Home page", status: "idle" },
-      { id: "page-2", label: "   📄  Page 2", status: "idle" },
-      { id: "page-3", label: "   📄  Page 3", status: "idle" },
-      { id: "page-contact", label: "   📄  Contact page", status: "idle" },
-      { id: "page-footer", label: "   🔗  Footer & scripts", status: "idle" },
-      {
-        id: "qa",
-        label: "🔍  Crawl QA is testing your website for any bug.",
-        status: "idle",
-      },
-      {
-        id: "visual-qa",
-        label:
-          "👁️  Crawl Visual QA is scanning your website for visual issues.",
-        status: "idle",
-      },
+      { id: "architect", label: "Architect", status: "idle" },
+      { id: "developer", label: "Developer", status: "idle" },
+      { id: "qa", label: "QA", status: "idle" },
+      { id: "visual-qa", label: "Visual QA", status: "idle" },
     ];
 
     const userMessage: Message = {
@@ -410,6 +959,9 @@ export default function ChatPanel({
     onGeneratingChange?.(true);
     onStreamCode?.("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
+    // Optimistically deduct the model's minimum cost so the header credit
+    // counter shows a realistic drop, not just -1 for an expensive generation.
+    deductCredit(getModelConfig(selectedModel).minCreditsToStart);
 
     // Helper to update a specific agent step in the message
     const updateStep = (
@@ -429,6 +981,29 @@ export default function ChatPanel({
               }
             : m,
         ),
+      );
+    };
+
+    // Dynamically insert page steps after "developer" step when PAGE_NAMES fires
+    const addPageSteps = (pages: string[], labels: string[]) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== agentMessage.id) return m;
+          const existing = m.agentSteps ?? [];
+          const devIndex = existing.findIndex((s) => s.id === "developer");
+          const pageSteps: AgentStep[] = pages.map((id, i) => ({
+            id: `page-${id}`,
+            label: labels[i] ?? id,
+            status: "idle" as AgentStatus,
+          }));
+          // Insert page steps right after developer
+          const next = [
+            ...existing.slice(0, devIndex + 1),
+            ...pageSteps,
+            ...existing.slice(devIndex + 1),
+          ];
+          return { ...m, agentSteps: next };
+        }),
       );
     };
 
@@ -532,93 +1107,45 @@ export default function ChatPanel({
               break;
 
             case "PAGE_NAMES": {
-              // Architect decided the real page structure — update step labels
               const pages: string[] = event.pages ?? [];
               const labels: string[] = event.pageLabels ?? [];
-              // Update each page step with real ID and label
-              // pages[0] is always "home", pages[-1] is always "contact"
-              // Middle pages replace the placeholder page-2, page-3 steps
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === agentMessage.id
-                    ? {
-                        ...m,
-                        agentSteps: m.agentSteps?.map((s) => {
-                          // Find matching page by position
-                          const pageIndex = pages.findIndex(
-                            (p) =>
-                              `page-${p}` === s.id ||
-                              (s.id === "page-2" && pages[1] !== undefined) ||
-                              (s.id === "page-3" && pages[2] !== undefined),
-                          );
-                          if (s.id === "page-2" && pages[1]) {
-                            return {
-                              ...s,
-                              id: `page-${pages[1]}`,
-                              label: `   📄  ${labels[1]} page`,
-                            };
-                          }
-                          if (
-                            s.id === "page-3" &&
-                            pages[2] &&
-                            pages.length > 3
-                          ) {
-                            return {
-                              ...s,
-                              id: `page-${pages[2]}`,
-                              label: `   📄  ${labels[2]} page`,
-                            };
-                          }
-                          if (
-                            s.id === "page-contact" &&
-                            labels[labels.length - 1]
-                          ) {
-                            return {
-                              ...s,
-                              label: `   📄  ${labels[labels.length - 1]} page`,
-                            };
-                          }
-                          return s;
-                        }),
-                      }
-                    : m,
-                ),
+              // Dynamically add real page steps + footer to developer block
+              addPageSteps(
+                [...pages, "footer"],
+                [...labels, "Footer & scripts"],
               );
               break;
             }
 
             case "ARCHITECT_DONE":
-              updateStep(
-                "architect",
-                "done",
-                event.message,
-                event.plan?.overallStyle,
-              );
+              updateStep("architect", "done", event.message);
+              // Store architect data in message for the dropdown
+              if (event.architectData) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === agentMessage.id
+                      ? {
+                          ...m,
+                          architectData: event.architectData,
+                          architectOpen: false,
+                        }
+                      : m,
+                  ),
+                );
+              }
               break;
 
-            case "DEVELOPER_START":
+            case "DEVELOPER_START": {
               const estimates: Record<string, string> = {
                 "anthropic/claude-haiku-4.5": "~5 credits",
                 "anthropic/claude-sonnet-4.6": "~20-30 credits",
                 "anthropic/claude-opus-4": "~300-500 credits",
-                "deepseek/deepseek-v3.2":
-                  "~5 credits · pages generate one by one",
+                "deepseek/deepseek-v3.2": "~5 credits · sequential",
               };
               const estimate = estimates[selectedModel] ?? "variable";
-              updateStep(
-                "developer",
-                "running",
-                `${event.message} (estimated ${estimate})`,
-              );
-              // Mark all page steps as running
-              [
-                "page-home",
-                "page-features",
-                "page-pricing",
-                "page-contact",
-                "page-footer",
-              ].forEach((id) => updateStep(id, "running"));
+              updateStep("developer", "running", `est. ${estimate}`);
               break;
+            }
             case "DEVELOPER_DONE":
               updateStep("developer", "done", event.message);
               break;
@@ -640,13 +1167,30 @@ export default function ChatPanel({
               break;
 
             case "DEVELOPER_FIX": {
-              // route.ts now sends stepId directly — no need to parse text
               const stepId = event.stepId as string | undefined;
               const msg = event.message ?? "";
               if (stepId) {
-                updateStep(stepId, "done", "Complete ✓");
+                // Mark that page done, then mark the next idle page as running
+                updateStep(stepId, "done");
+                setMessages((prev) =>
+                  prev.map((m) => {
+                    if (m.id !== agentMessage.id) return m;
+                    const steps = m.agentSteps ?? [];
+                    const nextIdle = steps.find(
+                      (s) => s.id.startsWith("page-") && s.status === "idle",
+                    );
+                    if (!nextIdle) return m;
+                    return {
+                      ...m,
+                      agentSteps: steps.map((s) =>
+                        s.id === nextIdle.id
+                          ? { ...s, status: "running" as AgentStatus }
+                          : s,
+                      ),
+                    };
+                  }),
+                );
               } else {
-                // Fallback for backwards compat
                 updateStep("developer", "running", msg);
               }
               break;
@@ -704,7 +1248,7 @@ export default function ChatPanel({
                     ? {
                         ...m,
                         isGenerating: false,
-                        content: `Your **${event.brandName}** website is ready! It's showing in the preview.\n\n${event.creditsUsed ? `**${event.creditsUsed} credits** used for this generation.` : ""}\n\nDescribe changes and I'll rebuild it for you. modal used was **${activeModel.label}**.`,
+                        content: `Your **${event.brandName}** website is ready! It's showing in the preview.\n\n${event.creditsUsed ? `**${event.creditsUsed} credits** used for this generation.` : ""}\n\nDescribe changes and I'll rebuild it for you. Model: **${activeModel.label}**.`,
                         thumbnail: thumb,
                       }
                     : m,
@@ -761,58 +1305,228 @@ export default function ChatPanel({
     }
   };
 
-  // ── Detect if the message is a fix/edit vs new generation ──
-  const isEditRequest = (message: string): boolean => {
-    const lower = message.toLowerCase().trim();
-    const editKeywords = [
-      "fix",
-      "change",
-      "update",
-      "edit",
-      "modify",
-      "adjust",
-      "improve",
-      "make",
-      "add",
-      "remove",
-      "delete",
-      "replace",
-      "move",
-      "resize",
-      "color",
-      "font",
-      "spacing",
-      "padding",
-      "margin",
-      "align",
-      "center",
-      "responsive",
-      "mobile",
-      "header",
-      "footer",
-      "navbar",
-      "button",
-      "broken",
-      "wrong",
-      "issue",
-      "problem",
-      "not working",
-      "looks",
-      "style",
-      "design",
-      "layout",
-      "section",
-      "text",
-      "image",
-      "logo",
-      "bigger",
-      "smaller",
-      "darker",
-      "lighter",
-      "bolder",
-      "thinner",
+  // ── Extract page IDs from current HTML for classifier context ──
+  const extractExistingPages = (): string[] => {
+    const html = deepHtmlRef.current;
+    if (!html) return [];
+    const matches = [...html.matchAll(/id="page-([a-z0-9-]+)"/g)];
+    return [...new Set(matches.map((m) => m[1]))];
+  };
+
+  // ── Find all CC section occurrences across pages ──
+  const findSectionPages = (
+    sectionName: string,
+  ): { id: string; label: string }[] => {
+    const html = deepHtmlRef.current;
+    if (!html) return [];
+    // Find all page-X sections that contain CC:sectionName
+    const pageMatches = [
+      ...html.matchAll(
+        /<section[^>]*id="page-([a-z0-9-]+)"[^>]*>[\s\S]*?<!-- CC:sectionName[\s\S]*?<\/section>/g,
+      ),
     ];
-    return editKeywords.some((kw) => lower.includes(kw));
+    // Simpler: find the page context around each CC marker
+    const ccPattern = new RegExp(`<!-- CC:${sectionName} -->`, "g");
+    const results: { id: string; label: string }[] = [];
+    let match;
+    while ((match = ccPattern.exec(html)) !== null) {
+      // Look backwards for the nearest id="page-X"
+      const before = html.slice(0, match.index);
+      const pageMatch = [...before.matchAll(/id="page-([a-z0-9-]+)"/g)].pop();
+      if (pageMatch) {
+        const id = pageMatch[1];
+        if (!results.find((r) => r.id === id)) {
+          results.push({
+            id,
+            label: id.charAt(0).toUpperCase() + id.slice(1).replace(/-/g, " "),
+          });
+        }
+      }
+    }
+    return results;
+  };
+
+  // ── Smart surgical edit — uses section markers when available ──
+  const handleSurgicalEdit = async (
+    instruction: string,
+    editMeta?: { section?: string; scope?: string; action?: string },
+    targetPageId?: string,
+  ) => {
+    const currentHtml = deepHtmlRef.current;
+    if (!currentHtml) return;
+
+    // If section identified and exists on multiple pages, ask which page first
+    if (
+      editMeta?.section &&
+      !targetPageId &&
+      editMeta.scope !== "navbar" &&
+      editMeta.scope !== "head"
+    ) {
+      const sectionPages = findSectionPages(editMeta.section);
+      if (sectionPages.length > 1) {
+        setPagePicker({
+          instruction,
+          section: editMeta.section,
+          pages: sectionPages,
+          editMeta,
+        });
+        return; // Wait for user to pick a page
+      }
+    }
+
+    const thinkingMsg: Message = {
+      id: Date.now().toString() + "-editing",
+      role: "assistant",
+      content: "",
+      isGenerating: true,
+    };
+    setMessages((prev) => [...prev, thinkingMsg]);
+    setIsEditing(true);
+    setLoading(true);
+
+    try {
+      const body: any = {
+        html: currentHtml,
+        instruction,
+        action: editMeta?.action ?? "section_edit",
+        targetSection: editMeta?.section ?? null,
+        targetPage: targetPageId ?? null,
+        model: selectedModel, // ← add this
+      };
+
+      const res = await fetch("/api/edit-html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (res.status === 402) {
+        const errData = await res.json();
+        throw new Error(errData.message ?? "Not enough credits.");
+      }
+      if (!res.ok) throw new Error("Edit failed");
+
+      const data = await res.json();
+
+      // Server says section markers missing — fall back to legacy edit
+      if (data.fallback) {
+        // Remove the thinking bubble added by handleSurgicalEdit first,
+        // then delegate to handleEditRequest which adds its own user+thinking pair.
+        setMessages((prev) => prev.filter((m) => m.id !== thinkingMsg.id));
+        setLoading(false);
+        setIsEditing(false);
+        await handleEditRequest(instruction);
+        return;
+      }
+
+      if (!data.html) throw new Error("No HTML returned");
+
+      deepHtmlRef.current = data.html;
+      setDeepHtml?.(data.html);
+      await refreshCredits();
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? {
+                ...m,
+                isGenerating: false,
+                content: `✅ Done! **${data.creditsUsed} credit${data.creditsUsed === 1 ? "" : "s"}** used.\n\nWant to make more changes?`,
+              }
+            : m,
+        ),
+      );
+    } catch (err: any) {
+      await refreshCredits();
+      const errorMsg = err.message.startsWith("Not enough")
+        ? `💳 ${err.message}`
+        : "Edit failed. Want me to regenerate the whole site instead?";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? { ...m, isGenerating: false, content: `❌ ${errorMsg}` }
+            : m,
+        ),
+      );
+    } finally {
+      setLoading(false);
+      setIsEditing(false);
+      setPagePicker(null);
+    }
+  };
+
+  // ── Add a new page to existing site ──
+  const handleAddPage = async (
+    pageId: string,
+    pageLabel: string,
+    businessContext: string,
+  ) => {
+    const currentHtml = deepHtmlRef.current;
+    if (!currentHtml) return;
+
+    const thinkingMsg: Message = {
+      id: Date.now().toString() + "-addpage",
+      role: "assistant",
+      content: "",
+      isGenerating: true,
+    };
+    setMessages((prev) => [...prev, thinkingMsg]);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/edit-html", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: currentHtml,
+          instruction: businessContext,
+          action: "add_page",
+          targetPage: pageId,
+          pageLabel,
+          model: selectedModel,
+        }),
+      });
+
+      if (res.status === 402) {
+        const errData = await res.json();
+        throw new Error(errData.message ?? "Not enough credits.");
+      }
+      if (!res.ok) throw new Error("Add page failed");
+
+      const data = await res.json();
+      if (!data.html) throw new Error("No HTML returned");
+
+      deepHtmlRef.current = data.html;
+      setDeepHtml?.(data.html);
+      await refreshCredits();
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? {
+                ...m,
+                isGenerating: false,
+                content: `✅ **${data.addedPage?.label ?? pageLabel}** page added! **${data.creditsUsed} credit${data.creditsUsed === 1 ? "" : "s"}** used.\n\nWant to make more changes?`,
+              }
+            : m,
+        ),
+      );
+    } catch (err: any) {
+      await refreshCredits();
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.isGenerating
+            ? {
+                ...m,
+                isGenerating: false,
+                content: `❌ Failed to add page. Try again.`,
+              }
+            : m,
+        ),
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ── Surgical edit via /api/edit-html ──
@@ -892,8 +1606,20 @@ export default function ChatPanel({
     const prompt = promptOverride ?? input.trim();
     if (!prompt || loading) return;
 
-    // Suggestion chips + auto-start always bypass conversational layer
-    if (promptOverride) {
+    console.log(
+      "[handleGenerate] prompt:",
+      prompt,
+      "mode:",
+      mode,
+      "promptOverride:",
+      promptOverride,
+    );
+
+    // Suggestion chips bypass conversational layer — option chips do not
+    const isOptionChip =
+      promptOverride === "Yes, start the build" ||
+      promptOverride === "Not yet, I want to change something";
+    if (promptOverride && !isOptionChip) {
       if (mode === "deep") {
         handleDeepDive(promptOverride);
       } else {
@@ -901,7 +1627,7 @@ export default function ChatPanel({
       }
       return;
     }
-
+    console.log("[handleGenerate] reached mode check, mode:", mode);
     // Fast mode — no conversational layer, just generate
     if (mode === "fast") {
       handleFastGenerate();
@@ -943,31 +1669,118 @@ export default function ChatPanel({
           messages: recentHistory,
           brief: briefRef.current,
           hasExistingWebsite: !!deepHtmlRef.current,
+          existingPages: extractExistingPages(),
         }),
       });
 
       const data = await res.json();
-      const { action, message, prompt: aiPrompt, updatedBrief } = data;
+      const {
+        action,
+        message,
+        prompt: aiPrompt,
+        updatedBrief,
+        editMeta,
+        newPage,
+        questions,
+      } = data;
 
       // Always update running brief if AI returned one
       if (updatedBrief) briefRef.current = updatedBrief;
 
-      const resolveThinking = (content: string) => {
+      const resolveThinking = (content: string, qs?: typeof questions) => {
+        console.log("[resolveThinking] qs:", qs);
         setMessages((prev) =>
           prev.map((m) =>
-            m.isGenerating ? { ...m, isGenerating: false, content } : m,
+            m.isGenerating
+              ? { ...m, isGenerating: false, content, questions: qs }
+              : m,
           ),
         );
       };
 
       switch (action) {
-        case "chat":
-          resolveThinking(message);
+        case "chat": {
+          // Safety net — if message looks like leaked raw JSON, don't show it
+          const looksLikeJson =
+            message?.trim().startsWith("{") || message?.includes("```json");
+
+          // Safety net — if AI returned "chat" but user said yes + we have a pending prompt, force generate
+          const isAffirmative =
+            /^(yes|yep|sure|ok|okay|go|build|start|do it|let'?s go|proceed|generate|yeah|yup|absolutely|perfect|ready)[\s!.]*$/i.test(
+              prompt.trim(),
+            );
+          if (isAffirmative && pendingPromptRef.current) {
+            resolveThinking(message || "Starting now! 🚀");
+            handleDeepDive(pendingPromptRef.current);
+            pendingPromptRef.current = null;
+            break;
+          }
+
+          console.log("[chat] questions from API:", questions);
+
+          // Safety net — if message sounds like a confirmation but action was "chat",
+          // treat it as confirm and show Yes/No chips
+          const looksLikeConfirm =
+            /make sure|got everything|ready to build|shall I|should I start|want me to|go ahead|ready\?|start building|begin/i.test(
+              message ?? "",
+            );
+
+          if (looksLikeConfirm && !questions?.length) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.isGenerating
+                  ? {
+                      ...m,
+                      isGenerating: false,
+                      content: message,
+                      options: [
+                        {
+                          label: "Yes, build it!",
+                          value: "Yes, start the build",
+                        },
+                        {
+                          label: "Not yet",
+                          value: "Not yet, I want to change something",
+                        },
+                      ],
+                    }
+                  : m,
+              ),
+            );
+            pendingPromptRef.current = briefRef.current || prompt;
+            break;
+          }
+
+          resolveThinking(
+            looksLikeJson ? "Got it! Let me help with that." : message,
+            questions?.length ? questions : undefined,
+          );
           break;
+        }
 
         case "confirm":
-          resolveThinking(message);
-          pendingPromptRef.current = aiPrompt ?? null;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.isGenerating
+                ? {
+                    ...m,
+                    isGenerating: false,
+                    content: message,
+                    options: [
+                      {
+                        label: "Yes, build it!",
+                        value: "Yes, start the build",
+                      },
+                      {
+                        label: "Not yet",
+                        value: "Not yet, I want to change something",
+                      },
+                    ],
+                  }
+                : m,
+            ),
+          );
+          pendingPromptRef.current = aiPrompt ?? pendingPromptRef.current;
           break;
 
         case "build_now":
@@ -992,7 +1805,18 @@ export default function ChatPanel({
 
         case "edit":
           resolveThinking(message);
-          if (aiPrompt) handleEditRequest(aiPrompt);
+          if (aiPrompt) handleSurgicalEdit(aiPrompt, editMeta);
+          break;
+
+        case "add_page":
+          resolveThinking(message);
+          if (newPage?.pageId) {
+            handleAddPage(
+              newPage.pageId,
+              newPage.pageLabel,
+              aiPrompt || briefRef.current || prompt,
+            );
+          }
           break;
 
         default:
@@ -1385,24 +2209,33 @@ export default function ChatPanel({
                 <img
                   src={Logo.src}
                   alt="CrawlCube"
-                  className="w-6 h-6 animate-bounce"
+                  className="w-6 h-6 opacity-80"
                 />
               </div>
             )}
 
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              className={`max-w-[85%] text-sm leading-relaxed ${
                 message.role === "user"
-                  ? "bg-purple-600 text-white rounded-tr-sm"
-                  : "bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-tl-sm"
+                  ? "bg-neutral-800 border border-neutral-700/60 text-neutral-100 rounded-2xl rounded-tr-sm px-4 py-3"
+                  : "bg-transparent text-neutral-300 rounded-2xl rounded-tl-sm px-0 py-0"
               }`}
             >
-              {/* Agent pipeline steps */}
+              {/* Generation progress — new accordion UI */}
               {message.agentSteps && message.agentSteps.length > 0 && (
-                <div className="mb-3 space-y-0.5 border-b border-neutral-800 pb-3">
-                  {message.agentSteps.map((step) => (
-                    <AgentStepRow key={step.id} step={step} />
-                  ))}
+                <div className="mb-3 pb-3 border-b border-white/10">
+                  <GenerationProgress
+                    message={message}
+                    onToggleArchitect={(msgId) => {
+                      setMessages((prev) =>
+                        prev.map((m) =>
+                          m.id === msgId
+                            ? { ...m, architectOpen: !m.architectOpen }
+                            : m,
+                        ),
+                      );
+                    }}
+                  />
                 </div>
               )}
 
@@ -1440,6 +2273,38 @@ export default function ChatPanel({
                       Visual QA screenshot · Click to expand
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* Quick-reply option chips — only rendered ONCE here, before the message text */}
+              {message.options && message.options.length > 0 && !loading && (
+                <div className="flex flex-wrap gap-2 px-1 pt-2">
+                  {message.options.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        // Clear options so they disappear after click
+                        setMessages((prev) =>
+                          prev.map((m) =>
+                            m.id === message.id
+                              ? { ...m, options: undefined }
+                              : m,
+                          ),
+                        );
+                        setInput(opt.value);
+                        // Simulate immediate send
+                        setTimeout(() => handleGenerate(opt.value), 0);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all cursor-pointer hover:bg-neutral-700/60"
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid #3a3a3a",
+                        color: "#d4d4d4",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               )}
 
@@ -1564,36 +2429,62 @@ export default function ChatPanel({
                   };
 
                   return (
-                    <div className="mt-3 pt-3 border-t border-neutral-800">
-                      {/* Submitted — positive */}
+                    <div className="mt-4 pt-3 border-t border-neutral-800/60 font-mono text-[11px]">
+                      {/* ── Submitted positive ── */}
                       {ratingState.submitted &&
                         ratingState.rating === "positive" && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-neutral-600">
-                              ✓ Thanks! This helps train our model.
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="flex items-center gap-2 text-emerald-500">
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              FEEDBACK RECORDED
                             </span>
                             <button
                               onClick={handleRerate}
-                              className="text-[10px] text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer underline"
+                              className="text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer tracking-wide"
                             >
-                              Change rating
+                              CHANGE
                             </button>
                           </div>
                         )}
 
-                      {/* Submitted — negative */}
+                      {/* ── Submitted negative ── */}
                       {ratingState.submitted &&
                         ratingState.rating === "negative" && (
                           <div className="space-y-2">
-                            <div className="mb-2 flex items-center justify-between">
-                              <span className="text-xs text-neutral-600">
-                                ✓ Feedback saved — we'll fix this.
+                            <div className="flex items-center justify-between">
+                              <span className="flex items-center gap-2 text-emerald-500">
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2.5}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                                FEEDBACK SAVED
                               </span>
                               <button
                                 onClick={handleRerate}
-                                className="text-[10px] text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer underline"
+                                className="text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer tracking-wide"
                               >
-                                Change rating
+                                CHANGE
                               </button>
                             </div>
                             {ratingState.submittedFeedback.length > 0 && (
@@ -1602,10 +2493,7 @@ export default function ChatPanel({
                                   const fixPrompt = ratingState.prompt;
                                   const fixes = ratingState.submittedFeedback;
                                   const currentHtml = ratingState.html;
-
                                   setFixLoading(true);
-
-                                  // Try surgical fix first
                                   try {
                                     const res = await fetch("/api/fix-html", {
                                       method: "POST",
@@ -1618,12 +2506,9 @@ export default function ChatPanel({
                                       }),
                                     });
                                     const data = await res.json();
-
                                     if (data.requiresFullRegen) {
-                                      // Issues need full rebuild
                                       handleDeepDive(fixPrompt, fixes);
                                     } else if (data.html) {
-                                      // Surgical fix succeeded — update preview AND rating state html
                                       setDeepHtml?.(data.html);
                                       setRatingState((r) =>
                                         r
@@ -1639,99 +2524,146 @@ export default function ChatPanel({
                                       );
                                     }
                                   } catch {
-                                    // Fallback to full regen
-                                    setRatingState(null); // clear UI before full regen
+                                    setRatingState(null);
                                     handleDeepDive(fixPrompt, fixes);
                                   } finally {
                                     setFixLoading(false);
-                                    // Note: ratingState is NOT nulled here — surgical fix
-                                    // already reset it via setRatingState({...r, submitted:false})
-                                    // Full regen path nulls it above before calling handleDeepDive
                                   }
                                 }}
                                 disabled={fixLoading}
-                                className="w-full mb-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-60"
-                                style={{
-                                  background: "rgba(168,85,247,0.15)",
-                                  border: "1px solid rgba(168,85,247,0.35)",
-                                  color: "#d8b4fe",
-                                }}
+                                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-neutral-200 transition-all cursor-pointer disabled:opacity-40 tracking-wide"
                               >
                                 {fixLoading ? (
                                   <>
-                                    <LoaderCircle className="w-3 h-3 animate-spin" />
-                                    Applying fix...
+                                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                                    APPLYING FIX...
                                   </>
                                 ) : (
-                                  <>✨ Auto-fix and regenerate</>
+                                  <>
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={2}
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                      />
+                                    </svg>
+                                    AUTO-FIX AND REGENERATE
+                                  </>
                                 )}
                               </button>
                             )}
                           </div>
                         )}
 
-                      {/* Not yet submitted — show buttons */}
+                      {/* ── Initial rating buttons ── */}
                       {!ratingState.submitted && !ratingState.showFeedback && (
-                        <div className="my-4 mb-5 flex items-center gap-2 flex-wrap">
-                          <span className="text-xs text-neutral-600">
-                            Rate this generation:
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-neutral-600 tracking-widest uppercase">
+                            Rate
                           </span>
-                          <button
-                            onClick={handlePositive}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer"
-                            style={{
-                              background:
-                                ratingState.rating === "positive"
-                                  ? "rgba(34,197,94,0.25)"
-                                  : "rgba(34,197,94,0.12)",
-                              border: "1px solid rgba(34,197,94,0.3)",
-                              color: "#86efac",
-                            }}
-                          >
-                            👍 Looks great
-                          </button>
-                          <button
-                            onClick={handleNegative}
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer"
-                            style={{
-                              background: "rgba(239,68,68,0.12)",
-                              border: "1px solid rgba(239,68,68,0.3)",
-                              color: "#fca5a5",
-                            }}
-                          >
-                            👎 Needs work
-                          </button>
+                          <div className="flex items-center gap-2 flex-1">
+                            <button
+                              onClick={handlePositive}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer tracking-wide"
+                              style={{
+                                borderColor:
+                                  ratingState.rating === "positive"
+                                    ? "rgba(52,211,153,0.5)"
+                                    : "#2a2a2a",
+                                background:
+                                  ratingState.rating === "positive"
+                                    ? "rgba(52,211,153,0.08)"
+                                    : "transparent",
+                                color:
+                                  ratingState.rating === "positive"
+                                    ? "#6ee7b7"
+                                    : "#525252",
+                              }}
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
+                                />
+                              </svg>
+                              LOOKS GREAT
+                            </button>
+                            <button
+                              onClick={handleNegative}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-neutral-600 text-neutral-600 hover:text-neutral-400 transition-all cursor-pointer tracking-wide"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"
+                                />
+                              </svg>
+                              NEEDS WORK
+                            </button>
+                          </div>
                         </div>
                       )}
 
-                      {/* Negative feedback form */}
+                      {/* ── Negative feedback form ── */}
                       {!ratingState.submitted && ratingState.showFeedback && (
-                        <div className="space-y-3">
-                          <p className="text-xs text-neutral-400 font-semibold">
-                            What went wrong? (select all that apply)
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {FEEDBACK_OPTIONS.map((item) => (
-                              <button
-                                key={item}
-                                onClick={() => toggleFeedbackItem(item)}
-                                className="text-[11px] px-2.5 py-1 rounded-full transition-all cursor-pointer"
-                                style={{
-                                  background:
-                                    ratingState.feedbackItems.includes(item)
-                                      ? "rgba(239,68,68,0.2)"
-                                      : "rgba(255,255,255,0.05)",
-                                  border: `1px solid ${ratingState.feedbackItems.includes(item) ? "rgba(239,68,68,0.5)" : "#2a2a2a"}`,
-                                  color: ratingState.feedbackItems.includes(
-                                    item,
-                                  )
-                                    ? "#fca5a5"
-                                    : "#737373",
-                                }}
-                              >
-                                {item}
-                              </button>
-                            ))}
+                        <div className="space-y-3 mb-3">
+                          <span className="text-neutral-600 tracking-widest uppercase">
+                            What went wrong?
+                          </span>
+                          <div className="grid grid-cols-2 gap-1 mt-2">
+                            {FEEDBACK_OPTIONS.map((item) => {
+                              const selected =
+                                ratingState.feedbackItems.includes(item);
+                              return (
+                                <button
+                                  key={item}
+                                  onClick={() => toggleFeedbackItem(item)}
+                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-left transition-all cursor-pointer"
+                                  style={{
+                                    borderColor: selected
+                                      ? "rgba(248,113,113,0.4)"
+                                      : "#2a2a2a",
+                                    background: selected
+                                      ? "rgba(248,113,113,0.07)"
+                                      : "transparent",
+                                    color: selected ? "#fca5a5" : "#525252",
+                                  }}
+                                >
+                                  <div
+                                    className="w-2 h-2 rounded-sm shrink-0 border transition-all"
+                                    style={{
+                                      borderColor: selected
+                                        ? "#fca5a5"
+                                        : "#404040",
+                                      background: selected
+                                        ? "#fca5a5"
+                                        : "transparent",
+                                    }}
+                                  />
+                                  {item}
+                                </button>
+                              );
+                            })}
                           </div>
                           <textarea
                             value={ratingState.feedbackText}
@@ -1740,21 +2672,29 @@ export default function ChatPanel({
                                 r ? { ...r, feedbackText: e.target.value } : r,
                               )
                             }
-                            placeholder="Anything else? (optional)"
+                            placeholder="Additional notes (optional)"
                             rows={2}
-                            className="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-neutral-300 placeholder:text-neutral-600 outline-none resize-none"
+                            className="w-full bg-transparent border border-neutral-800 focus:border-neutral-600 rounded-lg px-3 py-2 text-neutral-400 placeholder:text-neutral-700 outline-none resize-none transition-colors"
                           />
-                          <div className="mb-4 flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <button
                               onClick={handleFeedbackSubmit}
-                              className=" px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all"
-                              style={{
-                                background: "rgba(239,68,68,0.2)",
-                                border: "1px solid rgba(239,68,68,0.4)",
-                                color: "#fca5a5",
-                              }}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-neutral-200 transition-all cursor-pointer tracking-wide"
                             >
-                              Submit feedback
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              SUBMIT
                             </button>
                             <button
                               onClick={() =>
@@ -1762,9 +2702,9 @@ export default function ChatPanel({
                                   r ? { ...r, showFeedback: false } : r,
                                 )
                               }
-                              className=" text-xs text-neutral-700 hover:text-neutral-400 transition-colors cursor-pointer"
+                              className="text-neutral-700 hover:text-neutral-500 transition-colors cursor-pointer tracking-wide"
                             >
-                              Cancel
+                              CANCEL
                             </button>
                           </div>
                         </div>
@@ -1774,34 +2714,94 @@ export default function ChatPanel({
                 })()}
 
               {/* Message text */}
+              {/* Message text */}
               {message.isGenerating && !message.agentSteps ? (
-                <div className="flex items-center gap-2 text-neutral-400">
-                  <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
-                  <span>Generating your website...</span>
+                // Fast mode or chat API reply — static thinking
+                <div className="px-1 py-0.5">
+                  <ThinkingText label="Thinking" />
                 </div>
               ) : message.isGenerating && message.agentSteps ? (
-                <div className="flex items-center gap-2 text-neutral-500 text-xs">
-                  <LoaderCircle className="w-3 h-3 animate-spin" />
-                  <span>Working on it...</span>
+                // Deep dive — label derived from whichever step is currently running
+                <div className="px-1 pt-2">
+                  <ThinkingText label={getThinkingLabel(message.agentSteps)} />
                 </div>
+              ) : message.questions?.length ? (
+                <QuestionCards
+                  intro={message.content}
+                  questions={message.questions}
+                  onSubmit={(compiled) => {
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === message.id
+                          ? { ...m, questions: undefined }
+                          : m,
+                      ),
+                    );
+                    handleGenerate(compiled);
+                  }}
+                />
               ) : (
                 message.content && (
-                  <p className="whitespace-pre-wrap">
-                    {message.content.split(/\*\*(.*?)\*\*/g).map((part, i) =>
-                      i % 2 === 1 ? (
-                        <strong key={i} className="font-semibold text-white">
-                          {part}
-                        </strong>
-                      ) : (
-                        part
-                      ),
-                    )}
-                  </p>
+                  <>
+                    <p className="whitespace-pre-wrap px-1 py-0.5 text-neutral-300 text-[13px] leading-relaxed">
+                      {message.content.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+                        i % 2 === 1 ? (
+                          <strong
+                            key={i}
+                            className="font-medium text-neutral-100"
+                          >
+                            {part}
+                          </strong>
+                        ) : (
+                          part
+                        ),
+                      )}
+                    </p>
+
+                    {/* Options chips rendered above — not duplicated here */}
+                  </>
                 )
               )}
             </div>
           </div>
         ))}
+
+        {/* ── Page picker — shown when edit section is ambiguous ── */}
+        {pagePicker && (
+          <div className="mx-1 p-3 rounded-lg border border-neutral-800 bg-neutral-900/60 space-y-2 font-mono text-[11px]">
+            <p className="text-neutral-500 tracking-widest uppercase">
+              Which page should I fix?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {pagePicker.pages.map((page) => (
+                <button
+                  key={page.id}
+                  onClick={() => {
+                    const { instruction, section, editMeta } = pagePicker;
+                    setMessages((prev) => [
+                      ...prev,
+                      {
+                        id: Date.now().toString(),
+                        role: "user",
+                        content: `Fix ${section} on the ${page.label} page`,
+                      },
+                    ]);
+                    handleSurgicalEdit(instruction, editMeta, page.id);
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-neutral-200 transition-all cursor-pointer tracking-wide uppercase"
+                >
+                  {page.label}
+                </button>
+              ))}
+              <button
+                onClick={() => setPagePicker(null)}
+                className="px-3 py-1.5 text-neutral-700 hover:text-neutral-500 transition-colors cursor-pointer tracking-wide"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Suggestion chips */}
         {messages.length === 1 && (

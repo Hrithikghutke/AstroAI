@@ -83,14 +83,62 @@ export default function LandingPrompt() {
     setError(null);
 
     // ── DEEP DIVE MODE ──
-    // Don't call any API here — just save the prompt + mode and navigate.
-    // The Deep Dive pipeline runs inside BuildPage/ChatPanel after navigation.
+    // Route through /api/chat first. If it wants to build immediately,
+    // navigate with the enriched prompt. If it wants to chat/confirm,
+    // navigate with seed messages so ChatPanel starts in conversation mode.
     if (selectedMode === "deep") {
-      sessionStorage.setItem("crawlcube_prompt", prompt);
-      sessionStorage.setItem("crawlcube_mode", "deep");
-      sessionStorage.setItem("crawlcube_model", selectedModel);
-      sessionStorage.removeItem("crawlcube_layout");
-      router.push("/build");
+      try {
+        const chatRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: prompt }],
+            brief: "",
+            hasExistingWebsite: false,
+            existingPages: [],
+          }),
+        });
+
+        const chatData = await chatRes.json();
+        const action = chatData.action ?? "chat";
+
+        sessionStorage.setItem("crawlcube_mode", "deep");
+        sessionStorage.setItem("crawlcube_model", selectedModel);
+        sessionStorage.removeItem("crawlcube_layout");
+        sessionStorage.removeItem("crawlcube_deep_html");
+        sessionStorage.removeItem("crawlcube_messages");
+        sessionStorage.removeItem("crawlcube_brief");
+
+        if (action === "build_now" || action === "generate") {
+          // Ready to build — let ChatPanel auto-start with the enriched prompt
+          sessionStorage.setItem(
+            "crawlcube_prompt",
+            chatData.prompt ?? chatData.updatedBrief ?? prompt,
+          );
+          sessionStorage.removeItem("crawlcube_seed_messages");
+        } else {
+          // Needs conversation first — seed ChatPanel with this exchange
+          sessionStorage.removeItem("crawlcube_prompt");
+          sessionStorage.setItem(
+            "crawlcube_seed_messages",
+            JSON.stringify([
+              { role: "user", content: prompt },
+              {
+                role: "assistant",
+                content:
+                  chatData.message ??
+                  "Tell me more about what you'd like to build.",
+                questions: chatData.questions ?? undefined,
+              },
+            ]),
+          );
+        }
+
+        router.push("/build");
+      } catch {
+        setError("Something went wrong. Please try again.");
+        setLoading(false);
+      }
       return;
     }
 

@@ -12,7 +12,7 @@ import { useUser } from "@clerk/nextjs";
 interface CreditsContextValue {
   credits: number | null;
   refreshCredits: () => Promise<void>;
-  deductCredit: () => void;
+  deductCredit: (amount?: number) => void;
 }
 
 const CreditsContext = createContext<CreditsContextValue>({
@@ -36,9 +36,11 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isSignedIn]);
 
-  // Optimistic deduction — instantly shows -1 without waiting for API
-  const deductCredit = useCallback(() => {
-    setCredits((prev) => (prev !== null ? Math.max(0, prev - 1) : prev));
+  // Optimistic deduction — instantly updates UI without waiting for API.
+  // Pass an amount for modes that cost more than 1 credit (e.g. Deep Dive).
+  // The display snaps to the real value when refreshCredits() is called after generation.
+  const deductCredit = useCallback((amount: number = 1) => {
+    setCredits((prev) => (prev !== null ? Math.max(0, prev - amount) : prev));
   }, []);
 
   // Fetch on mount and when sign-in state changes

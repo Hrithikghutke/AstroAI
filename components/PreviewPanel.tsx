@@ -36,6 +36,8 @@ export default function PreviewPanel({
   prompt,
   savedId,
   onSaved,
+  onSaveComplete,
+  saveRef,
   onLayoutChange,
   streamingCode,
   isGenerating,
@@ -46,6 +48,8 @@ export default function PreviewPanel({
   prompt?: string;
   savedId?: string | null;
   onSaved?: (id: string) => void;
+  onSaveComplete?: () => void;
+  saveRef?: React.MutableRefObject<(() => void) | null>;
   onLayoutChange?: (updated: Layout) => void;
   streamingCode?: string;
   isGenerating?: boolean;
@@ -70,7 +74,7 @@ export default function PreviewPanel({
   // Auto-switch to Preview when generation finishes and content exists
   useEffect(() => {
     if (!isGenerating && (layout || deepHtml)) setActiveTab("preview");
-  }, [isGenerating]);
+  }, [isGenerating, layout, deepHtml]);
 
   // Auto-scroll code to bottom as it streams
   useEffect(() => {
@@ -105,6 +109,10 @@ export default function PreviewPanel({
     }
   }, [savedId]);
 
+  // Expose handleSave to BuildPage for the "Stay and save" modal button
+  useEffect(() => {
+    if (saveRef) saveRef.current = handleSave;
+  });
   // ── Save ──
   const handleSave = async () => {
     if ((!layout && !deepHtml) || saving) return;
@@ -126,6 +134,7 @@ export default function PreviewPanel({
         if (res.ok) {
           setSaved(true);
           setPendingChanges(false);
+          onSaveComplete?.();
         }
       } else {
         const res = await fetch("/api/generations/save", {
@@ -143,6 +152,7 @@ export default function PreviewPanel({
           onSaved?.(data.id);
           setSaved(true);
           setPendingChanges(false);
+          onSaveComplete?.();
         }
       }
     } catch {
@@ -194,6 +204,7 @@ export default function PreviewPanel({
           onSaved?.(data.id);
           setSaved(true);
           setPendingChanges(false);
+          onSaveComplete?.();
         }
       }
 

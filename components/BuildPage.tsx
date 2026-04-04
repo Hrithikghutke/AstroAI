@@ -31,6 +31,10 @@ export default function BuildPage() {
   );
   const [streamingCode, setStreamingCode] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const pendingNavRef = useRef<string | null>(null);
+  const triggerSaveRef = useRef<(() => void) | null>(null);
   const typewriterQueue = useRef<string>("");
   const typewriterDisplayed = useRef<string>("");
   const typewriterTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -86,6 +90,14 @@ export default function BuildPage() {
           }
           const data = await res.json();
           const gen = data.generation;
+
+          // Clear any previous session's messages/brief so they don't leak
+          // into this project's chat panel. ChatPanel's useState initializer
+          // must see empty sessionStorage to fall into the correct
+          // dashboard-restore branch ("Welcome back! Your website is loaded…").
+          sessionStorage.removeItem("crawlcube_messages");
+          sessionStorage.removeItem("crawlcube_brief");
+          sessionStorage.removeItem("crawlcube_seed_messages");
 
           setSavedId(continueId);
           setInitialPrompt(gen.prompt ?? "");
@@ -147,8 +159,45 @@ export default function BuildPage() {
       setCurrentPrompt(storedPrompt ?? "");
     }
 
+    // Restore deep HTML from previous session
+    const storedDeepHtml = sessionStorage.getItem("crawlcube_deep_html");
+    if (storedDeepHtml) {
+      setDeepHtml(storedDeepHtml);
+    }
+
     setReady(true);
   }, [router, searchParams]);
+
+  // Block browser close/refresh when there's unsaved work
+  const hasUnsavedWork = !!(deepHtml || layout) && !isSaved;
+
+  useEffect(() => {
+    if (!hasUnsavedWork) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedWork]);
+
+  // Intercept browser back button
+  useEffect(() => {
+    if (!hasUnsavedWork) return;
+
+    // Push a dummy state so there's something to pop back to
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      // Re-push so the URL doesn't actually change
+      window.history.pushState(null, "", window.location.href);
+      pendingNavRef.current = "/";
+      setShowLeaveModal(true);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [hasUnsavedWork]);
 
   // Show toast after payment redirect
   useEffect(() => {
@@ -185,7 +234,8 @@ export default function BuildPage() {
   // ── Fast Mode: layout JSON from ChatPanel ──
   const handleChatGenerate = (generatedLayout: any, prompt?: string) => {
     setLayout(generatedLayout);
-    setDeepHtml(null); // clear any deep dive output
+    setDeepHtml(null);
+    setIsSaved(false);
     if (prompt) setCurrentPrompt(prompt);
     if (generatedLayout) {
       sessionStorage.setItem(
@@ -200,7 +250,9 @@ export default function BuildPage() {
   const handleDeepHtml = (html: string, brandName?: string) => {
     setDeepHtml(html);
     setDeepBrandName(brandName ?? null);
-    setLayout(null); // clear any fast mode layout
+    setLayout(null);
+    setIsSaved(false);
+    sessionStorage.setItem("crawlcube_deep_html", html);
     setMobileView("preview");
   };
 
@@ -213,6 +265,9 @@ export default function BuildPage() {
     sessionStorage.removeItem("crawlcube_layout");
     sessionStorage.removeItem("crawlcube_prompt");
     sessionStorage.removeItem("crawlcube_mode");
+    sessionStorage.removeItem("crawlcube_deep_html");
+    sessionStorage.removeItem("crawlcube_messages");
+    sessionStorage.removeItem("crawlcube_brief");
   };
 
   const handleLayoutChange = (updated: Layout) => {
@@ -232,6 +287,146 @@ export default function BuildPage() {
 
   return (
     <main className="h-screen flex flex-col bg-neutral-950 text-white overflow-hidden">
+      {/* ── Leave confirmation modal ── */}
+      {/* ── Leave confirmation modal ── */}
+      {showLeaveModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="w-full max-w-sm mx-4 rounded-3xl border border-neutral-800 overflow-hidden"
+            style={{ background: "#141414" }}
+          >
+            {/* Illustration area */}
+            <div
+              className="relative flex items-center justify-center py-10"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(236,72,153,0.10) 100%)",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {/* Decorative blobs */}
+              <div
+                className="absolute top-3 left-4 w-16 h-16 rounded-2xl rotate-12 opacity-20"
+                style={{ background: "rgba(168,85,247,0.6)" }}
+              />
+              <div
+                className="absolute bottom-3 right-6 w-10 h-10 rounded-xl -rotate-12 opacity-20"
+                style={{ background: "rgba(236,72,153,0.6)" }}
+              />
+              <div
+                className="absolute top-6 right-10 w-6 h-6 rounded-lg rotate-45 opacity-15"
+                style={{ background: "rgba(99,102,241,0.8)" }}
+              />
+
+              {/* Central icon */}
+              <div
+                className="relative w-20 h-20 rounded-2xl flex items-center justify-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.20))",
+                  border: "1px solid rgba(168,85,247,0.3)",
+                  boxShadow: "0 0 40px rgba(168,85,247,0.2)",
+                }}
+              >
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="url(#leaveGrad)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <defs>
+                    <linearGradient
+                      id="leaveGrad"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stopColor="#c084fc" />
+                      <stop offset="100%" stopColor="#f472b6" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="15" y2="15" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Text + actions */}
+            <div className="p-6 space-y-5 relative">
+              <button
+                onClick={() => setShowLeaveModal(false)}
+                className="absolute top-0 right-0 w-7 h-7 flex items-center justify-center rounded-lg text-neutral-600 hover:text-neutral-300 hover:bg-neutral-800 transition-all cursor-pointer"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <div className="space-y-2 text-center">
+                <h2 className="text-base font-semibold text-neutral-100 tracking-tight">
+                  Save your work?
+                </h2>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Your generated website will be lost if you leave without
+                  saving it to your dashboard.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    triggerSaveRef.current?.();
+                    setShowLeaveModal(false);
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all"
+                  style={{
+                    background: "linear-gradient(135deg, #a855f7, #ec4899)",
+                    color: "#fff",
+                    boxShadow: "0 4px 20px rgba(168,85,247,0.3)",
+                  }}
+                >
+                  Stay and save
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLeaveModal(false);
+                    sessionStorage.removeItem("crawlcube_deep_html");
+                    sessionStorage.removeItem("crawlcube_messages");
+                    sessionStorage.removeItem("crawlcube_brief");
+                    if (pendingNavRef.current)
+                      router.push(pendingNavRef.current);
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer transition-all text-neutral-500 hover:text-neutral-300 tracking-wide uppercase"
+                >
+                  Quit without saving
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <Toast
           message={toast.message}
@@ -240,7 +435,16 @@ export default function BuildPage() {
           onClose={() => setToast(null)}
         />
       )}
-      <Header />
+      <Header
+        onNavigate={(href) => {
+          if (hasUnsavedWork) {
+            pendingNavRef.current = href;
+            setShowLeaveModal(true);
+          } else {
+            router.push(href);
+          }
+        }}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* DESKTOP */}
@@ -266,7 +470,12 @@ export default function BuildPage() {
             deepBrandName={deepBrandName}
             prompt={currentPrompt}
             savedId={savedId}
-            onSaved={(id) => setSavedId(id)}
+            onSaved={(id) => {
+              setSavedId(id);
+              setIsSaved(true);
+            }}
+            onSaveComplete={() => setIsSaved(true)}
+            saveRef={triggerSaveRef}
             onLayoutChange={handleLayoutChange}
             streamingCode={streamingCode}
             isGenerating={isGenerating}
@@ -323,7 +532,12 @@ export default function BuildPage() {
                 deepBrandName={deepBrandName}
                 prompt={currentPrompt}
                 savedId={savedId}
-                onSaved={(id) => setSavedId(id)}
+                onSaved={(id) => {
+                  setSavedId(id);
+                  setIsSaved(true);
+                }}
+                onSaveComplete={() => setIsSaved(true)}
+                saveRef={triggerSaveRef}
                 onLayoutChange={handleLayoutChange}
               />
             </div>

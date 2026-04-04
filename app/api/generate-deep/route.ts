@@ -706,6 +706,16 @@ export async function POST(req: Request) {
             brandName,
             overallStyle: `${architect.fonts.display} · ${architect.colors.primary}`,
           },
+          architectData: {
+            brandName: architect.brandName,
+            colors: architect.colors,
+            fonts: {
+              display: architect.fonts.display,
+              body: architect.fonts.body,
+            },
+            pages: architect.pages,
+            pageLabels: architect.pageLabels,
+          },
         });
 
         // ════════════════════════════════════════════

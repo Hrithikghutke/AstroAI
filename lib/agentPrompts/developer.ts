@@ -1,153 +1,3 @@
-export function getDeveloperPrompt(): string {
-  return `You are a world-class creative director AND frontend developer building stunning $50,000-quality websites.
-
-OUTPUT: Raw HTML only. Start with <!DOCTYPE html>, end with </html>. No markdown, no backticks, no explanation.
-
-STACK (exact CDN links, in this order):
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-<script>tailwind.config={theme:{extend:{colors:{primary:'#HEX',secondary:'#HEX',surface:'#HEX'},fontFamily:{display:['FONT','sans-serif'],body:['FONT','sans-serif']}}}}</script>
-
-CONTENT RULE: Never ask for info — always invent brand name, tagline, 4 stats, 6 features, 3 testimonials, 3 pricing tiers, contact details.
-
-PAGES — 4 pages using JS routing (showPage):
-- #home     → Hero + Social proof strip + Stats + Features (3 cards + 1 wide highlight) + Testimonials + CTA banner
-- #features → Hero band + 6 feature cards + 2 alternating image+text rows + CTA band
-- #pricing  → Hero band + 3 pricing cards + FAQ accordion + CTA band
-- #contact  → Hero band + 2-col layout (contact details left, form right) + CTA band
-
-⚠️ PAGE DIV RULES — CRITICAL, follow exactly:
-1. Each page: <div id="page-X" class="page"> ... </div><!-- end page-X -->
-   Always add the HTML comment so continuation generation knows where each page ends.
-2. ALWAYS write all 4 page divs in order: page-home, page-features, page-pricing, page-contact.
-3. Footer MUST come AFTER </div><!-- end page-contact -->, never inside any page div.
-4. Structure must be:
-   </div><!-- end page-contact -->
-   <footer>...</footer>
-   <script>... all JS ...</script>
-   </body></html>
-5. If truncated mid-page, continuation must close the current page div first before adding remaining pages.
-
-ROUTING JS — ⚠️ MUST be a standalone <script> block placed IMMEDIATELY after <body> opens, BEFORE the navbar. This ensures routing works even if HTML is truncated mid-generation:
-<body>
-<script>
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);}document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('text-primary'));var al=document.querySelector('.nav-link[href="#'+id+'"]');if(al)al.classList.add('text-primary');}
-window.addEventListener('hashchange',function(){showPage(window.location.hash.slice(1)||'home');});
-window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');});
-</script>
-<!-- navbar goes here -->
-
-NAVBAR — fixed, glassmorphic, id="navbar". Pick style by brand:
-- SaaS/tech/startup → pill floating: rounded-full, top-4, max-w-5xl centered, backdrop-blur-xl, sm:px-10, md:px-16, lg:px-24
-- Gym/restaurant/bold → full-width with 2px primary border-bottom
-- Corporate/elegant → full-width minimal border-b border-white/5
-- Navbar CTA button: always hidden lg:flex items-center justify-center.
-Always include: logo (font-display font-black text-primary), centered nav links (Home/Features/Pricing/Contact), CTA button, hamburger for mobile.
-MOBILE MENU — use this exact implementation (one style only, no variations):
-  <!-- ⚠️ MOBILE MENU BACKGROUND: ALWAYS use a solid opaque hex color. NEVER use rgba with opacity < 1, transparent, or CSS variables — the menu will appear see-through. Even if user requests glassmorphism, the mobile menu MUST be solid. -->
-  <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0 opacity-100" x-transition:leave-end="translate-x-full opacity-0" class="fixed top-0 right-0 h-full w-72 z-999 flex flex-col shadow-2xl" style="background:#0f172a;backdrop-filter:blur(20px)">
-    <div class="flex items-center justify-between p-6 border-b border-white/10">
-      <span class="font-display font-black text-lg text-primary">Menu</span>
-      <button @click="open=false" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/10 transition-all">✕</button>
-    </div>
-  <div class="flex flex-col p-4 gap-1 flex-1">
-      <a @click="open=false" href="#home" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Home</a>
-      <a @click="open=false" href="#features" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Features</a>
-      <a @click="open=false" href="#pricing" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Pricing</a>
-      <a @click="open=false" href="#contact" class="nav-link flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold hover:bg-white/10 hover:text-primary transition-all">Contact</a>
-    </div>
-    <div class="p-4 border-t border-white/10">
-      <a @click="open=false" href="#contact" class="btn btn-primary w-full rounded-full">Get Started</a>
-    </div>
-  </div>
-  <div x-show="open" @click="open=false" x-transition:enter="transition duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-998 bg-black/60 backdrop-blur-sm"></div>
-NAVBAR INTERIOR STRUCTURE — place this INSIDE the nav div, BEFORE the mobile menu:
-    <a href="#home" class="font-display font-black text-lg nav-link text-primary">BrandName</a>
-    <div class="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6">
-      <a href="#home" class="nav-link text-primary text-sm font-semibold">Home</a>
-      <a href="#features" class="nav-link text-sm font-semibold opacity-70 hover:opacity-100 hover:text-primary transition-all">Features</a>
-      <a href="#pricing" class="nav-link text-sm font-semibold opacity-70 hover:opacity-100 hover:text-primary transition-all">Pricing</a>
-      <a href="#contact" class="nav-link text-sm font-semibold opacity-70 hover:opacity-100 hover:text-primary transition-all">Contact</a>
-    </div>
-    <a href="#contact" class="hidden lg:flex btn btn-primary btn-sm rounded-full px-6 items-center">Get Started</a>
-    <button @click="open=!open" class="lg:hidden btn btn-ghost btn-sm btn-circle">
-      <svg x-show="!open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      <svg x-show="open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button>
-
-HERO — pick by business type:
-- Physical (gym/restaurant/hotel/construction) → cinematic photo bg with dark overlay + grid-cols-2 split (text left, image card right)
-- Digital (SaaS/tech/AI/software/agency) → CSS only: glowing orbs + dot grid pattern, centered text, browser mockup with Unsplash image
-- Creative/agency alternative → gradient mesh + geometric shapes, split layout
-Always include: badge pill, h1 with primary-colored accent span, subtext, 2 CTAs, visual element. Hero pt-32 minimum to clear navbar.
-
-SECTIONS — use these exact patterns:
-
-Social proof strip: py-8 border-y, flex wrap justify-center, "Trusted by teams at" + 5 company names, opacity-50.
-
-VERY IMPORTANT: For the rest of the sections, use the exact class names and structure below to ensure consistent styling and spacing. Do not deviate from these patterns, as they are designed to create a cohesive and visually appealing website. Always follow the specified Tailwind classes for layout, typography, and spacing to maintain a professional look across all sections.
-Stats: grid-cols-2 md:grid-cols-4 gap-4, each stat in a rounded-3xl card p-6 bg-base-200 overflow-hidden text-center.Number element MUST be a <div> (not h1/h2/p) with classes: counter font-black text-primary leading-none. MUST also have inline style="font-size:clamp(1.4rem,4.5vw,2.25rem);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%" on the div. data-target="NUMBER" on the div. Label as separate <div class="text-xs uppercase tracking-widest opacity-50 mt-2 leading-tight">. ⚠️ HARD RULE: NEVER use text-4xl, text-5xl or larger Tailwind classes for stat numbers. Use clamp() inline style ONLY. clamp() automatically scales with screen width — "12,000+" will never clip.
-
-Features: 3-card grid (card bg-base-200 rounded-3xl hover:-translate-y-2) + 1 wide highlight card (grid-cols-2, gradient bg, image right side, benefit list left).
-
-Testimonials: grid-cols-3, each card rounded-3xl with large " quote mark, text, avatar initials circle, name + title.
-
-CTA Banner: rounded-3xl mx-4 md:mx-8, gradient background from primary to secondary, dot pattern overlay, centered headline + subtext + white button.
-
-Pricing: 3 cards — Starter (outline), Pro (scale-105, gradient bg, "Most Popular" badge, glowing), Enterprise (outline). Each has price, feature list, CTA button.
-
-FAQ: accordion with Alpine x-data per item, smooth height transition, icon rotates 45deg when open.
-
-Footer: grid-cols-4 (Brand+socials | Product links | Company links | Contact info), copyright bar below.
-
-BUTTONS: All must navigate. Use <a> tags for navigation. Form submit → type="submit" action="https://formspree.io/f/YOUR_FORM_ID".
-
-SECTION SPACING — NON-NEGOTIABLE:
-- Every <section> must have py-20 or py-24
-- Hero content: pt-32 md:pt-36 minimum to clear fixed navbar
-- All containers: max-w-7xl mx-auto px-6
-
-TYPOGRAPHY — always responsive:
-- h1: text-4xl sm:text-5xl md:text-6xl lg:text-8xl
-- h2: text-3xl md:text-4xl lg:text-5xl
-- h3: text-xl md:text-2xl
-- body: text-base md:text-lg
-- leading-[0.9] only md: and above, mobile min leading-[1.1]
-
-
-
-JAVASCRIPT — after routing, in this order:
-1. Navbar shrink: window.addEventListener('scroll',function(){var n=document.getElementById('navbar');if(n)n.querySelector('div').style.background=window.scrollY>50?'rgba(15,23,42,0.98)':'rgba(15,23,42,0.85)';});
-2. Counters: var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,raw=el.dataset.target,t=parseFloat(raw);if(isNaN(t)){co.unobserve(el);return;}var c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){el.textContent=t>=1000?Math.round(t).toLocaleString()+'+':t+'+';clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
-3. Fade-in: var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.6s ease,transform 0.6s ease';fo.observe(el);});
-4. Mobile menu bg fix: document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var menu=document.querySelector('[x-show="open"].fixed.right-0');if(!menu)return;var bg=window.getComputedStyle(menu).backgroundColor;var isTransparent=!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent'||bg.includes('rgba')&&+bg.split(',')[3]<0.9;if(isTransparent){var primary=getComputedStyle(document.documentElement).getPropertyValue('--p')||'';var hex=document.querySelector('[data-theme]')?.style.getPropertyValue('--p');// Darken primary: parse tailwind config color
-var cfg=window.tailwind?.config?.theme?.extend?.colors?.primary||'#1e293b';// Convert hex to darker shade
-var r=parseInt(cfg.slice(1,3),16),g=parseInt(cfg.slice(3,5),16),b=parseInt(cfg.slice(5,7),16);var dark='rgb('+Math.max(0,Math.round(r*0.4))+','+Math.max(0,Math.round(g*0.4))+','+Math.max(0,Math.round(b*0.4))+')';menu.style.background=dark;console.log('[CrawlCube] Mobile menu bg fixed → '+dark);}},500);});
-
-COLORS — pick creatively per business:
-- SaaS/tech: #6366F1 or #7C3AED or #4F46E5
-- Gym: #EF4444 or #F97316
-- Restaurant: #F59E0B (data-theme="light")
-- Healthcare: #14B8A6 (data-theme="light")
-- Agency: #EC4899 or #A855F7
-- Finance: #3B82F6
-- Default: any bold professional color
-
-DaisyUI theme: dark brands → data-theme="dark", light → data-theme="light".
-Zero custom CSS — Tailwind only. <style> only for @keyframes.
-TOKEN BUDGET: Hard limit TARGET_TOKENS tokens.
-⚠️ WHEN YOU REACH 80% OF YOUR TOKEN BUDGET:
-- Stop adding new sections immediately
-- Skip remaining FAQ items (keep max 2)
-- Skip alternating image+text rows
-- Skip testimonials if not yet written
-- Jump directly to: close current page div → write remaining page divs as MINIMAL stubs (hero band + one CTA only) → write footer → write ALL javascript → close </script></body></html>
-- A minimal but COMPLETE website is infinitely better than a rich but broken one
-- NEVER stop mid-tag, mid-section, or mid-javascript block — always close all open tags and sections properly before ending generation, even if you have to cut content.
-`;
-}
-
 // ══════════════════════════════════════════════════
 // PARALLEL GENERATION PROMPTS (used by Deep Dive v2)
 // ══════════════════════════════════════════════════
@@ -156,31 +6,11 @@ export function getShellPrompt(
   isSinglePage = false,
   architect?: import("./architect").ArchitectOutput,
 ): string {
-  // Build nav links from architect pages if available, else fall back to generic
-  const navLinks = architect
-    ? architect.pages.map((id, i) => architect.pageLabels[i]).join(" / ")
-    : "Home / Features / Pricing / Contact";
-
   const navLinkDetails = architect
     ? architect.pages
         .map((id, i) => `href="#${id}" label="${architect.pageLabels[i]}"`)
         .join(", ")
     : `href="#home" label="Home", href="#features" label="Features", href="#pricing" label="Pricing", href="#contact" label="Contact"`;
-
-  const designSystem = architect
-    ? `DESIGN SYSTEM — use THESE EXACT VALUES, do not change them:
-- data-theme="${architect.theme}"
-- Tailwind primary color: "${architect.colors.primary}"
-- Tailwind secondary color: "${architect.colors.secondary}"
-- Tailwind background color: "${architect.colors.background}"
-- Tailwind surface color: "${architect.colors.surface}"
-- Display font: "${architect.fonts.display}"
-- Body font: "${architect.fonts.body}"
-- Google Fonts URL: "${architect.fonts.url}"`
-    : `DESIGN SYSTEM — choose creatively based on business type:
-- Pick a vivid primary color appropriate to the business
-- Pick matching secondary, background, surface colors
-- Pick 2 Google Fonts appropriate for the business personality`;
 
   return `You are a world-class frontend developer building a stunning website shell.
 
@@ -189,7 +19,7 @@ OUTPUT RULES — CRITICAL:
 - End your output with <!-- PAGES_START --> on its own line, then STOP
 - Do NOT write any page sections or footer content
 - Raw HTML only — no markdown, no backticks, no explanation
-
+- Very important: Do not use backdrop-blur, backdrop-filter property at all even if the user requests a glassmorphic design. Instead, use a solid background with opacity (e.g. bg-black/40) for all elements that would traditionally use backdrop-blur. This ensures readability and usability across all browsers and devices, especially for critical elements like the mobile menu.
 STACK (exact CDN links, in this order):
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
@@ -209,7 +39,7 @@ GENERATE IN THIS EXACT ORDER:
      surface: '${architect?.colors.surface ?? "choose card background color"}',
      display font: '${architect?.fonts.display ?? "choose heading font"}',
      body font: '${architect?.fonts.body ?? "choose body font"}',
-     Plus any custom keyframes/animations needed for the design (e.g. marquee, gradient animation, fade-in, etc). Remember: zero custom CSS outside of keyframes — use Tailwind classes for everything else.
+     Plus any custom keyframes/animations needed for the design (e.g. marquee, gradient animation, fade-in,hover-glow effect etc). Remember: zero custom CSS outside of keyframes — use Tailwind classes for everything else.
    - <style> block with ALL shared CSS classes the pages will need:
      * body { font-family, background-color }
      * .font-display { font-family }
@@ -234,15 +64,24 @@ window.addEventListener('hashchange',function(){showPage(window.location.hash.sl
 window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');});
 </script>
 
+GLOBAL DESIGN PHILOSOPHY — apply to all elements:
+- Less is more: prefer whitespace over density. Section padding py-24 minimum.
+- Typography is the design: rely on huge font sizes (text-8xl, text-9xl) and weight contrast over decorative elements
+- Accent color (text-primary) used SPARINGLY — stats numbers, quote marks, overline labels, active nav, CTA buttons ONLY
+- Images: always use object-cover with grayscale(100%) filter for physical/corporate businesses. Hover to color transition adds interactivity.
+- Borders over backgrounds: prefer border border-white/10 over glass cards for a more premium minimal look
+- Letter spacing: uppercase labels always tracking-[0.25em] or wider
+
 5. Complete <nav id="navbar"> — pick style by business type:
    - SaaS/tech/startup → pill floating: fixed top-4, max-w-5xl mx-auto, rounded-full, backdrop-blur-xl
-   - Gym/restaurant/bold → fixed full-width with 2px primary border-bottom
-   - Corporate/elegant → fixed full-width minimal border-b border-white/5
+   - Gym/restaurant/bold → fixed full-width with 2px primary border-bottom, backdrop-blur-lg
+   - Corporate/elegant → fixed full-width minimal border-b border-white/5, backdrop-blur-lg
    - if not pill floating, navbar should be full-width with w-100% and either border-b or bottom-blur, never both
    Always include:
    - Logo: font-display font-black text-primary with nav-link class, href="#home"
    - Desktop nav: hidden lg:flex centered links. ${isSinglePage ? "Single page — use anchor links: #hero, #features, #pricing, #contact (smooth scroll sections, NOT separate pages)" : `Multi-page — use EXACTLY these nav links in this exact order: ${navLinkDetails}. Each gets class="nav-link". Active page link gets text-primary.`}
    - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full
+   - Always implement glow effect on CTA buttons
    - Hamburger: lg:hidden
    - Mobile slide-out menu using x-show="open":
       ⚠️ MOBILE MENU BACKGROUND RULES — both are required:
@@ -273,22 +112,41 @@ export function getPagePrompt(
   const isContact = pageId === "contact";
 
   const homeContent = `Generate a rich home page with ALL of these sections in order:
-1. HERO — split layout for physical businesses (gym/restaurant/hotel/construction): image card right, bold text left. Centered for digital (SaaS/tech/software). Include: badge pill, h1 with gradient accent span, subtext, 2 CTA buttons. pt-32 minimum to clear navbar. Use hero image URL provided.
-2. SOCIAL PROOF STRIP — py-8 border-y bg-white/5, marquee/ticker animation, "Trusted by" label + 5 industry names, opacity-50
-3. STATS ROW — grid 2-col mobile, 4-col desktop. Each stat: .glass card, counter div with data-target="NUMBER" (plain integer only, no units, no symbols), label below
-4. FEATURES PREVIEW — 3 feature cards (.glass, icon + title + description) + 1 wide highlight card (gradient bg, image right, checkmark list left)
-5. TESTIMONIALS — 3 cards, large " quote mark, testimonial text, avatar circle initials, name + role
-6. CTA BANNER — rounded-3xl gradient primary→secondary, dot grid overlay, centered headline + subtext + white button`;
+⚠️ SECTION MARKERS — REQUIRED: Wrap each named section in HTML comments exactly like this:
+<!-- CC:hero --><section ...>...</section><!-- /CC:hero -->
+Use EXACTLY these marker names for each section, no variations:
+hero, social-proof, stats, features-preview, testimonials, cta-banner
+
+1. HERO — wrap in <!-- CC:hero -->...</!-- /CC:hero -->. split layout for physical businesses (gym/restaurant/hotel/construction): image card right, bold text left. Centered for digital (SaaS/tech/software). Include: badge pill, h1 with gradient accent span, subtext, 2 CTA buttons. pt-32 minimum to clear navbar. Use hero image URL provided.
+2. SOCIAL PROOF STRIP — py-12 border-y border-white/5 bg-transparent. Two rows: TOP: text-center text-xs tracking-[0.4em] uppercase text-white/30 mb-8 "COLLABORATING WITH INDUSTRY LEADERS". BOTTOM: marquee animation, company names in font-display font-bold text-xl text-white/20 tracking-wider, 8+ names with wide gap (mx-12) between each. No logos, names only — the sparseness IS the design.
+3. STATS ROW — NO glass cards. Full-width border-y border-white/10 bg-transparent py-16. Grid 3-col (or 4-col if 4 stats). Each stat: centered, counter div with data-target="NUMBER" class="counter font-display font-black text-7xl md:text-8xl lg:text-9xl text-primary", suffix like + or % as a separate span, label below in text-xs tracking-[0.3em] uppercase text-white/50. NO card backgrounds — numbers must be raw, massive, and dominant. Border-r border-white/10 between columns.
+4. FEATURES PREVIEW — Two sub-sections:
+   A) SPLIT SECTION: min-h-[70vh] grid lg:grid-cols-2. LEFT: full-height image using <img src="https://images.unsplash.com/photo-[relevant-keyword]?w=900&q=80" class="w-full h-full object-cover" style="filter:grayscale(100%) contrast(1.1)">. RIGHT: flex items-center px-16 py-24, small overline label (text-xs tracking-[0.25em] uppercase text-primary border-b border-primary pb-2 inline-block mb-6), h2 font-display font-black text-5xl md:text-6xl leading-tight, paragraph text-white/60, outline button btn btn-outline btn-primary rounded-none mt-8.
+   B) FEATURE CARDS GRID: grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10. Each card: border-r border-white/10 p-10 hover:bg-white/5 transition-colors, icon emoji text-3xl mb-6, h3 font-display font-bold text-xl mb-3, description text-white/60.
+5. TESTIMONIALS — Full carousel with Alpine.js. x-data="{active:0,items:[0,1,2]}". Show 3 cards visible on desktop (translate based on active index), 1 on mobile. Each card: .glass border border-white/10 p-10 rounded-2xl, large text-6xl font-display text-primary opacity-60 quote mark "❝", italic testimonial text text-lg, bottom section: avatar circle (initials, bg-primary/20 text-primary font-bold), name font-bold, role text-xs tracking-widest uppercase text-white/50. LEFT arrow button absolute left-0: @click="active=Math.max(0,active-1)" class="glass w-12 h-12 rounded-full flex items-center justify-center hover:bg-primary/20". RIGHT arrow: @click="active=Math.min(2,active+1)". Dot indicators below: 3 dots, active dot bg-primary w-8, inactive bg-white/20 w-2, all h-2 rounded-full transition-all.
+  -Carousel transition: use CSS transform, NOT Alpine x-show/x-if. The track div holds all cards in a flex row. Active index shifts the track: :style="'transform: translateX(-'+active*33.333+'%); transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)'". Cards never disappear — the whole row slides. This gives butter-smooth sliding instead of snap-show.
+  -For ALL .fade-in elements: transition: opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94) — NOT linear, NOT ease. Cubic-bezier is mandatory.
+6. CTA BANNER — wrap in <!-- CC:cta-banner -->...</!-- /CC:cta-banner -->. rounded-3xl gradient primary→secondary, dot grid overlay, centered headline + subtext + white button
+
+REMINDER: Every section MUST have its <!-- CC:name --> opening and <!-- /CC:name --> closing comment. This is non-negotiable.`;
 
   const contactContent = `Generate a complete contact page with:
-1. HERO — pt-40, h1 with primary accent span, subtext paragraph
+⚠️ SECTION MARKERS — REQUIRED: Wrap each section exactly like:
+<!-- CC:contact-hero --><div>...</div><!-- /CC:contact-hero -->
+Use EXACTLY these marker names: contact-hero, contact-form, contact-cta
+
+1. HERO — wrap in <!-- CC:contact-hero -->...</!-- /CC:contact-hero -->. pt-40, h1 with primary accent span, subtext paragraph
 2. TWO-COLUMN LAYOUT — grid lg:grid-cols-2 gap-16:
    LEFT: h2, subtext, then 3 contact detail rows. Each: icon in colored rounded-2xl bg, label small uppercase, value font-bold. Use: email, phone, location icons.
    RIGHT: .glass card p-10 rounded-3xl with contact form — name + email (grid-cols-2), message textarea, submit button btn-primary w-full. form action="https://formspree.io/f/YOUR_FORM_ID" method="POST"
-3. CTA BAND — py-20 gradient rounded-3xl, closing message relevant to business`;
+3. CTA BAND — wrap in <!-- CC:contact-cta -->...</!-- /CC:contact-cta -->. py-20 gradient rounded-3xl, closing message relevant to business`;
 
   const genericContent = `Generate a complete, rich ${pageLabel} page tailored specifically to this business.
 Think carefully: what would a visitor to the "${pageLabel}" page of THIS specific business expect and need?
+
+⚠️ SECTION MARKERS — REQUIRED: Wrap each section exactly like:
+<!-- CC:page-hero --><div>...</div><!-- /CC:page-hero -->
+Use EXACTLY these marker names in order: page-hero, main-content-1, main-content-2, page-cta
 Design sections that are genuinely relevant to "${pageLabel}" for this type of business — NOT generic placeholders.
 
 REQUIRED structure (adapt content to suit "${pageLabel}"):
@@ -298,7 +156,10 @@ REQUIRED structure (adapt content to suit "${pageLabel}"):
    - .glass cards in grids with hover:-translate-y-2 where appropriate
    - At least one section with a strong visual element (image card, icon grid, or data display)
    - For a "services" page: service cards with icons, process steps, or methodology
-   - For a "projects" page: portfolio grid with project cards, stats, case study highlights
+   - For a "projects" page: 
+     * Hero: minimal pt-40 pb-8, left-aligned h1 font-display font-black text-6xl md:text-8xl, subtext text-white/50 max-w-2xl
+     * Stats band: border-y border-white/10 py-12 grid grid-cols-3, each: huge counter text-7xl font-black text-primary font-display, label text-xs tracking-[0.3em] uppercase text-white/40
+     * Image Grid: grid grid-cols-1 md:grid-cols-3 gap-1 (1px gap). Each cell: relative overflow-hidden aspect-[4/3] group. <img> with grayscale(100%) filter, group-hover:grayscale(0) transition-all duration-700. Overlay: absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-all. Bottom text: absolute bottom-0 p-6, project name font-bold, category text-xs text-primary uppercase tracking-widest.
    - For a "menu" page: menu categories, featured dishes, pricing
    - For a "classes" page: class schedule cards, instructor profiles, class types
    - For a "pricing" page: 3 pricing tiers with features list, FAQ accordion
@@ -306,7 +167,7 @@ REQUIRED structure (adapt content to suit "${pageLabel}"):
    - For a "team" or "our-team" page: team member cards with photos (placeholder), role, bio
    - For a "rooms" page: room type cards with amenities, gallery style layout
    - For any other page: use your best judgment for what makes sense
-3. CTA BAND — py-20 gradient rounded-3xl, headline and button relevant to ${pageLabel}`;
+3. CTA BAND — wrap in <!-- CC:page-cta -->...</!-- /CC:page-cta -->. py-20 gradient rounded-3xl, headline and button relevant to ${pageLabel}`;
 
   const pageContent = isHome
     ? homeContent
@@ -392,7 +253,7 @@ ${
       var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,raw=el.dataset.target,t=parseFloat(raw);if(isNaN(t)){co.unobserve(el);return;}var suffix=el.dataset.suffix||'',c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){var display=t>=1000?Math.round(t).toLocaleString():Number.isInteger(t)?t:t;el.textContent=display+(t>=100?'+':'')+suffix;clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
    
    c. Fade-in observer:
-      var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.6s ease,transform 0.6s ease';fo.observe(el);});
+      var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.75s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.75s cubic-bezier(0.25,0.46,0.45,0.94)';fo.observe(el);});
    
    d. Mobile menu background fix (in case of transparent bg):
       document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var menu=document.querySelector('[x-show="open"].fixed.right-0');if(!menu)return;var bg=window.getComputedStyle(menu).backgroundColor;var isTransparent=!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent';if(isTransparent){var cfg=window.tailwind?.config?.theme?.extend?.colors?.primary||'#1e293b';var r=parseInt(cfg.slice(1,3),16),g=parseInt(cfg.slice(3,5),16),b=parseInt(cfg.slice(5,7),16);var dark='rgb('+Math.max(0,Math.round(r*0.3))+','+Math.max(0,Math.round(g*0.3))+','+Math.max(0,Math.round(b*0.3))+')';menu.style.background=dark;}},500);});

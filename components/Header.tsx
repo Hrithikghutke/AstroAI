@@ -9,22 +9,31 @@ import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function Header() {
+export default function Header({
+  onNavigate,
+}: {
+  onNavigate?: (href: string) => void;
+}) {
   const { isSignedIn } = useUser();
   const { credits } = useCredits();
   const router = useRouter();
+  const nav = (href: string) =>
+    onNavigate ? onNavigate(href) : router.push(href);
 
   return (
     <header className="flex items-center justify-between px-4 sm:px-6 lg:px-10 bg-neutral-950 py-3 sm:py-4 border-b border-neutral-900">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2">
+      <button
+        onClick={() => nav("/")}
+        className="flex items-center gap-2 cursor-pointer"
+      >
         <img src={Logo.src} className="w-8 sm:w-10" alt="CrawlCube logo" />
         <img
           src={cname.src}
           className="w-22 sm:w-30 opacity-90"
           alt="CrawlCube"
         />
-      </Link>
+      </button>
 
       {/* Right side */}
       <div className="flex items-center gap-2 sm:gap-4">
@@ -45,13 +54,13 @@ export default function Header() {
         )}
 
         {isSignedIn && (
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors"
+          <button
+            onClick={() => nav("/dashboard")}
+            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer"
           >
             <LayoutDashboard className="w-4 h-4" />
             <span className="hidden sm:inline">Dashboard</span>
-          </Link>
+          </button>
         )}
 
         <UserButton afterSignOutUrl="/sign-in" />
