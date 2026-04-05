@@ -8,17 +8,21 @@ export default function Navbar({
   editable = false,
   onUpdate,
   phone,
+  isThumbnail = false,
 }: {
   editable?: boolean;
   onUpdate?: (field: string, value: string) => void;
   phone?: string;
+  isThumbnail?: boolean;
 }) {
   const brand = useBrand();
   const isDark = brand.theme === "dark";
 
   return (
     <nav
-      className="flex justify-between items-center px-4 @md:px-8 py-4 @md:py-5 sticky top-0 z-50 backdrop-blur-md border-b gap-3"
+      className={`flex justify-between items-center px-4 @md:px-8 py-4 @md:py-5 z-50 backdrop-blur-md border-b gap-3 ${
+        isThumbnail ? "relative" : "sticky top-0"
+      }`}
       style={{
         borderColor: brand.primaryColor + "22",
         backgroundColor: isDark ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.9)",

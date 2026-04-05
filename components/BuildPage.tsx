@@ -153,8 +153,7 @@ export default function BuildPage() {
         setInitialPrompt(storedPrompt ?? "");
         setCurrentPrompt(storedPrompt ?? "");
       } catch {
-        router.replace("/");
-        return;
+        // fail silently
       }
     } else if (storedMode === "deep" && storedPrompt) {
       setInitialPrompt(storedPrompt ?? "");
@@ -165,6 +164,12 @@ export default function BuildPage() {
     const storedDeepHtml = sessionStorage.getItem("crawlcube_deep_html");
     if (storedDeepHtml) {
       setDeepHtml(storedDeepHtml);
+    }
+    
+    // Restore savedId to prevent duplicate saves on refresh
+    const storedSavedId = sessionStorage.getItem("crawlcube_savedId");
+    if (storedSavedId) {
+      setSavedId(storedSavedId);
     }
 
     setReady(true);
@@ -270,6 +275,7 @@ export default function BuildPage() {
     sessionStorage.removeItem("crawlcube_deep_html");
     sessionStorage.removeItem("crawlcube_messages");
     sessionStorage.removeItem("crawlcube_brief");
+    sessionStorage.removeItem("crawlcube_savedId");
   };
 
   const handleLayoutChange = (updated: Layout) => {
@@ -279,7 +285,7 @@ export default function BuildPage() {
 
   if (!ready) {
     return (
-      <div className="h-screen flex flex-col bg-neutral-950">
+      <div className="h-screen flex flex-col bg-white dark:bg-neutral-950 transition-colors">
         <div className="flex-1 flex items-center justify-center">
           <div className="w-5 h-5 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
         </div>
@@ -288,7 +294,7 @@ export default function BuildPage() {
   }
 
   return (
-    <main className="h-screen flex flex-col bg-neutral-950 text-white overflow-hidden">
+    <main className="h-screen flex flex-col bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white overflow-hidden transition-colors">
       {/* ── Leave confirmation modal ── */}
       {/* ── Leave confirmation modal ── */}
       {showLeaveModal && (
@@ -450,7 +456,7 @@ export default function BuildPage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* DESKTOP */}
-        <div className="hidden md:flex w-[38%] shrink-0 border-r border-neutral-800 flex-col">
+        <div className="hidden md:flex w-[38%] shrink-0 border-r border-neutral-200 dark:border-neutral-800 flex-col">
           <ChatPanel
             setLayout={handleChatGenerate}
             setDeepHtml={handleDeepHtml}
@@ -475,6 +481,7 @@ export default function BuildPage() {
             onSaved={(id) => {
               setSavedId(id);
               setIsSaved(true);
+              sessionStorage.setItem("crawlcube_savedId", id);
             }}
             onSaveComplete={() => setIsSaved(true)}
             saveRef={triggerSaveRef}
@@ -503,10 +510,10 @@ export default function BuildPage() {
             />
           ) : (
             <div className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-950 border-b border-neutral-800">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-white dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
                 <button
                   onClick={() => setMobileView("chat")}
-                  className="flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <svg
                     className="w-4 h-4"
@@ -537,6 +544,7 @@ export default function BuildPage() {
                 onSaved={(id) => {
                   setSavedId(id);
                   setIsSaved(true);
+                  sessionStorage.setItem("crawlcube_savedId", id);
                 }}
                 onSaveComplete={() => setIsSaved(true)}
                 saveRef={triggerSaveRef}

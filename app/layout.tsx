@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   description: "Generate professional websites in seconds with AI",
 };
 
+import { ThemeProvider } from "@/components/ThemeProvider";
+
 export default function RootLayout({
   children,
 }: {
@@ -27,9 +29,16 @@ export default function RootLayout({
         baseTheme: dark,
       }}
     >
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body className={openSans.className}>
-          <CreditsProvider>{children}</CreditsProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <CreditsProvider>{children}</CreditsProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

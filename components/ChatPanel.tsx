@@ -2199,10 +2199,10 @@ export default function ChatPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Chat Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-sm font-medium text-neutral-300">
+          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
             crawlcube.ai
           </span>
         </div>
@@ -2217,7 +2217,7 @@ export default function ChatPanel({
           )}
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-300 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             New chat
@@ -2227,7 +2227,7 @@ export default function ChatPanel({
 
       {/* Mode toggle */}
       {/* Mode toggle */}
-      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-neutral-800 shrink-0">
+      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-neutral-200 dark:border-neutral-800 shrink-0">
         <button
           onClick={() => setMode("fast")}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
@@ -2276,8 +2276,8 @@ export default function ChatPanel({
             <div
               className={`max-w-[85%] text-sm leading-relaxed ${
                 message.role === "user"
-                  ? "bg-neutral-800 border border-neutral-700/60 text-neutral-100 rounded-2xl rounded-tr-sm px-4 py-3"
-                  : "bg-transparent text-neutral-300 rounded-2xl rounded-tl-sm px-0 py-0"
+                  ? "bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/60 text-neutral-900 dark:text-neutral-100 rounded-2xl rounded-tr-sm px-4 py-3"
+                  : "bg-transparent text-neutral-800 dark:text-neutral-300 rounded-2xl rounded-tl-sm px-0 py-0"
               }`}
             >
               {/* Generation progress — new accordion UI */}
@@ -2802,12 +2802,12 @@ export default function ChatPanel({
               ) : (
                 message.content && (
                   <>
-                    <p className="whitespace-pre-wrap px-1 py-0.5 text-neutral-300 text-[13px] leading-relaxed">
+                    <p className="whitespace-pre-wrap px-1 py-0.5 text-inherit text-[13px] leading-relaxed">
                       {message.content.split(/\*\*(.*?)\*\*/g).map((part, i) =>
                         i % 2 === 1 ? (
                           <strong
                             key={i}
-                            className="font-medium text-neutral-100"
+                            className={`font-medium ${message.role === "user" ? "text-neutral-900 dark:text-neutral-100" : "text-neutral-950 dark:text-neutral-100"}`}
                           >
                             {part}
                           </strong>
@@ -2827,7 +2827,7 @@ export default function ChatPanel({
 
         {/* ── Page picker — shown when edit section is ambiguous ── */}
         {pagePicker && (
-          <div className="mx-1 p-3 rounded-lg border border-neutral-800 bg-neutral-900/60 space-y-2 font-mono text-[11px]">
+          <div className="mx-1 p-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900/60 space-y-2 font-mono text-[11px]">
             <p className="text-neutral-500 tracking-widest uppercase">
               Which page should I fix?
             </p>
@@ -2847,7 +2847,7 @@ export default function ChatPanel({
                     ]);
                     handleSurgicalEdit(instruction, editMeta, page.id);
                   }}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-neutral-200 transition-all cursor-pointer tracking-wide uppercase"
+                  className="px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 text-neutral-700 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-all cursor-pointer tracking-wide uppercase"
                 >
                   {page.label}
                 </button>
@@ -2873,7 +2873,7 @@ export default function ChatPanel({
                 <button
                   key={i}
                   onClick={() => handleGenerate(s)}
-                  className="text-left text-xs text-neutral-400 bg-neutral-900 border border-neutral-800 hover:border-purple-500/50 hover:text-neutral-200 rounded-xl px-3 py-2.5 transition-all duration-200 cursor-pointer"
+                  className="text-left text-xs text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-purple-500/50 dark:hover:border-purple-500/50 hover:text-neutral-900 dark:hover:text-neutral-200 rounded-xl px-3 py-2.5 transition-all duration-200 cursor-pointer"
                 >
                   {s}
                 </button>
@@ -2948,7 +2948,7 @@ export default function ChatPanel({
       {/* Input area */}
       <div className="px-4 pb-4">
         <div
-          className="flex flex-col bg-neutral-900 border border-neutral-800 rounded-2xl transition-all duration-200 overflow-visible"
+          className="flex flex-col bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl transition-all duration-200 shadow-sm dark:shadow-none overflow-visible"
           style={{
             borderColor: loading
               ? mode === "deep"
@@ -2972,7 +2972,7 @@ export default function ChatPanel({
                     : "Describe your website..."
               }
               rows={1}
-              className="flex-1 bg-transparent text-sm text-neutral-200 placeholder:text-neutral-600 outline-none resize-none max-h-30 scrollbar-none"
+              className="flex-1 bg-transparent text-sm text-neutral-900 dark:text-neutral-200 placeholder:text-neutral-400 dark:placeholder:text-neutral-600 outline-none resize-none max-h-30 scrollbar-none"
             />
           </div>
 
@@ -3029,12 +3029,7 @@ export default function ChatPanel({
                 {/* Dropdown — opens upward */}
                 {showModelPicker && (
                   <div
-                    className="absolute bottom-full mb-2 left-0 rounded-xl overflow-hidden z-50 min-w-48"
-                    style={{
-                      background: "#141414",
-                      border: "1px solid #2a2a2a",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-                    }}
+                    className="absolute bottom-full mb-2 left-0 rounded-xl overflow-hidden z-50 min-w-48 bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
                   >
                     {MODELS.map(({ model, label, sublabel, credits, logo }) => (
                       <button
@@ -3062,11 +3057,9 @@ export default function ChatPanel({
                         {/* Label + sublabel */}
                         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                           <span
-                            className="text-xs font-semibold truncate"
-                            style={{
-                              color:
-                                selectedModel === model ? "#f9a8d4" : "#e5e5e5",
-                            }}
+                            className={`text-xs font-semibold truncate ${
+                              selectedModel === model ? "text-pink-400" : "text-neutral-700 dark:text-neutral-200"
+                            }`}
                           >
                             {label}
                           </span>
@@ -3152,7 +3145,7 @@ export default function ChatPanel({
           </div>
         </div>
 
-        <p className="text-[10px] text-neutral-700 mt-1.5 text-center">
+        <p className="text-[10px] text-neutral-500 dark:text-neutral-700 mt-1.5 text-center">
           Press Enter to send · Shift+Enter for new line
         </p>
       </div>

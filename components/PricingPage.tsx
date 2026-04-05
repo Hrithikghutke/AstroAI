@@ -209,19 +209,19 @@ export default function PricingPage({
   const upgradePlans = SUBSCRIPTION_PLANS.filter((p) => p.id !== currentPlan);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white">
       {/* ── Top bar with back button ── */}
-      <div className="border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
+      <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => router.push("/build")}
-          className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm"
+          className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Builder
         </button>
         <button
           onClick={() => router.push("/build")}
-          className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center transition-colors"
+          className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -233,7 +233,7 @@ export default function PricingPage({
           <h1 className="text-4xl font-bold mb-2">
             {isSubscribed ? "Manage Your Plan" : "Choose Your Plan"}
           </h1>
-          <p className="text-neutral-400">
+          <p className="text-neutral-500 dark:text-neutral-400">
             {isSubscribed
               ? "Top up credits, upgrade, or manage your subscription."
               : "Start building stunning websites with AI. Cancel anytime."}
@@ -243,13 +243,13 @@ export default function PricingPage({
         {/* ── Billing toggle (unsubscribed or upgrade view) ── */}
         {(!isSubscribed || showUpgrade) && (
           <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-1 bg-neutral-900 border border-neutral-800 rounded-full p-1">
+            <div className="flex items-center gap-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm dark:shadow-none rounded-full p-1">
               <button
                 onClick={() => setPeriod("monthly")}
                 className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                   period === "monthly"
-                    ? "bg-white text-black"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-neutral-100 dark:bg-white text-neutral-900 dark:text-black"
+                    : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
                 Monthly
@@ -258,8 +258,8 @@ export default function PricingPage({
                 onClick={() => setPeriod("annual")}
                 className={`px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                   period === "annual"
-                    ? "bg-white text-black"
-                    : "text-neutral-400 hover:text-white"
+                    ? "bg-neutral-100 dark:bg-white text-neutral-900 dark:text-black"
+                    : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
                 Annually
@@ -277,10 +277,10 @@ export default function PricingPage({
             {SUBSCRIPTION_PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border p-6 flex flex-col gap-5 ${
+                className={`relative rounded-2xl border p-6 flex flex-col gap-5 transition-shadow ${
                   plan.popular
-                    ? "border-purple-500 bg-neutral-900 shadow-xl shadow-purple-500/10"
-                    : "border-neutral-800 bg-neutral-900/40"
+                    ? "border-purple-500 bg-white dark:bg-neutral-900 shadow-xl shadow-purple-500/10"
+                    : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/40 shadow-sm dark:shadow-none"
                 }`}
               >
                 {plan.popular && (
@@ -293,7 +293,7 @@ export default function PricingPage({
 
                 <div>
                   <h3 className="text-xl font-bold mb-1">{plan.label}</h3>
-                  <p className="text-neutral-400 text-sm">{plan.sublabel}</p>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-sm">{plan.sublabel}</p>
                 </div>
 
                 <div>
@@ -301,16 +301,16 @@ export default function PricingPage({
                     <span className="text-4xl font-black">
                       {getMonthlyEquivalent(plan, period, currency)}
                     </span>
-                    <span className="text-neutral-400 text-sm">/mo</span>
+                    <span className="text-neutral-500 dark:text-neutral-400 text-sm">/mo</span>
                   </div>
                   {period === "annual" && (
-                    <p className="text-green-400 text-xs mt-1">
+                    <p className="text-emerald-600 dark:text-green-400 text-xs mt-1">
                       Billed {formatPrice(plan.annualPriceINR, currency)}/year
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 bg-neutral-800 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-transparent rounded-xl px-4 py-3">
                   <Zap className="w-4 h-4 text-purple-400" />
                   <span className="font-semibold text-sm">
                     {plan.creditsPerMonth.toLocaleString()} credits / month
@@ -322,8 +322,8 @@ export default function PricingPage({
                   disabled={loadingId === plan.id}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${
                     plan.popular
-                      ? "bg-purple-500 hover:bg-purple-400 text-white"
-                      : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                      ? "bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-400 text-white"
+                      : "bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {loadingId === plan.id ? (
@@ -336,33 +336,33 @@ export default function PricingPage({
                   )}
                 </button>
 
-                <ul className="space-y-2 text-sm text-neutral-300">
+                <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    <Check className="w-4 h-4 text-emerald-500 dark:text-green-400 shrink-0" />
                     All AI models (DeepSeek, Gemini, Sonnet)
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    <Check className="w-4 h-4 text-emerald-500 dark:text-green-400 shrink-0" />
                     Unlimited downloads
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    <Check className="w-4 h-4 text-emerald-500 dark:text-green-400 shrink-0" />
                     Live preview
                   </li>
                   {plan.id !== "starter" && (
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-500 dark:text-green-400 shrink-0" />
                       Priority generation queue
                     </li>
                   )}
                   {plan.id === "agency" && (
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-green-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-500 dark:text-green-400 shrink-0" />
                       White-label export
                     </li>
                   )}
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-400 shrink-0" />
+                    <Check className="w-4 h-4 text-emerald-500 dark:text-green-400 shrink-0" />
                     Ability to top-up credits
                   </li>
                 </ul>
@@ -375,11 +375,11 @@ export default function PricingPage({
         {isSubscribed && (
           <div className="space-y-8">
             {/* Current plan card */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 shadow-sm dark:shadow-none">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center">
-                    <Crown className="w-6 h-6 text-purple-400" />
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center">
+                    <Crown className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -403,7 +403,7 @@ export default function PricingPage({
                         </span>
                       )}
                     </div>
-                    <p className="text-neutral-400 text-sm capitalize">
+                    <p className="text-neutral-500 dark:text-neutral-400 text-sm capitalize">
                       {currentPeriod} billing ·{" "}
                       {currentPlanData?.creditsPerMonth.toLocaleString()}{" "}
                       credits/month
@@ -420,7 +420,7 @@ export default function PricingPage({
                         )
                       : ""}
                   </p>
-                  <p className="text-neutral-400 text-xs">/month</p>
+                  <p className="text-neutral-500 dark:text-neutral-400 text-xs">/month</p>
                 </div>
               </div>
 
@@ -436,7 +436,7 @@ export default function PricingPage({
                 {!isCancelled && (
                   <button
                     onClick={() => setShowCancelConfirm(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 border border-neutral-700 text-neutral-400 rounded-xl text-sm font-medium transition-all"
+                    className="flex items-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-800 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600 dark:hover:text-red-400 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 rounded-xl text-sm font-medium transition-all"
                   >
                     <X className="w-4 h-4" />
                     Cancel Subscription
@@ -455,16 +455,16 @@ export default function PricingPage({
                   {upgradePlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`relative rounded-2xl border p-5 flex flex-col gap-4 ${
+                      className={`relative rounded-2xl border p-5 flex flex-col gap-4 transition-shadow ${
                         plan.popular
-                          ? "border-purple-500 bg-neutral-900"
-                          : "border-neutral-800 bg-neutral-900/40"
+                          ? "border-purple-500 bg-white dark:bg-neutral-900 shadow-lg dark:shadow-none"
+                          : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/40 shadow-sm dark:shadow-none"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-bold text-lg">{plan.label}</h3>
-                          <p className="text-neutral-400 text-xs">
+                          <p className="text-neutral-500 dark:text-neutral-400 text-xs">
                             {plan.sublabel}
                           </p>
                         </div>
@@ -472,12 +472,12 @@ export default function PricingPage({
                           <p className="text-2xl font-black">
                             {getMonthlyEquivalent(plan, period, currency)}
                           </p>
-                          <p className="text-neutral-400 text-xs">/mo</p>
+                          <p className="text-neutral-500 dark:text-neutral-400 text-xs">/mo</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 bg-neutral-800 rounded-xl px-3 py-2">
-                        <Zap className="w-3.5 h-3.5 text-purple-400" />
+                      <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl px-3 py-2 border border-neutral-200 dark:border-transparent">
+                        <Zap className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
                         <span className="text-sm font-semibold">
                           {plan.creditsPerMonth.toLocaleString()} credits /
                           month
@@ -489,8 +489,8 @@ export default function PricingPage({
                         disabled={loadingId === plan.id}
                         className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
                           plan.popular
-                            ? "bg-purple-500 hover:bg-purple-400 text-white"
-                            : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                            ? "bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-400 text-white"
+                            : "bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white"
                         } disabled:opacity-50`}
                       >
                         {loadingId === plan.id ? (
@@ -512,7 +512,7 @@ export default function PricingPage({
             <div>
               <div className="mb-5">
                 <h2 className="text-xl font-bold mb-1">Top Up Credits</h2>
-                <p className="text-neutral-400 text-sm">
+                <p className="text-neutral-500 dark:text-neutral-400 text-sm">
                   Need more credits this month? Top up instantly.
                 </p>
               </div>
@@ -523,8 +523,8 @@ export default function PricingPage({
                     key={pack.id}
                     className={`relative rounded-2xl border p-5 flex flex-col gap-4 transition-all hover:scale-[1.02] ${
                       pack.popular
-                        ? "border-purple-500 bg-neutral-900 shadow-lg shadow-purple-500/10"
-                        : "border-neutral-800 bg-neutral-900/40"
+                        ? "border-purple-500 bg-white dark:bg-neutral-900 shadow-xl dark:shadow-lg dark:shadow-purple-500/10"
+                        : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/40 shadow-sm dark:shadow-none"
                     }`}
                   >
                     {pack.popular && (
@@ -539,8 +539,8 @@ export default function PricingPage({
                       <div>
                         <h3 className="font-bold mb-1">{pack.label}</h3>
                         <div className="flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5 text-purple-400" />
-                          <span className="text-sm text-neutral-300">
+                          <Zap className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                          <span className="text-sm text-neutral-600 dark:text-neutral-300">
                             {pack.credits.toLocaleString()} credits
                           </span>
                         </div>
@@ -555,8 +555,8 @@ export default function PricingPage({
                       disabled={loadingId === pack.id}
                       className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
                         pack.popular
-                          ? "bg-purple-500 hover:bg-purple-400 text-white"
-                          : "bg-neutral-800 hover:bg-neutral-700 text-white"
+                          ? "bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-400 text-white"
+                          : "bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-900 dark:text-white"
                       } disabled:opacity-50`}
                     >
                       {loadingId === pack.id ? (
@@ -583,14 +583,14 @@ export default function PricingPage({
       {/* ── Cancel confirmation modal ── */}
       {showCancelConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-8 max-w-md w-full">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
+              <div className="w-10 h-10 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <h3 className="text-xl font-bold">Cancel Subscription?</h3>
             </div>
-            <p className="text-neutral-400 text-sm mb-6">
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm mb-6">
               Your subscription will remain active until the end of the current
               billing period. After that, you will lose access to your monthly
               credits. Your existing credits will not be affected.
@@ -598,7 +598,7 @@ export default function PricingPage({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border border-neutral-700 text-neutral-300 hover:bg-neutral-800 text-sm font-medium transition-all"
+                className="flex-1 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-sm font-medium transition-all"
               >
                 Keep Subscription
               </button>

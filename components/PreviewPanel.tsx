@@ -5,7 +5,9 @@ import PreviewFrame from "@/components/PreviewFrame";
 import DeepPreview from "@/components/DeepPreview";
 import { Layout } from "@/types/layout";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTheme } from "next-themes";
+import html2canvas from "html2canvas";
 
 import {
   Monitor,
@@ -30,6 +32,60 @@ function escapeHtml(code: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+async function captureThumbnail(html: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    try {
+      const iframe = document.createElement("iframe");
+      // 800x600 fixed iframe off-screen
+      iframe.style.cssText = "position:fixed;left:-9999px;top:0;width:800px;height:600px;opacity:0;pointer-events:none;border:none;";
+      document.body.appendChild(iframe);
+
+      const idoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!idoc) {
+        document.body.removeChild(iframe);
+        return resolve(null);
+      }
+
+      idoc.open();
+      idoc.write(html);
+      idoc.close();
+
+      iframe.onload = async () => {
+        try {
+          // Small delay for fonts/images to render
+          await new Promise((r) => setTimeout(r, 600));
+          
+          const canvas = await html2canvas(idoc.body, {
+            width: 800,
+            height: 600,
+            windowWidth: 800,
+            windowHeight: 600,
+            useCORS: true,
+            scale: 0.5, // 400x300 output
+          });
+          
+          // Heavy JPEG compression to keep DB payload extremely small (~10kb)
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+          document.body.removeChild(iframe);
+          resolve(dataUrl);
+        } catch (e) {
+          console.error("Thumbnail capture error", e);
+          if (document.body.contains(iframe)) document.body.removeChild(iframe);
+          resolve(null);
+        }
+      };
+      
+      iframe.onerror = () => {
+        if (document.body.contains(iframe)) document.body.removeChild(iframe);
+        resolve(null);
+      };
+    } catch (e) {
+      console.error(e);
+      resolve(null);
+    }
+  });
 }
 export default function PreviewPanel({
   layout,
@@ -56,6 +112,7 @@ export default function PreviewPanel({
   streamingCode?: string;
   isGenerating?: boolean;
 }) {
+  const { resolvedTheme } = useTheme();
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [saving, setSaving] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
@@ -122,15 +179,30 @@ export default function PreviewPanel({
     setSaving(true);
 
     try {
+      let thumbnailStr: string | null = null;
+      try {
+        const sourceHtml = isDeepMode && deepHtml ? deepHtml : layout ? generateHtml(layout) : "";
+        if (sourceHtml) {
+          thumbnailStr = await captureThumbnail(sourceHtml);
+        }
+      } catch (err) {
+        console.error("Failed to capture thumbnail", err);
+      }
+
+      const payload = {
+        layout: layout ?? null,
+        deepHtml: deepHtml ?? null,
+        prompt: prompt ?? "",
+        thumbnail: thumbnailStr,
+      };
+
       if (savedId) {
         const res = await fetch("/api/generations/save", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: savedId,
-            layout: layout ?? null,
-            deepHtml: deepHtml ?? null,
-            prompt: prompt ?? "",
+            ...payload
           }),
         });
         if (res.ok) {
@@ -142,11 +214,7 @@ export default function PreviewPanel({
         const res = await fetch("/api/generations/save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            layout: layout ?? null,
-            deepHtml: deepHtml ?? null,
-            prompt: prompt ?? "",
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (data.id && data.shareId) {
@@ -251,6 +319,23 @@ export default function PreviewPanel({
     URL.revokeObjectURL(url);
   };
 
+  // ── Open in new tab ──
+  const handleOpenInTab = () => {
+    let html = "";
+    if (isDeepMode && deepHtml) {
+      html = deepHtml;
+    } else if (layout) {
+      html = generateHtml(layout);
+    } else {
+      return;
+    }
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank", "noopener,noreferrer");
+    // Revoke after a short delay so the tab has time to load
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  };
+
   // ── Deploy to Netlify ──
   const handleDeploy = async () => {
     if (!deepHtml || deploying) return;
@@ -308,11 +393,12 @@ export default function PreviewPanel({
   // ── Empty state — only show if not generating and no code streaming ──
   if (!hasContent && !isGenerating && !streamingCode) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-neutral-950 gap-4 relative">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-size-[40px_40px] pointer-events-none" />
+      <div className="flex-1 flex flex-col items-center justify-center bg-neutral-50 dark:bg-neutral-950 gap-4 relative">
+        <div className="absolute inset-0 dark:opacity-100 opacity-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+        <div className="absolute inset-0 dark:opacity-0 opacity-100 bg-[linear-gradient(rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.05)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
         <div className="relative text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center mx-auto">
-            <Monitor className="w-7 h-7 text-neutral-600" />
+          <div className="w-16 h-16 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center mx-auto">
+            <Monitor className="w-7 h-7 text-neutral-400 dark:text-neutral-600" />
           </div>
           <p className="text-neutral-500 text-sm font-medium">
             Your website preview will appear here
@@ -327,11 +413,11 @@ export default function PreviewPanel({
   }
 
   return (
-    <div className="flex flex-col h-full bg-neutral-900">
+    <div className="flex flex-col h-full bg-neutral-50 dark:bg-neutral-900">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800 bg-neutral-950 gap-3">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 gap-3">
         {/* URL bar */}
-        <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
+        <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
           <div className="flex gap-1">
             <div className="w-2 h-2 rounded-full bg-red-500/60" />
             <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
@@ -355,22 +441,13 @@ export default function PreviewPanel({
           <button
             onClick={handleSave}
             disabled={saveDisabled}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              background:
-                saved && !pendingChanges
-                  ? "#16a34a22"
-                  : pendingChanges
-                    ? "#7c3aed22"
-                    : "#ffffff11",
-              color:
-                saved && !pendingChanges
-                  ? "#4ade80"
-                  : pendingChanges
-                    ? "#a78bfa"
-                    : "#a3a3a3",
-              border: `1px solid ${saved && !pendingChanges ? "#16a34a44" : pendingChanges ? "#7c3aed44" : "#2a2a2a"}`,
-            }}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+              saved && !pendingChanges
+                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                : pendingChanges
+                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
+                  : "bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
+            }`}
           >
             {saved && !pendingChanges ? (
               <Check className="w-3.5 h-3.5" />
@@ -384,12 +461,11 @@ export default function PreviewPanel({
           <button
             onClick={handleShare}
             disabled={saving}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50"
-            style={{
-              background: copied ? "#7c3aed33" : "#ffffff11",
-              color: copied ? "#a78bfa" : "#a3a3a3",
-              border: `1px solid ${copied ? "#7c3aed44" : "#2a2a2a"}`,
-            }}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50 ${
+              copied
+                ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
+                : "bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
+            }`}
           >
             <Share2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">
@@ -407,6 +483,17 @@ export default function PreviewPanel({
             <span className="hidden sm:inline">
               {isGenerating ? "Generating..." : "Download"}
             </span>
+          </button>
+
+          {/* Open in new tab */}
+          <button
+            onClick={handleOpenInTab}
+            disabled={isGenerating || (!layout && !deepHtml)}
+            title="Open full preview in new tab"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10 hover:bg-neutral-200 dark:hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Open</span>
           </button>
 
           {/* Deploy to Netlify — Deep Dive only */}
@@ -453,16 +540,16 @@ export default function PreviewPanel({
             ))}
 
           {/* Viewport toggle */}
-          <div className="flex items-center gap-1 bg-neutral-900 border border-neutral-800 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-1">
             <button
               onClick={() => setViewport("desktop")}
-              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewport === "desktop" ? "bg-neutral-700 text-white" : "text-neutral-500 hover:text-neutral-300"}`}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewport === "desktop" ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm dark:shadow-none" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
             >
               <Monitor className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setViewport("mobile")}
-              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewport === "mobile" ? "bg-neutral-700 text-white" : "text-neutral-500 hover:text-neutral-300"}`}
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewport === "mobile" ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm dark:shadow-none" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
             >
               <Smartphone className="w-3.5 h-3.5" />
             </button>
@@ -471,18 +558,14 @@ export default function PreviewPanel({
       </div>
 
       {/* Code / Preview tabs */}
-      <div className="flex items-center gap-1 px-4 pt-2 pb-0 bg-neutral-950 border-b border-neutral-800">
+      <div className="flex items-center gap-1 px-4 pt-2 pb-0 bg-neutral-100 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
         <button
           onClick={() => setActiveTab("code")}
-          className="px-4 py-2 text-xs font-semibold rounded-t-lg transition-all cursor-pointer"
-          style={{
-            background: activeTab === "code" ? "#1e1e2e" : "transparent",
-            color: activeTab === "code" ? "#d4d4d4" : "#525252",
-            borderBottom:
-              activeTab === "code"
-                ? "2px solid #a855f7"
-                : "2px solid transparent",
-          }}
+          className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-all cursor-pointer border-b-2 ${
+            activeTab === "code"
+              ? "bg-white dark:bg-[#1e1e2e] text-purple-600 dark:text-[#d4d4d4] border-purple-500"
+              : "bg-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border-transparent"
+          }`}
         >
           {"</>"} Code
         </button>
@@ -490,26 +573,19 @@ export default function PreviewPanel({
           onClick={() => {
             if (!isGenerating) setActiveTab("preview");
           }}
-          className="px-4 py-2 text-xs font-semibold rounded-t-lg transition-all"
-          style={{
-            background: activeTab === "preview" ? "#1e1e2e" : "transparent",
-            color: isGenerating
-              ? "#2a2a2a"
+          className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 ${
+            isGenerating
+              ? "cursor-not-allowed bg-transparent text-neutral-400 dark:text-[#2a2a2a] border-transparent"
               : activeTab === "preview"
-                ? "#d4d4d4"
-                : "#525252",
-            borderBottom:
-              activeTab === "preview"
-                ? "2px solid #a855f7"
-                : "2px solid transparent",
-            cursor: isGenerating ? "not-allowed" : "pointer",
-          }}
+                ? "bg-white dark:bg-[#1e1e2e] text-purple-600 dark:text-[#d4d4d4] border-purple-500 cursor-pointer"
+                : "bg-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border-transparent cursor-pointer"
+          }`}
           title={
             isGenerating ? "Preview unlocks when generation is complete" : ""
           }
         >
           👁 Preview{" "}
-          {isGenerating && <span style={{ color: "#3a3a3a" }}>🔒</span>}
+          {isGenerating && <span>🔒</span>}
         </button>
       </div>
 
@@ -532,52 +608,59 @@ export default function PreviewPanel({
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === "code" ? (
           <div
-            className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-thumb-[#404040] scrollbar-track-transparent hover:scrollbar-thumb-[#525252] [&>pre]:!scrollbar-thin [&>pre]:!scrollbar-thumb-[#404040] [&>pre]:!scrollbar-track-transparent [&>pre]:hover:!scrollbar-thumb-[#525252]"
+            className="flex-1 overflow-auto p-4 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-[#404040] scrollbar-track-transparent hover:scrollbar-thumb-neutral-400 dark:hover:scrollbar-thumb-[#525252] [&>pre]:!scrollbar-thin [&>pre]:!scrollbar-thumb-neutral-300 dark:[&>pre]:!scrollbar-thumb-[#404040] [&>pre]:!scrollbar-track-transparent hover:[&>pre]:!scrollbar-thumb-neutral-400 dark:hover:[&>pre]:!scrollbar-thumb-[#525252] bg-neutral-50 dark:bg-[#141414]"
             style={{
-              background: "#141414",
               fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
               fontSize: "12px",
               lineHeight: "1.6",
             }}
           >
-            {streamingCode ? (
-              <SyntaxHighlighter
-                language="html"
-                style={vscDarkPlus}
-                customStyle={{
-                  margin: 0,
-                  background: 'transparent',
-                  padding: 0,
-                  fontSize: '13px',
-                  fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
-                }}
-                wrapLines={true}
-                wrapLongLines={true}
-                showLineNumbers={true}
-                lineNumberStyle={{
-                  minWidth: "3.5em",
-                  paddingRight: "1.5em",
-                  color: "#858585",
-                  textAlign: "right",
-                  userSelect: "none"
-                }}
-              >
-                {streamingCode}
-              </SyntaxHighlighter>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <p
-                  style={{ color: "#3a3a3a", fontFamily: "system-ui" }}
-                  className="text-sm"
+            {(() => {
+              // Prefer live streaming code; fall back to existing content so
+              // the panel never goes blank between generations.
+              const displayCode =
+                streamingCode ||
+                (isDeepMode && deepHtml ? deepHtml : layout ? generateHtml(layout) : "");
+
+              return displayCode ? (
+                <SyntaxHighlighter
+                  language="html"
+                  style={resolvedTheme === "light" ? vs : vscDarkPlus}
+                  customStyle={{
+                    margin: 0,
+                    background: "transparent",
+                    padding: 0,
+                    fontSize: "13px",
+                    fontFamily: "'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+                  }}
+                  wrapLines={true}
+                  wrapLongLines={true}
+                  showLineNumbers={true}
+                  lineNumberStyle={{
+                    minWidth: "3.5em",
+                    paddingRight: "1.5em",
+                    color: "#858585",
+                    textAlign: "right",
+                    userSelect: "none",
+                  }}
                 >
-                  Code will appear here during generation...
-                </p>
-              </div>
-            )}
+                  {displayCode}
+                </SyntaxHighlighter>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <p
+                    style={{ fontFamily: "system-ui" }}
+                    className="text-sm text-neutral-500"
+                  >
+                    Code will appear here during generation...
+                  </p>
+                </div>
+              );
+            })()}
             <div ref={codeEndRef} />
           </div>
         ) : (
-          <div className="flex-1 overflow-auto bg-neutral-800 flex items-start justify-center p-4">
+          <div className="flex-1 overflow-auto bg-neutral-200/50 dark:bg-neutral-800 flex items-start justify-center p-4">
             {isDeepMode ? (
               // Deep Dive — raw HTML in iframe
               <DeepPreview html={deepHtml!} viewport={viewport} />

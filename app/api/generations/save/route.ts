@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { prompt, layout, deepHtml } = await req.json();
+    const { prompt, layout, deepHtml, thumbnail } = await req.json();
 
     if (!layout && !deepHtml) {
       return NextResponse.json(
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
       prompt ?? "",
       layout ?? null,
       deepHtml ?? null,
+      thumbnail ?? null
     );
     return NextResponse.json({ id, shareId });
   } catch (error) {
@@ -38,7 +39,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, prompt, layout, deepHtml } = await req.json();
+    const { id, prompt, layout, deepHtml, thumbnail } = await req.json();
 
     if (!id || (!layout && !deepHtml)) {
       return NextResponse.json(
@@ -53,6 +54,7 @@ export async function PATCH(req: Request) {
       layout ?? null,
       prompt ?? "",
       deepHtml ?? null,
+      thumbnail ?? null
     );
     return NextResponse.json({ success: true });
   } catch (error) {

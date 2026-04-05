@@ -97,7 +97,7 @@ export default function Dashboard({ data }: any) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white flex flex-col">
       <Header />
 
       <div className="max-w-6xl mx-auto w-full px-6 py-10">
@@ -129,8 +129,8 @@ export default function Dashboard({ data }: any) {
         {/* Empty state */}
         {!loading && generations.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
-              <Layers className="w-7 h-7 text-neutral-600" />
+            <div className="w-16 h-16 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex items-center justify-center">
+              <Layers className="w-7 h-7 text-neutral-400 dark:text-neutral-600" />
             </div>
             <p className="text-neutral-400 font-medium">No websites yet</p>
             <p className="text-neutral-600 text-sm">
@@ -157,7 +157,7 @@ export default function Dashboard({ data }: any) {
               return (
                 <div
                   key={gen.id}
-                  className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-600 transition-all duration-200 flex flex-col"
+                  className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200 flex flex-col"
                 >
                   {/* Color accent top bar */}
                   <div
@@ -174,7 +174,7 @@ export default function Dashboard({ data }: any) {
                     {/* Site name + theme badge + delete */}
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div className="flex items-start gap-2 flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-base leading-tight truncate">
+                        <h3 className="font-semibold text-neutral-900 dark:text-white text-base leading-tight truncate">
                           {gen.siteName}
                         </h3>
                         <span
@@ -274,22 +274,17 @@ export default function Dashboard({ data }: any) {
                         <Link
                           href={`/preview/${gen.shareId}`}
                           target="_blank"
-                          className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-all"
+                          className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all"
                         >
                           View
                         </Link>
                         <button
                           onClick={() => handleShare(gen.shareId)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer"
-                          style={{
-                            background:
-                              copiedId === gen.shareId
-                                ? "#16a34a22"
-                                : "#ffffff11",
-                            color:
-                              copiedId === gen.shareId ? "#4ade80" : "#a3a3a3",
-                            border: `1px solid ${copiedId === gen.shareId ? "#16a34a44" : "#2a2a2a"}`,
-                          }}
+                          className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer ${
+                            copiedId === gen.shareId
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                              : "bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
+                          }`}
                         >
                           <Share2 className="w-3 h-3" />
                           {copiedId === gen.shareId ? "Copied!" : "Share"}

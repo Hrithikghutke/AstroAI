@@ -20,10 +20,12 @@ export default function PreviewFrame({
   layout,
   editable = false,
   onLayoutChange,
+  isThumbnail = false,
 }: {
   layout: Layout | null;
   editable?: boolean;
   onLayoutChange?: (updated: Layout) => void;
+  isThumbnail?: boolean;
 }) {
   if (!layout) return null;
 
@@ -93,7 +95,7 @@ export default function PreviewFrame({
   return (
     <BrandContext.Provider value={brandContextValue}>
       <div
-        className={`preview-root @container min-h-screen ${layout.theme === "dark" ? "bg-black text-white" : "bg-white text-black"}`}
+        className={`preview-root @container ${isThumbnail ? "min-h-full" : "min-h-screen"} ${layout.theme === "dark" ? "bg-black text-white" : "bg-white text-black"}`}
       >
         {/* Developer Agent Google Font */}
         {layout.customFont?.url && (
@@ -140,6 +142,7 @@ export default function PreviewFrame({
         <Navbar
           editable={editable}
           phone={phone}
+          isThumbnail={isThumbnail}
           onUpdate={(field, value) => updateBranding(field, value)}
         />
 

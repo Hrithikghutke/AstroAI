@@ -90,6 +90,7 @@ export async function saveGeneration(
   prompt: string,
   layout: any,
   deepHtml: string | null = null,
+  thumbnail: string | null = null,
 ): Promise<{ id: string; shareId: string }> {
   const shareId = generateShareId();
 
@@ -104,6 +105,7 @@ export async function saveGeneration(
       ? extractTitleFromHtml(deepHtml)
       : (layout?.branding?.logoText ?? "Untitled"),
     themeStyle: layout?.themeStyle ?? "corporate",
+    thumbnail: thumbnail ?? null,
     createdAt: serverTimestamp(),
   });
 
@@ -184,6 +186,7 @@ export async function updateGeneration(
   layout: any,
   prompt: string,
   deepHtml: string | null = null,
+  thumbnail: string | null = null,
 ): Promise<void> {
   const ref = doc(db, "generations", docId);
   const snap = await getDoc(ref);
@@ -200,6 +203,7 @@ export async function updateGeneration(
       ? extractTitleFromHtml(deepHtml)
       : (layout?.branding?.logoText ?? "Untitled"),
     themeStyle: deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate"),
+    thumbnail: thumbnail ?? null,
     updatedAt: serverTimestamp(),
   });
 }

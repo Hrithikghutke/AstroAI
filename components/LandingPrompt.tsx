@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { MoveRight, Zap, Telescope, ChevronDown } from "lucide-react";
+import { ArrowUp, Zap, Telescope, Settings2, ChevronDown } from "lucide-react";
 import { normalizeLayout } from "@/lib/normalizeLayout";
 import { THEME_STYLES, getThemeLabel } from "@/lib/themeConfig";
 import { ThemeStyle } from "@/types/layout";
 import { useCredits } from "@/context/CreditsContext";
-import Logo from "@/assets/logo_light.svg";
+import Logo from "@/assets/logo.svg";
 import { DEEP_DIVE_MODELS, CLAUDE_LOGO_SVG } from "@/lib/modelConfig";
+
 type GenerationMode = "fast" | "deep";
 
 const useTypewriter = (
@@ -66,16 +67,17 @@ export default function LandingPrompt() {
   const [loading, setLoading] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<ThemeStyle>("corporate");
   const [selectedMode, setSelectedMode] = useState<GenerationMode>("fast");
-  const [selectedModel, setSelectedModel] = useState(
-    "anthropic/claude-sonnet-4.6",
-  );
+  const [selectedModel, setSelectedModel] = useState("anthropic/claude-sonnet-4.6");
+  
   const [showModelPicker, setShowModelPicker] = useState(false);
+  const [showModePicker, setShowModePicker] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
   const animatedPlaceholder = useTypewriter(PLACEHOLDERS);
 
   const MODELS = DEEP_DIVE_MODELS;
-  const activeModel =
-    MODELS.find((m) => m.model === selectedModel) ?? MODELS[0];
+  const activeModel = MODELS.find((m) => m.model === selectedModel) ?? MODELS[0];
 
   const handleGenerate = async () => {
     if (!prompt.trim() || loading) return;
@@ -83,8 +85,6 @@ export default function LandingPrompt() {
     setError(null);
 
     // ── DEEP DIVE MODE ──
-    // For very detailed prompts (>500 chars), skip the chat roundtrip entirely —
-    // the user already told us everything, no need to compress/summarize it.
     if (selectedMode === "deep") {
       const isDetailedPrompt = prompt.trim().length > 500;
 
@@ -96,7 +96,6 @@ export default function LandingPrompt() {
       sessionStorage.removeItem("crawlcube_brief");
 
       if (isDetailedPrompt) {
-        // Pass the full original prompt directly — do NOT let Haiku compress it
         sessionStorage.setItem("crawlcube_prompt", prompt);
         sessionStorage.removeItem("crawlcube_seed_messages");
         router.push("/build");
@@ -119,14 +118,9 @@ export default function LandingPrompt() {
         const action = chatData.action ?? "chat";
 
         if (action === "build_now" || action === "generate") {
-          // Ready to build — use enriched prompt if available, else original
-          sessionStorage.setItem(
-            "crawlcube_prompt",
-            chatData.prompt ?? chatData.updatedBrief ?? prompt,
-          );
+          sessionStorage.setItem("crawlcube_prompt", chatData.prompt ?? chatData.updatedBrief ?? prompt);
           sessionStorage.removeItem("crawlcube_seed_messages");
         } else {
-          // Needs conversation first — seed ChatPanel with this exchange
           sessionStorage.removeItem("crawlcube_prompt");
           sessionStorage.setItem(
             "crawlcube_seed_messages",
@@ -134,12 +128,10 @@ export default function LandingPrompt() {
               { role: "user", content: prompt },
               {
                 role: "assistant",
-                content:
-                  chatData.message ??
-                  "Tell me more about what you'd like to build.",
+                content: chatData.message ?? "Tell me more about what you'd like to build.",
                 questions: chatData.questions ?? undefined,
               },
-            ]),
+            ])
           );
         }
 
@@ -180,418 +172,243 @@ export default function LandingPrompt() {
       setError(
         err.message === "NO_CREDITS"
           ? "You're out of credits. Purchase more to keep building!"
-          : "Something went wrong. Please try again.",
+          : "Something went wrong. Please try again."
       );
       setLoading(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      handleGenerate();
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey === false)) {
+      if (!e.shiftKey) {
+        e.preventDefault();
+        handleGenerate();
+      }
     }
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-6 px-4 w-full min-h-screen justify-center py-16 overflow-hidden">
-      {/* Background texture */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
-          backgroundSize: "28px 28px",
-        }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: "-10%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "600px",
-          height: "400px",
-          background:
-            "radial-gradient(ellipse, rgba(168,85,247,0.12) 0%, transparent 70%)",
-          filter: "blur(40px)",
-        }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          bottom: "0%",
-          left: "-5%",
-          width: "400px",
-          height: "300px",
-          background:
-            "radial-gradient(ellipse, rgba(236,72,153,0.07) 0%, transparent 70%)",
-          filter: "blur(50px)",
-        }}
-      />
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          bottom: "0%",
-          right: "-5%",
-          width: "400px",
-          height: "300px",
-          background:
-            "radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%)",
-          filter: "blur(50px)",
-        }}
-      />
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(0,0,0,0.5) 100%)",
-        }}
-      />
+    <div className="relative flex flex-col items-center w-full min-h-[70vh] justify-center pb-12 pt-8 sm:pt-20 px-4 md:px-0">
+      
+      {/* Deep Purple Aura / Glows */}
+      <div 
+        className="absolute inset-0 pointer-events-none overflow-hidden" 
+        style={{ zIndex: 0 }}
+      >
+        {/* Top left geometric blocks pattern */}
+        <div 
+          className="absolute -top-[10%] -left-[10%] w-[50%] h-[70%] opacity-20 dark:opacity-[0.15] hidden sm:block"
+          style={{
+            backgroundImage: `linear-gradient(30deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(150deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(30deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(150deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(60deg, #86198f 25%, transparent 25.5%, transparent 75%, #86198f 75%, #86198f), linear-gradient(60deg, #86198f 25%, transparent 25.5%, transparent 75%, #86198f 75%, #86198f)`,
+            backgroundSize: `80px 140px`,
+            backgroundPosition: `0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px`,
+            maskImage: "radial-gradient(ellipse at center, black 10%, transparent 60%)",
+            WebkitMaskImage: "radial-gradient(ellipse at center, black 10%, transparent 60%)"
+          }}
+        />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-2xl mx-auto">
-        <div className="text-center space-y-2">
-          <h2 className="text-3xl sm:text-4xl lg:text-[52px] font-semibold bg-linear-to-r from-purple-400 via-pink-300 to-white bg-clip-text text-transparent leading-tight">
-            What will you build today?
-          </h2>
-          <p className="text-sm text-neutral-500">
-            Describe your website and pick a visual style below
-          </p>
+        {/* Center Top Purple Glow */}
+        <div 
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] opacity-40 dark:opacity-40 pointer-events-none mix-blend-screen"
+          style={{
+            background: "radial-gradient(ellipse at top, rgba(147, 51, 234, 0.4) 0%, rgba(76, 29, 149, 0.1) 40%, transparent 70%)"
+          }}
+        />
+
+        {/* Floating Matrix Squares (Right side) */}
+        <div 
+          className="absolute top-[30%] right-[5%] w-[300px] h-[400px] opacity-60 hidden md:block"
+          style={{
+            backgroundImage: `radial-gradient(rgba(168, 85, 247, 0.4) 2px, transparent 2px)`,
+            backgroundSize: "32px 32px",
+            maskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
+            WebkitMaskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)"
+          }}
+        />
+        
+        {/* Decorative Floating Soft Squares */}
+        <div className="absolute top-[35%] right-[12%] w-4 h-4 rounded-sm bg-purple-500/40 shadow-[0_0_15px_rgba(168,85,247,0.6)] rotate-12 hidden lg:block" />
+        <div className="absolute top-[25%] right-[8%] w-8 h-8 rounded-md border border-purple-400/20 bg-purple-500/10 shadow-[0_0_20px_rgba(168,85,247,0.2)] -rotate-6 hidden lg:block" />
+        <div className="absolute bottom-[20%] left-[10%] w-6 h-6 rounded-md bg-purple-600/30 shadow-[0_0_20px_rgba(147,51,234,0.5)] rotate-45 hidden lg:block" />
+      </div>
+
+      {/* Floating Badge */}
+      <div className="relative z-10 flex items-center justify-center mb-8">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 backdrop-blur-md text-[11px] font-semibold tracking-wide text-neutral-600 dark:text-neutral-300 shadow-sm">
+          <svg className="w-3 h-3 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          Get up to 50% in affiliates revenue
         </div>
+      </div>
 
-        {/* Mode toggle */}
-        <div className="flex flex-col sm:flex-row items-stretch gap-3 w-full">
-          <button
-            onClick={() => setSelectedMode("fast")}
-            className="flex-1 flex flex-col items-start gap-1.5 px-4 py-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left"
-            style={{
-              borderColor: selectedMode === "fast" ? "#a855f7" : "#2a2a2a",
-              background:
-                selectedMode === "fast"
-                  ? "rgba(168,85,247,0.12)"
-                  : "rgba(255,255,255,0.02)",
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{
-                  background:
-                    selectedMode === "fast"
-                      ? "rgba(168,85,247,0.25)"
-                      : "rgba(255,255,255,0.05)",
-                }}
-              >
-                <Zap
-                  className="w-3.5 h-3.5"
-                  style={{
-                    color: selectedMode === "fast" ? "#d8b4fe" : "#525252",
-                  }}
-                />
-              </div>
-              <span
-                className="text-sm font-semibold"
-                style={{
-                  color: selectedMode === "fast" ? "#d8b4fe" : "#525252",
-                }}
-              >
-                Fast Mode
-              </span>
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                style={{
-                  background:
-                    selectedMode === "fast"
-                      ? "rgba(168,85,247,0.2)"
-                      : "rgba(255,255,255,0.05)",
-                  color: selectedMode === "fast" ? "#d8b4fe" : "#525252",
-                }}
-              >
-                1 credit
-              </span>
-            </div>
-            <p
-              className="text-xs leading-relaxed"
-              style={{
-                color: selectedMode === "fast" ? "#a78bfa" : "#404040",
-              }}
-            >
-              Structured components with AI-enhanced CSS, animations and custom
-              fonts. Ready in ~15 seconds.
-            </p>
-          </button>
+      {/* Hero Headings */}
+      <div className="relative z-10 text-center space-y-4 mb-10 w-full max-w-3xl">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-neutral-900 dark:text-white">
+          Create beautiful designs
+        </h1>
+        <p className="text-base sm:text-lg text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto font-medium">
+          Generate top-tier landing pages in seconds. <a href="#" className="underline decoration-neutral-300 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors">Watch video.</a>
+        </p>
+      </div>
 
-          <button
-            onClick={() => setSelectedMode("deep")}
-            className="flex-1 flex flex-col items-start gap-1.5 px-4 py-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left"
-            style={{
-              borderColor: selectedMode === "deep" ? "#ec4899" : "#2a2a2a",
-              background:
-                selectedMode === "deep"
-                  ? "rgba(236,72,153,0.10)"
-                  : "rgba(255,255,255,0.02)",
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{
-                  background:
-                    selectedMode === "deep"
-                      ? "rgba(236,72,153,0.2)"
-                      : "rgba(255,255,255,0.05)",
-                }}
-              >
-                <Telescope
-                  className="w-3.5 h-3.5"
-                  style={{
-                    color: selectedMode === "deep" ? "#f9a8d4" : "#525252",
-                  }}
-                />
-              </div>
-              <span
-                className="text-sm font-semibold"
-                style={{
-                  color: selectedMode === "deep" ? "#f9a8d4" : "#525252",
-                }}
-              >
-                Deep Dive
-              </span>
-              <span
-                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-                style={{
-                  background:
-                    selectedMode === "deep"
-                      ? "rgba(236,72,153,0.2)"
-                      : "rgba(255,255,255,0.05)",
-                  color: selectedMode === "deep" ? "#f9a8d4" : "#525252",
-                }}
-              >
-                3 credits
-              </span>
-            </div>
-            <p
-              className="text-xs leading-relaxed"
-              style={{
-                color: selectedMode === "deep" ? "#f9a8d4" : "#404040",
-              }}
-            >
-              Full AI agent pipeline — Architect, Developer and QA work together
-              to build a truly unique website. Takes ~45 seconds.
-            </p>
-          </button>
-        </div>
+      {/* Input Shell */}
+      <div className="relative z-20 w-full max-w-3xl mx-auto rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111111] shadow-2xl transition-colors">
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={animatedPlaceholder}
+          rows={3}
+          className="w-full resize-none bg-transparent px-5 pt-5 pb-16 text-base text-neutral-800 dark:text-neutral-200 outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-600 scrollbar-none"
+        />
 
-        {/* Theme selector — only shown in Fast Mode */}
-        {selectedMode === "fast" && (
-          <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-center gap-2 w-full">
-            {THEME_STYLES.map((style) => (
-              <button
-                key={style}
-                onClick={() => setSelectedTheme(style)}
-                className="flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 cursor-pointer w-full sm:w-auto"
-                style={{
-                  borderColor: selectedTheme === style ? "#a855f7" : "#2a2a2a",
-                  background:
-                    selectedTheme === style
-                      ? "rgba(168,85,247,0.15)"
-                      : "rgba(255,255,255,0.03)",
-                  color: selectedTheme === style ? "#d8b4fe" : "#737373",
-                }}
+        {/* Bottom Toolbar inside textarea */}
+        <div className="absolute bottom-3 left-4 right-3 flex items-center justify-between pointer-events-none">
+          
+          {/* Action Chips */}
+          <div className="flex items-center gap-2 pointer-events-auto flex-wrap">
+            {/* Mode Toggle Button */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowModePicker(!showModePicker)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
               >
-                <span className="font-semibold">{getThemeLabel(style)}</span>
-                <span className="text-[10px] opacity-70 mt-0.5">
-                  {THEME_DESCRIPTIONS[style]}
-                </span>
+                {selectedMode === "fast" 
+                  ? <Zap className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+                  : <Telescope className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />}
+                {selectedMode === "fast" ? "Fast Mode" : "Deep Dive"}
+                <ChevronDown className="w-3 h-3 opacity-40" />
               </button>
-            ))}
-          </div>
-        )}
-        {/* Prompt input */}
-        {/* Prompt input */}
-        <div className="relative w-full">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={animatedPlaceholder}
-            rows={4}
-            className="scrollbar no-scrollbar w-full resize-none rounded-2xl bg-neutral-900/80 backdrop-blur-sm border border-neutral-800 focus:border-purple-500/60 px-5 pt-4 pb-14 text-sm text-stone-300 outline-none placeholder:text-neutral-600 transition-all"
-          />
+              
+              {showModePicker && (
+                <div className="absolute top-full mt-2 left-0 w-48 bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl overflow-hidden z-30">
+                  <button onClick={() => { setSelectedMode("fast"); setShowModePicker(false); }} className="w-full flex items-center gap-2 p-3 text-left hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <Zap className="w-4 h-4 text-neutral-400 dark:text-neutral-500 shrink-0" />
+                    <div>
+                      <span className="block text-xs font-semibold text-neutral-800 dark:text-neutral-200">Fast Mode</span>
+                      <span className="block text-[10px] text-neutral-500">Structured layout (1 credit)</span>
+                    </div>
+                  </button>
+                  <button onClick={() => { setSelectedMode("deep"); setShowModePicker(false); }} className="w-full flex items-center gap-2 p-3 text-left hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <Telescope className="w-4 h-4 text-neutral-400 dark:text-neutral-500 shrink-0" />
+                    <div>
+                      <span className="block text-xs font-semibold text-neutral-800 dark:text-neutral-200">Deep Dive</span>
+                      <span className="block text-[10px] text-neutral-500">Agent pipeline (3 credits)</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
 
-          {/* Bottom bar inside textarea */}
-          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-            {/* Model selector pill — Deep Dive only */}
-            {selectedMode === "deep" ? (
+            {/* Model Toggle Button (Deep only) */}
+            {selectedMode === "deep" && (
               <div className="relative">
-                {selectedModel === "anthropic/claude-opus-4" && !loading && (
-                  <div
-                    className="mb-2 flex items-start gap-2 px-3 py-2 rounded-xl text-xs"
-                    style={{
-                      background: "rgba(234,179,8,0.08)",
-                      border: "1px solid rgba(234,179,8,0.25)",
-                      color: "#fde68a",
-                    }}
-                  >
-                    <span className="shrink-0 mt-0.5">⏳</span>
-                    <span>
-                      Opus takes <strong>3–5 minutes</strong> and uses{" "}
-                      <strong>300–500 credits</strong> for a complete site. For
-                      faster results, try{" "}
-                      <button
-                        onClick={() =>
-                          setSelectedModel("anthropic/claude-sonnet-4.6")
-                        }
-                        className="underline cursor-pointer hover:text-yellow-200 transition-colors"
-                      >
-                        Sonnet instead
-                      </button>
-                      .
-                    </span>
-                  </div>
-                )}
-                <button
+                <button 
                   onClick={() => setShowModelPicker(!showModelPicker)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                  style={{
-                    background: "rgba(236,72,153,0.12)",
-                    border: "1px solid rgba(236,72,153,0.3)",
-                    color: "#f9a8d4",
-                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
                 >
+                  {/* Colored brand logo */}
                   <span
-                    dangerouslySetInnerHTML={{
-                      __html: activeModel.logo ?? CLAUDE_LOGO_SVG,
-                    }}
-                    className="shrink-0"
+                    className="w-3.5 h-3.5 flex items-center justify-center shrink-0"
+                    dangerouslySetInnerHTML={{ __html: activeModel.logo ?? CLAUDE_LOGO_SVG }}
                   />
-                  <span>{activeModel.label}</span>
-                  <ChevronDown className="w-3 h-3 opacity-50" />
+                  {activeModel.label}
+                  <ChevronDown className="w-3 h-3 opacity-40" />
                 </button>
-
-                {/* Dropdown */}
                 {showModelPicker && (
-                  <div
-                    className="absolute bottom-full mb-2 left-0 rounded-xl overflow-hidden z-50 min-w-48"
-                    style={{
-                      background: "#141414",
-                      border: "1px solid #2a2a2a",
-                      boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-                    }}
-                  >
-                    {MODELS.map(({ model, label, sublabel, credits, logo }) => (
-                      <button
-                        key={model}
-                        onClick={() => {
-                          setSelectedModel(model);
-                          setShowModelPicker(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all cursor-pointer hover:bg-white/5"
-                        style={{
-                          background:
-                            selectedModel === model
-                              ? "rgba(236,72,153,0.1)"
-                              : "transparent",
-                        }}
-                      >
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: logo ?? CLAUDE_LOGO_SVG,
-                          }}
-                          className="shrink-0"
-                        />
-                        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                          <span
-                            className="text-xs font-semibold truncate"
-                            style={{
-                              color:
-                                selectedModel === model ? "#f9a8d4" : "#e5e5e5",
-                            }}
-                          >
-                            {label}
-                          </span>
-                          <span className="text-[10px] text-neutral-500 truncate">
-                            {sublabel}
-                          </span>
-                          {model === "anthropic/claude-opus-4" && (
-                            <span
-                              className="text-[10px] mt-0.5"
-                              style={{ color: "#fde68a" }}
-                            >
-                              ⏳ 3–5 min · 300–500 credits
+                  <div className="absolute top-full mt-2 left-0 w-[300px] bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-30 p-2 overflow-hidden">
+                    <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-neutral-400 tracking-wider">
+                      HTML GENERATION
+                    </div>
+                    <div className="flex flex-col gap-1 mt-1">
+                      {MODELS.map(({ model, label, sublabel, logo }) => (
+                        <button
+                          key={model}
+                          onClick={() => { setSelectedModel(model); setShowModelPicker(false); }}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span 
+                              className="text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200 transition-colors w-5 flex items-center justify-center shrink-0"
+                              dangerouslySetInnerHTML={{ __html: logo ?? CLAUDE_LOGO_SVG }} 
+                            />
+                            <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">{label}</span>
+                          </div>
+                          
+                          {sublabel && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-200/50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors">
+                              {sublabel.split(' ')[0]}
                             </span>
                           )}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span
-                            className="text-[10px] px-1.5 py-0.5 rounded-full"
-                            style={{
-                              background:
-                                selectedModel === model
-                                  ? "rgba(236,72,153,0.2)"
-                                  : "rgba(255,255,255,0.06)",
-                              color:
-                                selectedModel === model ? "#f9a8d4" : "#525252",
-                            }}
-                          >
-                            {credits}
-                          </span>
-                          {selectedModel === model && (
-                            <div className="w-1.5 h-1.5 rounded-full bg-pink-400" />
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
-            ) : (
-              // Fast mode — just a static label
-              <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                style={{
-                  background: "rgba(168,85,247,0.12)",
-                  border: "1px solid rgba(168,85,247,0.3)",
-                  color: "#d8b4fe",
-                }}
-              >
-                <Zap className="w-3 h-3" />
-                <span>Fast Mode · 1 credit</span>
               </div>
             )}
 
-            {/* Send button */}
-            <button
-              onClick={handleGenerate}
-              disabled={loading || !prompt.trim()}
-              className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              style={{
-                background: selectedMode === "deep" ? "#ec4899" : "#a855f7",
-              }}
-            >
-              {loading ? (
-                <img
-                  src={Logo.src}
-                  alt="Loading"
-                  className="w-4 h-4 animate-spin"
-                />
-              ) : (
-                <MoveRight className="w-4 h-4" />
-              )}
-            </button>
+            {/* Theme Style Picker (Fast only) */}
+            {selectedMode === "fast" && (
+              <div className="relative">
+                <button 
+                  onClick={() => setShowThemePicker(!showThemePicker)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 transition-colors cursor-pointer"
+                >
+                  <Settings2 className="w-3 h-3 text-neutral-500 dark:text-neutral-400" />
+                  {getThemeLabel(selectedTheme)}
+                  <ChevronDown className="w-3 h-3 opacity-40" />
+                </button>
+                {showThemePicker && (
+                  <div className="absolute top-full mt-2 left-0 w-[240px] bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl z-30 p-2 overflow-hidden">
+                    <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-neutral-400 tracking-wider">
+                      STYLE OPTIONS
+                    </div>
+                    <div className="flex flex-col gap-1 mt-1">
+                      {THEME_STYLES.map((style) => (
+                        <button
+                          key={style}
+                          onClick={() => { setSelectedTheme(style); setShowThemePicker(false); }}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer group"
+                        >
+                          <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                            {getThemeLabel(style)}
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-200/50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors">
+                            {style}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
           </div>
+
+          {/* Submit Button */}
+          <button
+            onClick={handleGenerate}
+            disabled={loading || !prompt.trim()}
+            className="pointer-events-auto flex items-center justify-center p-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {loading ? (
+              <img src={Logo.src} alt="Loading" className="w-4 h-4 animate-spin dark:invert" />
+            ) : (
+              <ArrowUp className="w-4 h-4 font-bold" />
+            )}
+          </button>
+
         </div>
-
-        <p className="text-xs text-neutral-600">
-          Tip: Be specific — mention your industry, audience, and tone. Press
-          ⌘+Enter to generate.
-        </p>
-
-        {error && (
-          <p className="text-xs text-red-400 bg-red-900/20 border border-red-900/30 px-4 py-2 rounded-lg">
-            {error}
-          </p>
-        )}
       </div>
+
+      {error && (
+        <div className="relative z-10 p-3 mt-4 text-xs font-medium text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
