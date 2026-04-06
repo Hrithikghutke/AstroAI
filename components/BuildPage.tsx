@@ -475,6 +475,7 @@ export default function BuildPage() {
           <PreviewPanel
             layout={layout}
             deepHtml={deepHtml}
+            onDeepHtmlChange={setDeepHtml}
             deepBrandName={deepBrandName}
             prompt={currentPrompt}
             savedId={savedId}
@@ -538,6 +539,7 @@ export default function BuildPage() {
               <PreviewPanel
                 layout={layout}
                 deepHtml={deepHtml}
+                onDeepHtmlChange={setDeepHtml}
                 deepBrandName={deepBrandName}
                 prompt={currentPrompt}
                 savedId={savedId}

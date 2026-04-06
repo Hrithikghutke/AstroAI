@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import PreviewFrame from "@/components/PreviewFrame";
 import DeepPreview from "@/components/DeepPreview";
+import ElementEditorPanel from "@/components/ui/ElementEditorPanel";
 import { Layout } from "@/types/layout";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -97,6 +98,7 @@ export default function PreviewPanel({
   onSaveComplete,
   saveRef,
   onLayoutChange,
+  onDeepHtmlChange,
   streamingCode,
   isGenerating,
 }: {
@@ -109,17 +111,24 @@ export default function PreviewPanel({
   onSaveComplete?: () => void;
   saveRef?: React.MutableRefObject<(() => void) | null>;
   onLayoutChange?: (updated: Layout) => void;
+  onDeepHtmlChange?: (html: string) => void;
   streamingCode?: string;
   isGenerating?: boolean;
 }) {
   const { resolvedTheme } = useTheme();
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
+  const [editorActiveTab, setEditorActiveTab] = useState<"typography" | "colors" | "spacing" | "css">("colors");
   const [saving, setSaving] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pendingChanges, setPendingChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState<"code" | "preview">("preview");
+  const [activeTab, setActiveTab] = useState<"code" | "preview" | "design">("preview");
+  const [selectedElement, setSelectedElement] = useState<any>(null);
+  
+  // Ref to hold the silently updated HTML to avoid iframe flashing during editing
+  const localHtmlRef = useRef(deepHtml);
+  useEffect(() => { localHtmlRef.current = deepHtml; }, [deepHtml]);
   const codeEndRef = useRef<HTMLDivElement>(null);
   const [deploying, setDeploying] = useState(false);
   const [deployedUrl, setDeployedUrl] = useState<string | null>(null);
@@ -132,8 +141,130 @@ export default function PreviewPanel({
 
   // Auto-switch to Preview when generation finishes and content exists
   useEffect(() => {
-    if (!isGenerating && (layout || deepHtml)) setActiveTab("preview");
+    if (!isGenerating && (layout || deepHtml)) {
+      if (activeTab === "code" || activeTab === "preview") setActiveTab("preview");
+    }
   }, [isGenerating, layout, deepHtml]);
+
+  // Handle cross-window communication for Deep Dive elements
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === "ELEMENT_CLICKED" && activeTab === "design") {
+        setSelectedElement(e.data.data);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [activeTab]);
+
+  // Sync edits to parent on tab exit if changed
+  useEffect(() => {
+    if (activeTab !== "design" && localHtmlRef.current !== deepHtml && onDeepHtmlChange) {
+      onDeepHtmlChange(localHtmlRef.current || "");
+    }
+  }, [activeTab, onDeepHtmlChange, deepHtml]);
+
+  const getCleanHtmlSnapshot = (idoc: Document) => {
+    const clone = idoc.documentElement.cloneNode(true) as HTMLElement;
+    
+    // Modern targeted removal
+    clone.querySelector('#crawlcube-editor-script')?.remove();
+    clone.querySelector('#crawlcube-editor-style')?.remove();
+    
+    // Legacy targeted removal (for instances already contaminated before the fix)
+    const styles = clone.querySelectorAll('style');
+    for (let i = 0; i < styles.length; i++) {
+        if (styles[i].textContent?.includes('.editor-hover-outline')) styles[i].remove();
+    }
+    const scripts = clone.querySelectorAll('script');
+    for (let i = 0; i < scripts.length; i++) {
+        if (scripts[i].textContent?.includes('CrawlCube Editor Script Initializing')) scripts[i].remove();
+    }
+    
+    clone.querySelectorAll('.editor-hover-outline').forEach(el => el.classList.remove('editor-hover-outline'));
+
+    let finalHtml = "<!DOCTYPE html>\n" + clone.outerHTML;
+    
+    // Aggressively remove literal \n string artifacts caused by the old buggy string concatenation
+    finalHtml = finalHtml.replace(/\\n/g, ""); 
+    
+    return finalHtml;
+  };
+
+  const handleStyleUpdate = (id: string, styles: Record<string, string>) => {
+    try {
+      const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        if (target) {
+          Object.entries(styles).forEach(([k, v]) => {
+            target.style[k as any] = v;
+          });
+          localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
+          setPendingChanges(true);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct DOM sync failed", e);
+    }
+  };
+
+  const handleContentUpdate = (id: string, content: string) => {
+    try {
+      const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        if (target) {
+          target.innerHTML = content;
+          localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
+          setPendingChanges(true);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct DOM sync failed", e);
+    }
+  };
+
+  const handleResetStyle = (id: string, initialStyle: string) => {
+    try {
+      const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        if (target) {
+          target.setAttribute('style', initialStyle || '');
+          localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
+          setPendingChanges(true);
+        }
+      }
+    } catch (e) {
+      console.warn("Direct DOM sync failed", e);
+    }
+  };
+
+  const handleSelectElement = (id: string) => {
+    try {
+      const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        if (target) {
+          // Emulate a perfect native click sequence directly
+          target.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+          target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct DOM select failed", e);
+    }
+    
+    // Fallback to postMessage
+    const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage({ type: 'SELECT_ELEMENT', data: { id } }, '*');
+    }
+  };
 
   // Auto-scroll code to bottom as it streams
   useEffect(() => {
@@ -180,8 +311,13 @@ export default function PreviewPanel({
 
     try {
       let thumbnailStr: string | null = null;
+      // Make sure we use the locally edited string if saving while in Design tab
+      const htmlToSave = activeTab === "design" ? (localHtmlRef.current || deepHtml) : deepHtml;
+      
       try {
-        const sourceHtml = isDeepMode && deepHtml ? deepHtml : layout ? generateHtml(layout) : "";
+        const sourceHtml = isDeepMode && htmlToSave 
+          ? getCleanHtmlSnapshot(new DOMParser().parseFromString(htmlToSave, 'text/html'))
+          : layout ? generateHtml(layout) : "";
         if (sourceHtml) {
           thumbnailStr = await captureThumbnail(sourceHtml);
         }
@@ -191,7 +327,7 @@ export default function PreviewPanel({
 
       const payload = {
         layout: layout ?? null,
-        deepHtml: deepHtml ?? null,
+        deepHtml: isDeepMode ? htmlToSave : null,
         prompt: prompt ?? "",
         thumbnail: thumbnailStr,
       };
@@ -299,7 +435,9 @@ export default function PreviewPanel({
     let filename = "website";
 
     if (isDeepMode && deepHtml) {
-      html = deepHtml;
+      // Use DOMParser to safely execute our robust clean pipeline for downloads 
+      const parsed = new DOMParser().parseFromString(localHtmlRef.current || deepHtml, 'text/html');
+      html = getCleanHtmlSnapshot(parsed).replace(/\sdata-editor-id="[^"]*"/g, ""); // strip data id from final download
       filename = brandName.toLowerCase().replace(/\s+/g, "-");
     } else if (layout) {
       html = generateHtml(layout);
@@ -587,6 +725,25 @@ export default function PreviewPanel({
           👁 Preview{" "}
           {isGenerating && <span>🔒</span>}
         </button>
+        {isDeepMode && (
+          <button
+            onClick={() => {
+              if (!isGenerating) setActiveTab("design");
+            }}
+            className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 ${
+              isGenerating
+                ? "cursor-not-allowed bg-transparent text-neutral-400 dark:text-[#2a2a2a] border-transparent"
+                : activeTab === "design"
+                  ? "bg-white dark:bg-[#1e1e2e] text-pink-600 dark:text-[#d4d4d4] border-pink-500 cursor-pointer"
+                  : "bg-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border-transparent cursor-pointer"
+            }`}
+            title={
+              isGenerating ? "Editing unlocks when generation is complete" : ""
+            }
+          >
+            🎨 Design {isGenerating && <span>🔒</span>}
+          </button>
+        )}
       </div>
 
       {/* Hint bar — edit hint for Fast Mode, info bar for Deep Dive */}
@@ -660,10 +817,25 @@ export default function PreviewPanel({
             <div ref={codeEndRef} />
           </div>
         ) : (
-          <div className="flex-1 overflow-auto bg-neutral-200/50 dark:bg-neutral-800 flex items-start justify-center p-4">
+          <div className="flex-1 overflow-auto bg-neutral-200/50 dark:bg-neutral-800 flex items-start justify-center p-4 relative">
             {isDeepMode ? (
               // Deep Dive — raw HTML in iframe
-              <DeepPreview html={deepHtml!} viewport={viewport} />
+              <>
+                <DeepPreview html={deepHtml!} viewport={viewport} editable={activeTab === "design"} />
+                {activeTab === "design" && selectedElement && (
+                  <ElementEditorPanel
+                    key={selectedElement.id}
+                    element={selectedElement}
+                    activeTab={editorActiveTab}
+                    onTabChange={setEditorActiveTab}
+                    onClose={() => setSelectedElement(null)}
+                    onUpdateStyle={(styles) => handleStyleUpdate(selectedElement.id, styles)}
+                    onUpdateContent={(content) => handleContentUpdate(selectedElement.id, content)}
+                    onSelectElement={handleSelectElement}
+                    onResetStyle={(initial) => handleResetStyle(selectedElement.id, initial)}
+                  />
+                )}
+              </>
             ) : (
               // Fast Mode — React component tree
               <div
