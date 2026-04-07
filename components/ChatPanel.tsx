@@ -734,6 +734,19 @@ export default function ChatPanel({
     submittedFeedback: string[]; // stored after submit for fix button
   } | null>(null);
 
+  // Sync edits made in PreviewPanel back to ChatPanel context
+  useEffect(() => {
+    if (initialLayout !== undefined) {
+      setCurrentLayout(initialLayout);
+    }
+  }, [initialLayout]);
+
+  useEffect(() => {
+    if (restoredDeepHtml !== undefined) {
+      deepHtmlRef.current = restoredDeepHtml ?? null;
+    }
+  }, [restoredDeepHtml]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -1388,13 +1401,31 @@ export default function ChatPanel({
     return results;
   };
 
+  const getLatestHtml = () => {
+    try {
+      const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        const clone = iframe.contentDocument.documentElement.cloneNode(true) as HTMLElement;
+        clone.querySelector('#crawlcube-editor-script')?.remove();
+        clone.querySelector('#crawlcube-editor-style')?.remove();
+        clone.querySelectorAll('.editor-hover-outline').forEach(el => el.classList.remove('editor-hover-outline'));
+        let finalHtml = "<!DOCTYPE html>\n" + clone.outerHTML;
+        finalHtml = finalHtml.replace(/\\n/g, "");
+        return finalHtml;
+      }
+    } catch (e) {
+      console.warn("Failed to get live HTML from iframe", e);
+    }
+    return deepHtmlRef.current;
+  };
+
   // ── Smart surgical edit — uses section markers when available ──
   const handleSurgicalEdit = async (
     instruction: string,
     editMeta?: { section?: string; scope?: string; action?: string },
     targetPageId?: string,
   ) => {
-    const currentHtml = deepHtmlRef.current;
+    const currentHtml = getLatestHtml();
     if (!currentHtml) return;
 
     // If section identified and exists on multiple pages, ask which page first
@@ -1503,7 +1534,7 @@ export default function ChatPanel({
     pageLabel: string,
     businessContext: string,
   ) => {
-    const currentHtml = deepHtmlRef.current;
+    const currentHtml = getLatestHtml();
     if (!currentHtml) return;
 
     const thinkingMsg: Message = {
@@ -1573,7 +1604,7 @@ export default function ChatPanel({
 
   // ── Surgical edit via /api/edit-html ──
   const handleEditRequest = async (instruction: string) => {
-    const currentHtml = deepHtmlRef.current;
+    const currentHtml = getLatestHtml();
     if (!currentHtml) return;
 
     const userMessage: Message = {

@@ -200,18 +200,70 @@ export default function PreviewPanel({
     return finalHtml;
   };
 
+  const rebuildResponsiveStylesheet = (idoc: Document) => {
+    let styleTag = idoc.getElementById('cc-custom-edits');
+    if (!styleTag) {
+      styleTag = idoc.createElement('style');
+      styleTag.id = 'cc-custom-edits';
+      if (idoc.head) idoc.head.appendChild(styleTag);
+      else idoc.body.appendChild(styleTag);
+    }
+    
+    let newCss = "";
+    idoc.querySelectorAll('[data-cc-desktop], [data-cc-mobile]').forEach((el) => {
+      const elId = el.getAttribute('data-editor-id');
+      if (!elId) return;
+      
+      const dSafe = el.getAttribute('data-cc-desktop') || "{}";
+      const mSafe = el.getAttribute('data-cc-mobile') || "{}";
+      
+      let d = {}, m = {};
+      try { d = JSON.parse(dSafe); } catch (e) {}
+      try { m = JSON.parse(mSafe); } catch (e) {}
+      
+      if (Object.keys(d).length > 0) {
+        newCss += `[data-editor-id="${elId}"] { `;
+        for (const [k, v] of Object.entries(d)) {
+          let prop = k.replace(/([A-Z])/g, "-$1").toLowerCase();
+          newCss += `${prop}: ${v} !important; `;
+        }
+        newCss += `}\n`;
+      }
+      
+      if (Object.keys(m).length > 0) {
+        newCss += `@media (max-width: 767px) {\n  [data-editor-id="${elId}"] { `;
+        for (const [k, v] of Object.entries(m)) {
+          let prop = k.replace(/([A-Z])/g, "-$1").toLowerCase();
+          newCss += `${prop}: ${v} !important; `;
+        }
+        newCss += `}\n}\n`;
+      }
+    });
+    styleTag.textContent = newCss;
+  };
+
   const handleStyleUpdate = (id: string, styles: Record<string, string>) => {
     try {
       const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
       if (iframe?.contentDocument) {
-        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        const idoc = iframe.contentDocument;
+        const target = idoc.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
         if (target) {
-          Object.entries(styles).forEach(([k, v]) => {
-            target.style[k as any] = v;
-          });
-          localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
+          const isMobileViewport = viewport === "mobile";
+          
+          if (isMobileViewport) {
+              const currentMobile = JSON.parse(target.getAttribute('data-cc-mobile') || "{}");
+              Object.assign(currentMobile, styles);
+              target.setAttribute('data-cc-mobile', JSON.stringify(currentMobile));
+          } else {
+              const currentDesktop = JSON.parse(target.getAttribute('data-cc-desktop') || "{}");
+              Object.assign(currentDesktop, styles);
+              target.setAttribute('data-cc-desktop', JSON.stringify(currentDesktop));
+          }
+          
+          rebuildResponsiveStylesheet(idoc);
+          localHtmlRef.current = getCleanHtmlSnapshot(idoc);
           setPendingChanges(true);
-          return;
         }
       }
     } catch (e) {
@@ -240,10 +292,15 @@ export default function PreviewPanel({
     try {
       const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
       if (iframe?.contentDocument) {
-        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        const idoc = iframe.contentDocument;
+        const target = idoc.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
         if (target) {
+          target.removeAttribute('data-cc-desktop');
+          target.removeAttribute('data-cc-mobile');
           target.setAttribute('style', initialStyle || '');
-          localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
+          rebuildResponsiveStylesheet(idoc);
+          
+          localHtmlRef.current = getCleanHtmlSnapshot(idoc);
           setPendingChanges(true);
         }
       }

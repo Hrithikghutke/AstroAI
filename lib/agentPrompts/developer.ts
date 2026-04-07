@@ -548,7 +548,7 @@ const statsRow = `
   // ── TESTIMONIALS ──
   const testimonialsSection = `
 <!-- CC:testimonials -->
-<section class="py-24 px-6 overflow-hidden" x-data="{active:0}">
+<section class="py-24 px-6 overflow-hidden" x-data="{ active: 0, get isMobile() { return window.innerWidth < 768 } }" @resize.window="active = 0">
   <div class="max-w-7xl mx-auto">
     <div class="mb-12 text-center fade-in">
       <span class="text-xs tracking-[0.4em] uppercase text-primary mb-4 block">Social Proof</span>
@@ -556,17 +556,17 @@ const statsRow = `
     </div>
     <div class="overflow-hidden">
       <div class="flex transition-transform duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
-           :style="'transform:translateX(-' + active * 33.333 + '%)'">
+           :style="'transform:translateX(-' + active * (isMobile ? 100 : 33.333) + '%)'">
         ${testimonials.map(t => `
-        <div class="min-w-[33.333%] px-4 flex-shrink-0">
-          <div class="${cardCss} p-10 rounded-2xl h-full flex flex-col">
-            <div class="font-display text-6xl text-primary opacity-40 leading-tight mb-6">❝</div>
-            <p class="text-white/70 text-base leading-relaxed italic flex-1">${t.quote}</p>
-            <div class="flex items-center gap-4 mt-8 pt-6 border-t border-white/10">
-              <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center \ text-primary">${t.name.split(" ").map(n => n[0]).join("")}</div>
-              <div>
-                <div class="\ text-sm">${t.name}</div>
-                <div class="text-xs text-white/40 tracking-widest uppercase">${t.role}, ${t.company}</div>
+        <div class="w-full md:w-[33.333%] px-4 shrink-0">
+          <div class="${cardCss} p-8 md:p-10 rounded-2xl h-full flex flex-col overflow-hidden">
+            <div class="font-display text-6xl text-primary opacity-40 leading-tight mb-6 shrink-0">❝</div>
+            <p class="text-white/70 text-base leading-relaxed italic flex-1 break-words">${t.quote}</p>
+            <div class="flex items-center gap-4 mt-8 pt-6 border-t border-white/10 shrink-0">
+              <div class="w-10 h-10 shrink-0 rounded-full bg-primary/20 flex items-center justify-center \ text-primary font-bold">${t.name.split(" ").map(n => n[0]).join("")}</div>
+              <div class="min-w-0">
+                <div class="\ text-sm font-semibold truncate">${t.name}</div>
+                <div class="text-xs text-white/40 tracking-widest uppercase truncate">${t.role}, ${t.company}</div>
               </div>
             </div>
           </div>
@@ -576,9 +576,9 @@ const statsRow = `
     <div class="flex items-center justify-center gap-4 mt-8">
       <button @click="active=Math.max(0,active-1)" class="glass w-12 h-12 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">←</button>
       <div class="flex gap-2">
-        ${testimonials.map((_, i) => `<button @click="active=${i}" class="h-2 rounded-full transition-all" :class="active===${i}?'w-8 bg-primary':'w-2 bg-white/20'"></button>`).join("")}
+        ${testimonials.map((_, i) => `<button @click="active=${i}" x-show="isMobile || ${i} <= ${Math.max(0, testimonials.length - 3)}" class="h-2 rounded-full transition-all" :class="active===${i}?'w-8 bg-primary':'w-2 bg-white/20'"></button>`).join("")}
       </div>
-      <button @click="active=Math.min(${testimonials.length - 1},active+1)" class="glass w-12 h-12 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">→</button>
+      <button @click="active=Math.min(isMobile ? ${testimonials.length - 1} : ${Math.max(0, testimonials.length - 3)}, active+1)" class="glass w-12 h-12 rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors">→</button>
     </div>
   </div>
 </section><!-- /CC:testimonials -->`;
