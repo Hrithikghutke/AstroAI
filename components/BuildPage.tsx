@@ -24,6 +24,7 @@ export default function BuildPage() {
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [initialMode, setInitialMode] = useState<GenerationMode>("fast");
   const [mobileView, setMobileView] = useState<"chat" | "preview">("preview");
+  const [showChatPanel, setShowChatPanel] = useState(true);
   const [ready, setReady] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [initialModel, setInitialModel] = useState(
@@ -285,7 +286,7 @@ export default function BuildPage() {
 
   if (!ready) {
     return (
-      <div className="h-screen flex flex-col bg-white dark:bg-neutral-950 transition-colors">
+      <div className="h-screen flex flex-col bg-white dark:bg-[#111111] transition-colors">
         <div className="flex-1 flex items-center justify-center">
           <div className="w-5 h-5 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
         </div>
@@ -294,7 +295,7 @@ export default function BuildPage() {
   }
 
   return (
-    <main className="h-screen flex flex-col bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white overflow-hidden transition-colors">
+    <main className="h-screen flex flex-col bg-white dark:bg-[#111111] text-neutral-900 dark:text-white overflow-hidden transition-colors">
       {/* ── Leave confirmation modal ── */}
       {/* ── Leave confirmation modal ── */}
       {showLeaveModal && (
@@ -456,7 +457,7 @@ export default function BuildPage() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* DESKTOP */}
-        <div className="hidden md:flex w-[38%] shrink-0 border-r border-neutral-200 dark:border-neutral-800 flex-col">
+        <div className={`${showChatPanel ? 'hidden md:flex w-[38%]' : 'hidden'} shrink-0 border-r border-neutral-200 dark:border-neutral-800 flex-col transition-all duration-300 ease-in-out`}>
           <ChatPanel
             setLayout={handleChatGenerate}
             setDeepHtml={handleDeepHtml}
@@ -471,7 +472,7 @@ export default function BuildPage() {
           />
         </div>
 
-        <div className="hidden md:flex flex-1 flex-col min-w-0">
+        <div className="hidden md:flex flex-1 flex-col min-w-0 bg-neutral-50 dark:bg-[#0a0a0a]">
           <PreviewPanel
             layout={layout}
             deepHtml={deepHtml}
@@ -489,6 +490,8 @@ export default function BuildPage() {
             onLayoutChange={handleLayoutChange}
             streamingCode={streamingCode}
             isGenerating={isGenerating}
+            onToggleChat={() => setShowChatPanel(!showChatPanel)}
+            isChatPanelHidden={!showChatPanel}
           />
         </div>
 
@@ -511,10 +514,10 @@ export default function BuildPage() {
             />
           ) : (
             <div className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2.5 bg-white dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#111111] border-b border-transparent dark:border-white/5">
                 <button
                   onClick={() => setMobileView("chat")}
-                  className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-200 transition-colors cursor-pointer"
                 >
                   <svg
                     className="w-4 h-4"
@@ -526,15 +529,14 @@ export default function BuildPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
                     />
                   </svg>
                   Back to chat
                 </button>
-                <span className="text-xs text-neutral-500 font-medium">
+                <span className="text-sm text-neutral-700 dark:text-neutral-200">
                   Preview
                 </span>
-                <div className="w-16" />
               </div>
               <PreviewPanel
                 layout={layout}

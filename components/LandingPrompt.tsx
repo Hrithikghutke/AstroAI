@@ -196,7 +196,7 @@ export default function LandingPrompt() {
         style={{ zIndex: 0 }}
       >
         {/* Top left geometric blocks pattern */}
-        <div 
+        {/* <div 
           className="absolute -top-[10%] -left-[10%] w-[50%] h-[70%] opacity-20 dark:opacity-[0.15] hidden sm:block"
           style={{
             backgroundImage: `linear-gradient(30deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(150deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(30deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(150deg, #6b21a8 12%, transparent 12.5%, transparent 87%, #6b21a8 87.5%, #6b21a8), linear-gradient(60deg, #86198f 25%, transparent 25.5%, transparent 75%, #86198f 75%, #86198f), linear-gradient(60deg, #86198f 25%, transparent 25.5%, transparent 75%, #86198f 75%, #86198f)`,
@@ -205,15 +205,10 @@ export default function LandingPrompt() {
             maskImage: "radial-gradient(ellipse at center, black 10%, transparent 60%)",
             WebkitMaskImage: "radial-gradient(ellipse at center, black 10%, transparent 60%)"
           }}
-        />
+        /> */}
 
         {/* Center Top Purple Glow */}
-        <div 
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] opacity-40 dark:opacity-40 pointer-events-none mix-blend-screen"
-          style={{
-            background: "radial-gradient(ellipse at top, rgba(147, 51, 234, 0.4) 0%, rgba(76, 29, 149, 0.1) 40%, transparent 70%)"
-          }}
-        />
+       
 
         {/* Floating Matrix Squares (Right side) */}
         <div 
@@ -238,7 +233,7 @@ export default function LandingPrompt() {
           <svg className="w-3 h-3 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
-          Get up to 50% in affiliates revenue
+          Website Generation Cannot Get Cheaper Than This.
         </div>
       </div>
 

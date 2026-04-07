@@ -22,6 +22,11 @@ import {
   Globe,
   ExternalLink,
   Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Component,
+  ScanEye,
+  CodeXml,
 } from "lucide-react";
 import { generateHtml } from "@/lib/generateHtml";
 
@@ -101,6 +106,8 @@ export default function PreviewPanel({
   onDeepHtmlChange,
   streamingCode,
   isGenerating,
+  onToggleChat,
+  isChatPanelHidden,
 }: {
   layout: Layout | null;
   deepHtml?: string | null;
@@ -114,6 +121,8 @@ export default function PreviewPanel({
   onDeepHtmlChange?: (html: string) => void;
   streamingCode?: string;
   isGenerating?: boolean;
+  onToggleChat?: () => void;
+  isChatPanelHidden?: boolean;
 }) {
   const { resolvedTheme } = useTheme();
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
@@ -551,199 +560,182 @@ export default function PreviewPanel({
   }
 
   return (
-    <div className="flex flex-col h-full bg-neutral-50 dark:bg-neutral-900">
+    <div className="flex flex-col h-full bg-[#fcfcfc] dark:bg-[#111111]">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 gap-3">
-        {/* URL bar */}
-        <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg px-3 py-1.5 flex-1 max-w-xs">
-          <div className="flex gap-1">
-            <div className="w-2 h-2 rounded-full bg-red-500/60" />
-            <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
-            <div className="w-2 h-2 rounded-full bg-green-500/60" />
-          </div>
-          <span className="text-xs text-neutral-600 truncate">
-            {urlBarName}.crawlcube.app
-          </span>
-          {/* Deep Dive badge in toolbar */}
-          {isDeepMode && (
-            <span className="ml-1 flex items-center gap-1 text-[10px] font-semibold text-pink-400 bg-pink-500/10 border border-pink-500/20 px-1.5 py-0.5 rounded-full shrink-0">
-              <Telescope className="w-2.5 h-2.5" />
-              Deep
-            </span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between px-4 py-3 border-b border-transparent dark:border-white/5 bg-[#fcfcfc] dark:bg-[#111111] gap-3 relative z-10">
+        {/* Left Controls & URL bar */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Chat Toggle (Desktop only) */}
+          {onToggleChat && (
+            <button
+              onClick={onToggleChat}
+              title={isChatPanelHidden ? "Show Sidebar" : "Hide Sidebar"}
+              className="hidden md:flex items-center justify-center p-2 rounded-xl bg-transparent dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10 hover:bg-neutral-100 dark:hover:bg-white/10 transition-all cursor-pointer"
+            >
+              {isChatPanelHidden ? (
+                <PanelLeftOpen className="w-5 h-5" />
+              ) : (
+                <PanelLeftClose className="w-5 h-5" />
+              )}
+            </button>
           )}
+
+          <div className="flex items-center gap-3 bg-transparent dark:bg-[#161616] border border-neutral-300 dark:border-white/10 rounded-xl px-4 py-2 flex-1 max-w-xs shadow-sm">
+            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">
+              {urlBarName}.crawlcube.app
+            </span>
+            {/* Deep Dive badge in toolbar */}
+            {isDeepMode && (
+              <span className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-pink-400 bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-full shrink-0">
+                <Telescope className="w-3 h-3" />
+                Deep
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between md:justify-end gap-1 sm:gap-2 w-full md:w-auto overflow-x-auto scrollbar-none pb-1 md:pb-0">
           {/* Save */}
           <button
             onClick={handleSave}
             disabled={saveDisabled}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+            title="Save"
+            className={`shrink-0 flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
               saved && !pendingChanges
-                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                ? "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10"
                 : pendingChanges
-                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
-                  : "bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
+                  ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10"
+                  : "text-neutral-600 dark:text-neutral-300 bg-transparent hover:bg-neutral-100 dark:hover:bg-white/10"
             }`}
           >
-            {saved && !pendingChanges ? (
-              <Check className="w-3.5 h-3.5" />
-            ) : (
-              <Save className="w-3.5 h-3.5" />
-            )}
-            <span className="hidden sm:inline">{saveLabel()}</span>
+            {saved && !pendingChanges ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
           </button>
 
           {/* Share */}
           <button
             onClick={handleShare}
             disabled={saving}
-            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-50 ${
+            title="Share"
+            className={`shrink-0 flex items-center justify-center w-11 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-50 ${
               copied
-                ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20"
-                : "bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
+                ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10"
+                : "text-neutral-600 dark:text-neutral-300 bg-transparent hover:bg-neutral-100 dark:hover:bg-white/10"
             }`}
           >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {copied ? "Copied!" : "Share"}
-            </span>
+            {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
           </button>
 
           {/* Download */}
           <button
             onClick={handleDownload}
             disabled={isGenerating}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 transition-all cursor-pointer"
+            title="Download"
+            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-transparent hover:bg-neutral-100 dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 transition-all cursor-pointer disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {isGenerating ? "Generating..." : "Download"}
-            </span>
+            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin"/> : <Download className="w-5 h-5" />}
           </button>
 
           {/* Open in new tab */}
           <button
             onClick={handleOpenInTab}
             disabled={isGenerating || (!layout && !deepHtml)}
-            title="Open full preview in new tab"
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10 hover:bg-neutral-200 dark:hover:bg-white/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Open full preview"
+            className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-transparent hover:bg-neutral-100 dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Open</span>
+            <ExternalLink className="w-5 h-5" />
           </button>
 
-          {/* Deploy to Netlify — Deep Dive only */}
-          {isDeepMode &&
-            (deployedUrl ? (
-              // Show live URL after deploy
-              <div className="flex items-center gap-1">
-                <a
-                  href={deployedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 transition-all"
-                >
-                  <Globe className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Live</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-                <button
-                  onClick={handleCopyDeployUrl}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-all"
-                >
-                  {deployCopied ? (
-                    <Check className="w-3.5 h-3.5" />
-                  ) : (
-                    <Share2 className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
+          {/* Deploy to Netlify */}
+          {isDeepMode ? (
+            deployedUrl ? (
+              <a
+                href={deployedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View Live Site"
+                className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-500/20 transition-all"
+              >
+                <Globe className="w-5 h-5" />
+              </a>
             ) : (
               <button
                 onClick={handleDeploy}
                 disabled={deploying || isGenerating || !deepHtml}
-                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 hover:bg-green-500/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Publish"
+                className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-transparent hover:bg-neutral-100 dark:hover:bg-white/10 text-neutral-600 dark:text-neutral-300 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {deploying ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Globe className="w-3.5 h-3.5" />
-                )}
-                <span className="hidden sm:inline">
-                  {deploying ? "Publishing..." : "Publish"}
-                </span>
+                {deploying ? <Loader2 className="w-5 h-5 animate-spin" /> : <Globe className="w-5 h-5" />}
               </button>
-            ))}
+            )
+          ) : (
+            <div className="w-7 sm:w-11 h-11 shrink-0" /> // spacer for fast mode
+          )}
 
           {/* Viewport toggle */}
-          <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-1">
+          <div className="flex items-center gap-0.5 bg-neutral-100 dark:bg-[#1a1a1a] border border-neutral-200 dark:border-white/5 rounded-xl p-1 h-11 shrink-0">
             <button
               onClick={() => setViewport("desktop")}
-              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewport === "desktop" ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm dark:shadow-none" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
+              className={`flex items-center justify-center w-10 sm:w-11 h-full rounded-lg transition-all cursor-pointer ${viewport === "desktop" ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"}`}
             >
-              <Monitor className="w-3.5 h-3.5" />
+              <Monitor className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewport("mobile")}
-              className={`p-1.5 rounded-md transition-all cursor-pointer ${viewport === "mobile" ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm dark:shadow-none" : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"}`}
+              className={`flex items-center justify-center w-10 sm:w-11 h-full rounded-lg transition-all cursor-pointer ${viewport === "mobile" ? "bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"}`}
             >
-              <Smartphone className="w-3.5 h-3.5" />
+              <Smartphone className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Code / Preview tabs */}
-      <div className="flex items-center gap-1 px-4 pt-2 pb-0 bg-neutral-100 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
-        <button
-          onClick={() => setActiveTab("code")}
-          className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-all cursor-pointer border-b-2 ${
-            activeTab === "code"
-              ? "bg-white dark:bg-[#1e1e2e] text-purple-600 dark:text-[#d4d4d4] border-purple-500"
-              : "bg-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border-transparent"
-          }`}
-        >
-          {"</>"} Code
-        </button>
-        <button
-          onClick={() => {
-            if (!isGenerating) setActiveTab("preview");
-          }}
-          className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 ${
-            isGenerating
-              ? "cursor-not-allowed bg-transparent text-neutral-400 dark:text-[#2a2a2a] border-transparent"
-              : activeTab === "preview"
-                ? "bg-white dark:bg-[#1e1e2e] text-purple-600 dark:text-[#d4d4d4] border-purple-500 cursor-pointer"
-                : "bg-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border-transparent cursor-pointer"
-          }`}
-          title={
-            isGenerating ? "Preview unlocks when generation is complete" : ""
-          }
-        >
-          👁 Preview{" "}
-          {isGenerating && <span>🔒</span>}
-        </button>
-        {isDeepMode && (
+      <div className="flex justify-center px-4 pt-4 pb-3 bg-[#fcfcfc] dark:bg-[#111111] z-10 relative">
+        <div className="flex items-center p-1 bg-transparent border border-neutral-300 dark:border-white/10 rounded-full w-full max-w-sm">
+          <button
+            onClick={() => setActiveTab("code")}
+            className={`flex-1 py-2 text-sm font-medium rounded-full transition-all cursor-pointer ${
+              activeTab === "code"
+                ? "bg-white dark:bg-[#201d36] text-purple-600 dark:text-[#c084fc] shadow-sm ring-1 ring-black/5 dark:ring-white/5"
+                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
+            }`}
+          >
+            Code
+          </button>
           <button
             onClick={() => {
-              if (!isGenerating) setActiveTab("design");
+              if (!isGenerating) setActiveTab("preview");
             }}
-            className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 ${
+            className={`flex items-center justify-center gap-1 flex-1 py-2 text-sm font-medium rounded-full transition-all ${
               isGenerating
-                ? "cursor-not-allowed bg-transparent text-neutral-400 dark:text-[#2a2a2a] border-transparent"
-                : activeTab === "design"
-                  ? "bg-white dark:bg-[#1e1e2e] text-pink-600 dark:text-[#d4d4d4] border-pink-500 cursor-pointer"
-                  : "bg-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 border-transparent cursor-pointer"
+                ? "cursor-not-allowed text-neutral-400 dark:text-[#404040]"
+                : activeTab === "preview"
+                  ? "bg-white dark:bg-[#201d36] text-purple-600 dark:text-[#c084fc] shadow-sm ring-1 ring-black/5 dark:ring-white/5 cursor-pointer"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 cursor-pointer"
             }`}
-            title={
-              isGenerating ? "Editing unlocks when generation is complete" : ""
-            }
+            title={isGenerating ? "Preview unlocks when generation is complete" : ""}
           >
-            🎨 Design {isGenerating && <span>🔒</span>}
+            Preview {isGenerating && <span className="text-[10px]">🔒</span>}
           </button>
-        )}
+          {isDeepMode && (
+            <button
+              onClick={() => {
+                if (!isGenerating) setActiveTab("design");
+              }}
+              className={`flex items-center justify-center gap-1 flex-1 py-2 text-sm font-medium rounded-full transition-all ${
+                isGenerating
+                  ? "cursor-not-allowed text-neutral-400 dark:text-[#404040]"
+                  : activeTab === "design"
+                    ? "bg-[#fdf2f8] dark:bg-[#341e30] text-pink-600 dark:text-[#f472b6] shadow-sm ring-1 ring-pink-500/20 cursor-pointer"
+                    : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 cursor-pointer"
+              }`}
+              title={isGenerating ? "Editing unlocks when generation is complete" : ""}
+            >
+              Design {isGenerating && <span className="text-[10px]">🔒</span>}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Hint bar — edit hint for Fast Mode, info bar for Deep Dive */}
@@ -817,7 +809,7 @@ export default function PreviewPanel({
             <div ref={codeEndRef} />
           </div>
         ) : (
-          <div className="flex-1 overflow-auto bg-neutral-200/50 dark:bg-neutral-800 flex items-start justify-center p-4 relative">
+          <div className="flex-1 overflow-hidden bg-neutral-200/50 dark:bg-neutral-800 flex items-start justify-center p-4 relative">
             {isDeepMode ? (
               // Deep Dive — raw HTML in iframe
               <>
@@ -839,7 +831,7 @@ export default function PreviewPanel({
             ) : (
               // Fast Mode — React component tree
               <div
-                className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto"
+                className="@container rounded-lg shadow-2xl transition-all duration-300 origin-top overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 scrollbar-track-transparent"
                 style={{
                   width: viewport === "mobile" ? "390px" : "100%",
                   minHeight: "100%",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
 
 export default function DeepPreview({
   html,
@@ -13,6 +14,7 @@ export default function DeepPreview({
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const blobUrlRef = useRef<string | null>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -24,6 +26,24 @@ export default function DeepPreview({
     }
 
     let finalHtml = html;
+
+    // neutral-700 is rgba(64,64,64,1) -> dark grey for dark theme
+    // neutral-300 is rgba(212,212,212,1) -> light grey for light theme
+    const isDark = resolvedTheme === "dark";
+    const thumbColor = isDark ? "#404040" : "#d4d4d4";
+    const thumbHover = isDark ? "#525252" : "#a3a3a3";
+    const trackColor = isDark ? "#1a1a1a" : "#f5f5f5";
+
+    // Minimalistic cross-browser scrollbar injected directly into the iframe DOM
+    const SCROLLBAR_STYLE = `
+      ::-webkit-scrollbar { width: 12px !important; height: 12px !important; background: ${trackColor} !important; }
+      ::-webkit-scrollbar-track { background: ${trackColor} !important; }
+      ::-webkit-scrollbar-corner { background: ${trackColor} !important; }
+      ::-webkit-scrollbar-thumb { background: ${thumbColor} !important; border-radius: 10px !important; border: 3px solid ${trackColor} !important; }
+      ::-webkit-scrollbar-thumb:hover { background: ${thumbHover} !important; }
+      html, body { scrollbar-width: thin !important; scrollbar-color: ${thumbColor} ${trackColor} !important; }
+    `;
+
     if (editable) {
       const EDITOR_SCRIPT = `
         console.log('CrawlCube Editor Script Initializing...');
@@ -151,6 +171,14 @@ export default function DeepPreview({
       } else {
         finalHtml += `<script id="crawlcube-editor-script">${EDITOR_SCRIPT}</script>`;
       }
+    }
+
+    // Unconditionally inject the scrollbar styles
+    const styleTag = `<style id="crawlcube-custom-scrollbar">${SCROLLBAR_STYLE}</style>`;
+    if (finalHtml.includes('</head>')) {
+      finalHtml = finalHtml.replace('</head>', `${styleTag}</head>`);
+    } else {
+      finalHtml = styleTag + finalHtml;
     }
 
     const blob = new Blob([finalHtml], { type: "text/html" });

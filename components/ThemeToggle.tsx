@@ -29,17 +29,7 @@ export function ThemeToggle() {
       >
         <Sun className="w-3.5 h-3.5" />
       </button>
-      <button
-        onClick={() => setTheme("system")}
-        className={`p-1 rounded-full transition-colors ${
-          theme === "system"
-            ? "bg-white dark:bg-neutral-900 text-black dark:text-white shadow-sm"
-            : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200"
-        }`}
-        title="System Default"
-      >
-        <Monitor className="w-3.5 h-3.5" />
-      </button>
+
       <button
         onClick={() => setTheme("dark")}
         className={`p-1 rounded-full transition-colors ${

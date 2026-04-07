@@ -13,6 +13,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Header from "@/components/Header";
+import LiveThumbnail from "@/components/LiveThumbnail";
 
 interface Generation {
   id: string;
@@ -157,26 +158,27 @@ export default function Dashboard({ data }: any) {
               return (
                 <div
                   key={gen.id}
-                  className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200 flex flex-col"
+                  className="group relative bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-400 dark:hover:border-neutral-500 transition-all duration-300 flex flex-col h-[280px]"
                 >
-                  {/* Color accent top bar */}
-                  <div
-                    className="h-1.5 w-full shrink-0"
-                    style={{
-                      background:
-                        gen.themeStyle === "deep-dive"
-                          ? "linear-gradient(90deg, #6366f1, #ec4899, #8b5cf6)"
-                          : (THEME_COLORS[gen.themeStyle] ?? "#6366f1"),
-                    }}
-                  />
+                  {/* Background Live Thumbnail Setup */}
+                  <div className="absolute inset-0 z-0 overflow-hidden mix-blend-luminosity opacity-40 group-hover:opacity-70 transition-opacity duration-500">
+                    <LiveThumbnail gen={gen} scale={0.3} width={1280} height={896} />
+                  </div>
+                  {/* Heavy dark gradient overlay to ensure text legibility */}
+                  <div className="absolute inset-0 z-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-neutral-950/40 pointer-events-none" />
 
-                  <div className="p-5 flex flex-col flex-1">
-                    {/* Site name + theme badge + delete */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex items-start gap-2 flex-1 min-w-0">
-                        <h3 className="font-semibold text-neutral-900 dark:text-white text-base leading-tight truncate">
-                          {gen.siteName}
-                        </h3>
+                  {/* Foreground Content */}
+                  <div className="relative z-10 flex flex-col h-full">
+                    {/* Color accent top bar */}
+                 
+
+                    <div className="p-5 flex flex-col flex-1">
+                      {/* Site name + theme badge + delete */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-start gap-2 flex-1 min-w-0">
+                          <h3 className="font-semibold text-white text-base leading-tight truncate">
+                            {gen.siteName || "Untitled Project"}
+                          </h3>
                         <span
                           className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 mt-0.5"
                           style={{
@@ -189,68 +191,74 @@ export default function Dashboard({ data }: any) {
                       </div>
 
                       {/* Delete button */}
-                      <button
-                        onClick={() => handleDelete(gen.id)}
-                        disabled={deletingId === gen.id}
-                        className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-neutral-600 hover:text-red-400 hover:bg-red-400/10 transition-all cursor-pointer disabled:opacity-40"
-                        title="Delete"
-                      >
-                        {deletingId === gen.id ? (
-                          <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Prompt */}
-                    <div className="mb-3">
-                      {promptText ? (
-                        <>
-                          <p
-                            className={`text-xs text-neutral-500 leading-relaxed ${!isExpanded && isLong ? "line-clamp-2" : ""}`}
-                          >
-                            {promptText}
-                          </p>
-                          {isLong && (
-                            <button
-                              onClick={() =>
-                                setExpandedPrompt(isExpanded ? null : gen.id)
-                              }
-                              className="flex items-center gap-1 text-[11px] text-neutral-600 hover:text-neutral-400 mt-1 transition-colors cursor-pointer"
-                            >
-                              {isExpanded ? (
-                                <>
-                                  <ChevronUp className="w-3 h-3" />
-                                  Show less
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="w-3 h-3" />
-                                  Show more
-                                </>
-                              )}
-                            </button>
+                        <button
+                          onClick={() => handleDelete(gen.id)}
+                          disabled={deletingId === gen.id}
+                          className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-400/10 transition-all cursor-pointer disabled:opacity-40"
+                          title="Delete"
+                        >
+                          {deletingId === gen.id ? (
+                            <div className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
                           )}
-                        </>
-                      ) : (
-                        <p className="text-xs text-neutral-700 italic">
-                          No prompt recorded
-                        </p>
-                      )}
-                    </div>
+                        </button>
+                      </div>
 
-                    {/* Spacer */}
-                    <div className="flex-1" />
+                      {/* Prompt */}
+                      <div className="mb-3 relative shrink-0">
+                        {promptText ? (
+                          <>
+                            <div
+                              className={`text-xs text-neutral-300 leading-relaxed ${
+                                !isExpanded && isLong
+                                  ? "line-clamp-2"
+                                  : isExpanded
+                                  ? "max-h-[72px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 pr-1"
+                                  : ""
+                              }`}
+                            >
+                              {promptText}
+                            </div>
+                            {isLong && (
+                              <button
+                                onClick={() =>
+                                  setExpandedPrompt(isExpanded ? null : gen.id)
+                                }
+                                className="flex items-center gap-1 text-[11px] text-neutral-400 hover:text-white mt-1 transition-colors cursor-pointer"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="w-3 h-3" />
+                                    Show less
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-3 h-3" />
+                                    Show more
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-xs text-neutral-500 italic">
+                            No prompt recorded
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Date */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-600 mb-4">
-                      <Clock className="w-3 h-3" />
-                      {formatDate(gen.createdAt)}
-                    </div>
+                      {/* Spacer */}
+                      <div className="flex-1" />
 
-                    {/* Actions */}
-                    <div className="flex flex-col gap-2">
+                      {/* Date */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 mb-4">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(gen.createdAt)}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2 relative">
                       {/* Continue editing — full width primary action */}
                       <Link
                         href={`/build?continue=${gen.id}`}
@@ -269,26 +277,26 @@ export default function Dashboard({ data }: any) {
                       >
                         ✦ Continue Editing
                       </Link>
-                      {/* View + Share row */}
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/preview/${gen.shareId}`}
-                          target="_blank"
-                          className="flex-1 text-center text-xs font-semibold py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all"
-                        >
-                          View
-                        </Link>
-                        <button
-                          onClick={() => handleShare(gen.shareId)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer ${
-                            copiedId === gen.shareId
-                              ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
-                              : "bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10"
-                          }`}
-                        >
-                          <Share2 className="w-3 h-3" />
-                          {copiedId === gen.shareId ? "Copied!" : "Share"}
-                        </button>
+                        <div className="flex gap-2">
+                          <Link
+                            href={`/preview/${gen.shareId}`}
+                            target="_blank"
+                            className="flex-1 flex items-center justify-center text-xs font-semibold py-2 rounded-lg bg-neutral-800/80 hover:bg-neutral-700/80 text-white backdrop-blur-sm transition-all"
+                          >
+                            View
+                          </Link>
+                          <button
+                            onClick={() => handleShare(gen.shareId)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-all cursor-pointer backdrop-blur-sm ${
+                              copiedId === gen.shareId
+                                ? "bg-green-500/20 text-green-400 border border-green-500/20"
+                                : "bg-neutral-800/80 text-white hover:bg-neutral-700/80 border border-transparent"
+                            }`}
+                          >
+                            <Share2 className="w-3 h-3" />
+                            {copiedId === gen.shareId ? "Copied!" : "Share"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

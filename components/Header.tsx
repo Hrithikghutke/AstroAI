@@ -13,8 +13,10 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Header({
   onNavigate,
+  transparent = false,
 }: {
   onNavigate?: (href: string) => void;
+  transparent?: boolean;
 }) {
   const { isSignedIn } = useUser();
   const { credits } = useCredits();
@@ -23,7 +25,13 @@ export default function Header({
     onNavigate ? onNavigate(href) : router.push(href);
 
   return (
-    <header className="flex items-center justify-between px-4 sm:px-6 lg:px-10 bg-white dark:bg-neutral-950 py-3 sm:py-4 border-b border-neutral-200 dark:border-neutral-900 transition-colors">
+    <header 
+      className={`flex items-center justify-between px-4 sm:px-6 lg:px-10 transition-colors ${
+        transparent 
+          ? "bg-transparent py-6 border-b border-transparent" 
+          : "bg-white dark:bg-neutral-950 py-3 sm:py-4 border-b border-neutral-200 dark:border-neutral-900"
+      }`}
+    >
       {/* Logo */}
       <button
         onClick={() => nav("/")}

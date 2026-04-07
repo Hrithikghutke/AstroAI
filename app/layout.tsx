@@ -33,8 +33,7 @@ export default function RootLayout({
         <body className={openSans.className}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="dark"
             disableTransitionOnChange
           >
             <CreditsProvider>{children}</CreditsProvider>

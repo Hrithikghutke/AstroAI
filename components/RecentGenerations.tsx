@@ -18,91 +18,7 @@ interface Generation {
   thumbnail?: string | null;
 }
 
-// CSS-based themed thumbnail — derived from themeStyle so each card looks distinct
-const THEME_PALETTES: Record<string, { bg: string; accent: string; bar: string; blocks: string[] }> = {
-  minimal:        { bg: "#f9fafb", accent: "#111827", bar: "#e5e7eb", blocks: ["#f3f4f6","#e5e7eb","#d1d5db"] },
-  bold:           { bg: "#0f0f0f", accent: "#facc15", bar: "#1f1f1f", blocks: ["#facc15","#f97316","#1f1f1f"] },
-  glassmorphism:  { bg: "linear-gradient(135deg,#1e1b4b,#312e81)", accent: "#818cf8", bar: "rgba(255,255,255,0.1)", blocks: ["rgba(129,140,248,0.4)","rgba(196,181,253,0.3)","rgba(255,255,255,0.1)"] },
-  elegant:        { bg: "#1a1209", accent: "#d4a855", bar: "#2d2215", blocks: ["#d4a855","#a37c32","#2d2215"] },
-  corporate:      { bg: "#f8fafc", accent: "#2563eb", bar: "#e2e8f0", blocks: ["#2563eb","#3b82f6","#e2e8f0"] },
-  "deep-dive":    { bg: "#0a0a0a", accent: "#a855f7", bar: "#1a1a1a", blocks: ["#a855f7","#ec4899","#1a1a1a"] },
-};
-
-function ThemeThumbnail({ themeStyle }: { themeStyle: string }) {
-  const p = THEME_PALETTES[themeStyle] ?? THEME_PALETTES["corporate"];
-  const isGradientBg = p.bg.startsWith("linear");
-  return (
-    <div
-      className="w-full h-full relative overflow-hidden"
-      style={{ background: isGradientBg ? p.bg : p.bg }}
-    >
-      {/* Nav bar simulation */}
-      <div className="absolute top-0 left-0 right-0 h-[18%] flex items-center px-2 gap-1" style={{ background: p.bar }}>
-        <div className="w-3 h-1.5 rounded-sm" style={{ background: p.accent, opacity: 0.9 }} />
-        <div className="flex-1" />
-        <div className="w-2 h-1 rounded-sm" style={{ background: p.accent, opacity: 0.4 }} />
-        <div className="w-2 h-1 rounded-sm" style={{ background: p.accent, opacity: 0.4 }} />
-      </div>
-      {/* Hero block */}
-      <div className="absolute top-[22%] left-2 right-2 h-[28%] rounded-sm" style={{ background: p.blocks[0], opacity: 0.7 }} />
-      {/* Two feature cards */}
-      <div className="absolute top-[55%] left-2 right-[52%] h-[20%] rounded-sm" style={{ background: p.blocks[1], opacity: 0.55 }} />
-      <div className="absolute top-[55%] left-[52%] right-2 h-[20%] rounded-sm" style={{ background: p.blocks[2], opacity: 0.45 }} />
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-[12%]" style={{ background: p.bar, opacity: 0.6 }} />
-    </div>
-  );
-}
-
-function LiveThumbnail({ gen }: { gen: Generation }) {
-  if (gen.thumbnail) {
-    return (
-      <img 
-        src={gen.thumbnail} 
-        alt={gen.siteName || "Site thumbnail"} 
-        className="w-full h-full object-cover object-top"
-      />
-    );
-  }
-
-  if (gen.mode === "deep" && gen.deepHtml) {
-    return (
-      <div className="w-full h-full bg-white relative overflow-hidden pointer-events-none select-none">
-        <iframe
-          srcDoc={gen.deepHtml}
-          style={{
-            width: "1280px",
-            height: "896px",
-            transform: "scale(0.0625)",
-            transformOrigin: "top left",
-            border: "none",
-          }}
-          scrolling="no"
-          tabIndex={-1}
-        />
-      </div>
-    );
-  }
-
-  if (gen.layout) {
-    return (
-      <div className="w-full h-full bg-white relative overflow-hidden pointer-events-none select-none">
-        <div
-          style={{
-            width: "1280px",
-            height: "896px",
-            transform: "scale(0.0625)",
-            transformOrigin: "top left",
-          }}
-        >
-          <PreviewFrame layout={gen.layout} editable={false} isThumbnail={true} />
-        </div>
-      </div>
-    );
-  }
-
-  return <ThemeThumbnail themeStyle={gen.themeStyle} />;
-}
+import LiveThumbnail from "@/components/LiveThumbnail";
 
 export default function RecentGenerations() {
   const [generations, setGenerations] = useState<Generation[]>([]);
@@ -145,7 +61,7 @@ export default function RecentGenerations() {
   if (loading || generations.length === 0) return null;
 
   return (
-    <div className="w-full max-w-5xl mx-auto mt-12 px-4 sm:px-6 mb-16 relative z-10 border-t border-neutral-200 dark:border-neutral-800/60 pt-6">
+    <div className="bg-white drop-shadow-2xl dark:bg-[#111111] py-10 px-10 rounded-2xl w-full max-w-5xl mx-auto mt-12 px-4 sm:px-6 mb-16 relative z-10 border-t border-neutral-200 dark:border-neutral-800/60 pt-6">
       
       {/* Top Header / Tabs */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -196,8 +112,8 @@ export default function RecentGenerations() {
               className="flex items-center gap-3 p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-neutral-50 dark:bg-neutral-900/40 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 transition-all cursor-pointer group"
             >
               {/* Live thumbnail — CSS scaled component tree or fallback */}
-              <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0 border border-neutral-300/60 dark:border-neutral-700/40 shadow-sm ring-1 ring-inset ring-black/5 group-hover:ring-black/10 transition-all bg-neutral-900">
-                <LiveThumbnail gen={gen} />
+              <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0 border border-neutral-300/60 dark:border-neutral-700/40 shadow-sm ring-1 ring-inset ring-black/5 group-hover:ring-black/10 transition-all bg-neutral-900">
+                <LiveThumbnail gen={gen} scale={0.0625} />
               </div>
 
               {/* Details */}
