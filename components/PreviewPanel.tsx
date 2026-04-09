@@ -126,7 +126,7 @@ export default function PreviewPanel({
 }) {
   const { resolvedTheme } = useTheme();
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
-  const [editorActiveTab, setEditorActiveTab] = useState<"typography" | "colors" | "spacing" | "css">("colors");
+  const [editorActiveTab, setEditorActiveTab] = useState<"typography" | "colors" | "spacing" | "borders" | "css">("colors");
   const [saving, setSaving] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
