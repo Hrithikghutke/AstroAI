@@ -22,7 +22,7 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     credits: "150-200 credits",
     logo: CLAUDE_LOGO_SVG,
     costPerOutputToken: 0.000015,
-    minCreditsToStart: 150,
+    minCreditsToStart: 350,
     maxOutputTokens: 32000,
   },
   {
@@ -32,19 +32,10 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     credits: "300-500 credits",
     logo: CLAUDE_LOGO_SVG,
     costPerOutputToken: 0.000075,
-    minCreditsToStart: 300,
+    minCreditsToStart: 500,
     maxOutputTokens: 32000,
   },
-  {
-    model: "deepseek/deepseek-v3.2",
-    label: "DeepSeek V3.2",
-    sublabel: "Best value · Fast & powerful coding model",
-    credits: "5-10 credits",
-    logo: DEEPSEEK_LOGO_SVG,
-    costPerOutputToken: 0.00000038,
-    minCreditsToStart: 5,
-    maxOutputTokens: 32000,
-  },
+
 
   {
     model: "google/gemini-3-flash-preview",
@@ -56,26 +47,8 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     minCreditsToStart: 5,
     maxOutputTokens: 32000,
   },
-  {
-    model: "openai/gpt-5-mini",
-    label: "GPT-5 Mini",
-    sublabel: "Best value · Fast & powerful coding model",
-    credits: "5-10 credits",
-    logo: OPENAI_LOGO_SVG,
-    costPerOutputToken: 0.000002,
-    minCreditsToStart: 5,
-    maxOutputTokens: 32000,
-  },
-  {
-    model: "google/gemma-4-31b-it:free",
-    label: "Google Gemma",
-    sublabel: "Best value · Fast & powerful coding model",
-    credits: "5-10 credits",
-    logo: GEMINI_LOGO_SVG,
-    costPerOutputToken: 0,
-    minCreditsToStart: 5,
-    maxOutputTokens: 32000,
-  },
+
+
 ];
 
 // ── Model lookup helpers — import these in route files ──

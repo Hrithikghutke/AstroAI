@@ -632,7 +632,7 @@ export default function ChatPanel({
 }) {
   const [mode, setMode] = useState<GenerationMode>(initialMode ?? "fast");
   const [selectedModel, setSelectedModel] = useState(
-    initialModel ?? "anthropic/claude-haiku-4.5",
+    initialModel ?? "google/gemini-3-flash-preview",
   );
   const [showModelPicker, setShowModelPicker] = useState(false);
 
@@ -702,7 +702,7 @@ export default function ChatPanel({
   const deepHtmlRef = useRef<string | null>(restoredDeepHtml ?? null);
   const pendingPromptRef = useRef<string | null>(null);
   const briefRef = useRef<string>("");
-  const { deductCredit, refreshCredits } = useCredits();
+  const { credits, deductCredit, refreshCredits } = useCredits();
   const [currentLayout, setCurrentLayout] = useState<any>(
     initialLayout ?? null,
   );
@@ -3062,19 +3062,29 @@ export default function ChatPanel({
                   <div
                     className="absolute bottom-full mb-2 left-0 rounded-xl overflow-hidden z-50 min-w-48 bg-white dark:bg-[#141414] border border-neutral-200 dark:border-neutral-800 shadow-xl dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
                   >
-                    {MODELS.map(({ model, label, sublabel, credits, logo }) => (
+                    {MODELS.map(({ model, label, sublabel, minCreditsToStart, credits: estimatedCredits, logo }) => {
+                      const currentCredits = credits ?? 0;
+                      const insufficientCredits = currentCredits < minCreditsToStart;
+                      return (
                       <button
                         key={model}
                         onClick={() => {
-                          setSelectedModel(model);
-                          setShowModelPicker(false);
+                          if (!insufficientCredits) {
+                            setSelectedModel(model);
+                            setShowModelPicker(false);
+                          }
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all cursor-pointer hover:bg-white/5"
+                        disabled={insufficientCredits}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${
+                          insufficientCredits
+                            ? "opacity-50 cursor-not-allowed bg-neutral-50 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50"
+                            : "cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/5"
+                        }`}
                         style={{
                           background:
-                            selectedModel === model
+                            selectedModel === model && !insufficientCredits
                               ? "rgba(236,72,153,0.08)"
-                              : "transparent",
+                              : undefined,
                         }}
                       >
                         {/* Claude logo */}
@@ -3082,52 +3092,55 @@ export default function ChatPanel({
                           dangerouslySetInnerHTML={{
                             __html: logo ?? CLAUDE_LOGO_SVG,
                           }}
-                          className="shrink-0"
+                          className={`shrink-0 self-start mt-0.5 ${
+                            insufficientCredits ? "text-neutral-400 dark:text-neutral-600" : ""
+                          }`}
                         />
 
                         {/* Label + sublabel */}
                         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                           <span
                             className={`text-xs font-semibold truncate ${
-                              selectedModel === model ? "text-pink-400" : "text-neutral-700 dark:text-neutral-200"
+                              selectedModel === model && !insufficientCredits
+                                ? "text-pink-400"
+                                : insufficientCredits
+                                ? "text-neutral-500"
+                                : "text-neutral-700 dark:text-neutral-200"
                             }`}
                           >
                             {label}
                           </span>
-                          <span className="text-[10px] text-neutral-500 truncate">
+                          <span className="text-[10px] text-neutral-500 text-wrap leading-snug">
                             {sublabel}
+                            {insufficientCredits && (
+                              <div className="text-red-500 dark:text-red-400 font-semibold mt-1">
+                                Requires {minCreditsToStart} credits (You have {Math.floor(currentCredits)}) to avoid truncation.
+                              </div>
+                            )}
                           </span>
-                          {model === "anthropic/claude-opus-4" && (
-                            <span
-                              className="text-[10px] mt-0.5"
-                              style={{ color: "#fde68a" }}
-                            >
-                              ⏳ 3–5 min · 300–500 credits
-                            </span>
-                          )}
                         </div>
 
                         {/* Credits + checkmark */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 self-start mt-0.5">
                           <span
-                            className="text-[10px] px-1.5 py-0.5 rounded-full"
+                            className="text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap"
                             style={{
                               background:
-                                selectedModel === model
+                                selectedModel === model && !insufficientCredits
                                   ? "rgba(236,72,153,0.2)"
                                   : "rgba(255,255,255,0.06)",
                               color:
-                                selectedModel === model ? "#f9a8d4" : "#525252",
+                                selectedModel === model && !insufficientCredits ? "#f9a8d4" : insufficientCredits ? "#3f3f46" : "#525252",
                             }}
                           >
-                            {credits}
+                            {estimatedCredits}
                           </span>
-                          {selectedModel === model && (
+                          {selectedModel === model && !insufficientCredits && (
                             <div className="w-1.5 h-1.5 rounded-full bg-pink-400" />
                           )}
                         </div>
                       </button>
-                    ))}
+                    )})}
                   </div>
                 )}
               </div>

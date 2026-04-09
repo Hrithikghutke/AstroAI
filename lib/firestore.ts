@@ -18,7 +18,7 @@ import {
 import { db } from "@/lib/firebase";
 import { generateShareId } from "@/lib/generateId";
 
-const STARTING_CREDITS = 50;
+const STARTING_CREDITS = 20;
 
 /* -------------------------------------------------------
    Create a new user document when they sign up.

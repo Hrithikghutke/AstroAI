@@ -62,12 +62,12 @@ const THEME_DESCRIPTIONS: Record<ThemeStyle, string> = {
 
 export default function LandingPrompt() {
   const router = useRouter();
-  const { deductCredit, refreshCredits } = useCredits();
+  const { credits, deductCredit, refreshCredits } = useCredits();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<ThemeStyle>("corporate");
-  const [selectedMode, setSelectedMode] = useState<GenerationMode>("fast");
-  const [selectedModel, setSelectedModel] = useState("anthropic/claude-sonnet-4.6");
+  const [selectedMode, setSelectedMode] = useState<GenerationMode>("deep");
+  const [selectedModel, setSelectedModel] = useState("google/gemini-3-flash-preview");
   
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showModePicker, setShowModePicker] = useState(false);
@@ -319,27 +319,55 @@ export default function LandingPrompt() {
                       HTML GENERATION
                     </div>
                     <div className="flex flex-col gap-1 mt-1">
-                      {MODELS.map(({ model, label, sublabel, logo }) => (
+                      {MODELS.map(({ model, label, sublabel, minCreditsToStart, credits: estimatedCredits, logo }) => {
+                        const currentCredits = credits ?? 0;
+                        const insufficientCredits = currentCredits < minCreditsToStart;
+                        return (
                         <button
                           key={model}
-                          onClick={() => { setSelectedModel(model); setShowModelPicker(false); }}
-                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer group"
+                          onClick={() => { 
+                            if (!insufficientCredits) {
+                              setSelectedModel(model); 
+                              setShowModelPicker(false); 
+                            }
+                          }}
+                          disabled={insufficientCredits}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors group ${
+                            insufficientCredits 
+                              ? "opacity-50 cursor-not-allowed bg-neutral-50 dark:bg-neutral-900" 
+                              : "hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                          }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <span 
-                              className="text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200 transition-colors w-5 flex items-center justify-center shrink-0"
-                              dangerouslySetInnerHTML={{ __html: logo ?? CLAUDE_LOGO_SVG }} 
-                            />
-                            <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">{label}</span>
+                          <div className="flex flex-col items-start gap-1">
+                            <div className="flex items-center gap-3">
+                              <span 
+                                className={`w-5 flex items-center justify-center shrink-0 transition-colors ${
+                                  insufficientCredits 
+                                    ? "text-neutral-400 dark:text-neutral-600" 
+                                    : "text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200"
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: logo ?? CLAUDE_LOGO_SVG }} 
+                              />
+                              <span className={`text-sm font-semibold ${
+                                insufficientCredits ? "text-neutral-500 dark:text-neutral-500" : "text-neutral-800 dark:text-neutral-200"
+                              }`}>{label}</span>
+                            </div>
+                            
+                            <div className="pl-8 text-[10px] text-neutral-400 text-left leading-snug">
+                              {sublabel && <span>{sublabel} • </span>}
+                              <span className={insufficientCredits ? "" : "text-emerald-500 dark:text-emerald-400"}>
+                                {estimatedCredits}
+                              </span>
+                              
+                              {insufficientCredits && (
+                                <div className="text-red-500 dark:text-red-400 font-semibold mt-1">
+                                  Requires {minCreditsToStart} credits (You have {Math.floor(currentCredits)}) to avoid truncation.
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          
-                          {sublabel && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-200/50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors">
-                              {sublabel.split(' ')[0]}
-                            </span>
-                          )}
                         </button>
-                      ))}
+                      )})}
                     </div>
                   </div>
                 )}
