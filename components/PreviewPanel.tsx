@@ -264,6 +264,7 @@ export default function PreviewPanel({
           rebuildResponsiveStylesheet(idoc);
           localHtmlRef.current = getCleanHtmlSnapshot(idoc);
           setPendingChanges(true);
+          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
         }
       }
     } catch (e) {
@@ -280,6 +281,7 @@ export default function PreviewPanel({
           target.innerHTML = content;
           localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
           setPendingChanges(true);
+          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
           return;
         }
       }
@@ -302,6 +304,7 @@ export default function PreviewPanel({
           
           localHtmlRef.current = getCleanHtmlSnapshot(idoc);
           setPendingChanges(true);
+          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
         }
       }
     } catch (e) {
@@ -503,7 +506,7 @@ export default function PreviewPanel({
     if (isDeepMode && deepHtml) {
       // Use DOMParser to safely execute our robust clean pipeline for downloads 
       const parsed = new DOMParser().parseFromString(localHtmlRef.current || deepHtml, 'text/html');
-      html = getCleanHtmlSnapshot(parsed).replace(/\sdata-editor-id="[^"]*"/g, ""); // strip data id from final download
+      html = getCleanHtmlSnapshot(parsed);
       filename = brandName.toLowerCase().replace(/\s+/g, "-");
     } else if (layout) {
       html = generateHtml(layout);
