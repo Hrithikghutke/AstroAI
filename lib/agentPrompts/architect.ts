@@ -16,7 +16,10 @@ export interface ArchitectOutput {
   fonts: {
     display: string;
     body: string;
-    url: string;
+    mono: string;            // ← ADD THIS
+    displayUrl: string;      // ← CHANGED: was single "url"
+    bodyUrl: string;         // ← CHANGED
+    monoUrl: string;         // ← ADD THIS
   };
   pages: string[];
   pageLabels: string[];
@@ -36,10 +39,13 @@ Return EXACTLY this shape:
     "background": "<hex — page background>",
     "surface": "<hex — card/panel background, slightly different from background>"
   },
-  "fonts": {
-    "display": "<Google Font name for headings>",
-    "body": "<Google Font name for body text>",
-    "url": "<full Google Fonts CSS2 URL with both fonts, weights 400;600;700;900>"
+ "fonts": {
+    "display": "<font name for headings>",
+    "body": "<font name for body text>",
+    "mono": "<monospace font name for UI labels, overlines, and metadata>",
+    "displayUrl": "<full CDN link tag to load the display font>",
+    "bodyUrl": "<full CDN link tag to load the body font>",
+    "monoUrl": "<full CDN link tag to load the mono font>"
   },
   "pages": ["home", "<page2_id>", "<page3_id>", "contact"],
   "pageLabels": ["Home", "<Page 2 Label>", "<Page 3 Label>", "Contact"]
@@ -100,17 +106,51 @@ CRITICAL COLOR RULES:
 - For dark themes: background must be in #040408–#121220 range. NEVER #1a1a2e type purple-dark unless explicitly agency/creative.
 - surface must be 8-15% lighter than background only.
 
-FONT RULES — match to business personality EXACTLY:
-  Construction/corporate:   "Bebas Neue" + "Inter"  →  url with both
-  Restaurant high-end:      "Cormorant Garamond" + "Lato"
-  Restaurant casual:         "Syne" + "Plus Jakarta Sans"
-  Gym/bold:                 "Barlow Condensed" + "Barlow"
-  SaaS/tech:                "Space Grotesk" + "DM Sans"
-  Agency/creative:          "Syne" + "Plus Jakarta Sans"  OR  "DM Serif Display" + "DM Sans"
-  Law/finance:              "Libre Baskerville" + "Source Sans 3"
-  Medical/clinic:           "Inter" + "Inter"
-  Hotel/luxury:             "Cormorant Garamond" + "Nunito"
-  Real estate:              "Playfair Display" + "Lato"
+FONT RULES — use EXACTLY the font + CDN source listed. No substitutions.
+
+Display fonts (use Fontshare CDN — more reliable than Google Fonts for these):
+  Construction/corporate: "Bebas Neue"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  Gym/fitness/bold-energy: "Barlow Condensed"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
+  SaaS/tech/agency: "Cabinet Grotesk"
+    displayUrl: <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap" rel="stylesheet">
+  Restaurant high-end / hotel / luxury: "Cormorant Garamond"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+  Law/finance/VC: "DM Serif Display"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+  Real estate: "Playfair Display"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&display=swap" rel="stylesheet">
+  Medical/clinic: "Inter"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  Restaurant casual: "Syne"
+    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+
+Body fonts (always Google Fonts, these work reliably):
+  Modern/tech: "DM Sans" — <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  Premium/editorial: "Geist Sans (via fontsource)" — use two link tags:
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/400.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/500.css">
+  Serif/luxury: "Lato" — <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&display=swap" rel="stylesheet">
+  Corporate: "Inter" — <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  Gym/energy: "Barlow" — <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+Mono fonts (ALWAYS include one — used for UI labels, overlines, metadata):
+  ALL dark themes: "Geist Mono"
+    monoUrl: <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">
+  Light/corporate: "IBM Plex Mono"
+    monoUrl: <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+FONT PAIRING BY BUSINESS TYPE:
+  Construction/corporate:   display="Bebas Neue"         body="Inter"          mono="Geist Mono"
+  Gym/fitness:              display="Barlow Condensed"   body="Barlow"         mono="Geist Mono"
+  SaaS/tech/VC/agency:      display="Cabinet Grotesk"    body="Geist Sans"     mono="Geist Mono"
+  Restaurant high-end:      display="Cormorant Garamond" body="Lato"           mono="Geist Mono"
+  Restaurant casual:        display="Syne"               body="DM Sans"        mono="Geist Mono"
+  Law/finance:              display="DM Serif Display"   body="Inter"          mono="IBM Plex Mono"
+  Medical/clinic:           display="Inter"              body="Inter"          mono="IBM Plex Mono"
+  Hotel/luxury:             display="Cormorant Garamond" body="Lato"           mono="Geist Mono"
+  Real estate:              display="Playfair Display"   body="Lato"           mono="Geist Mono"
 
 Google Fonts URL format: https://fonts.googleapis.com/css2?family=DisplayFont:wght@400;600;700;900&family=BodyFont:wght@400;500;600&display=swap`;
 }

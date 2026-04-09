@@ -209,18 +209,18 @@ export default function PricingPage({
   const upgradePlans = SUBSCRIPTION_PLANS.filter((p) => p.id !== currentPlan);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white">
+    <div className=" min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white">
       {/* ── Top bar with back button ── */}
       <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex items-center justify-between">
         <button
-          onClick={() => router.push("/build")}
+          onClick={() => router.back()}
           className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Builder
+          Back
         </button>
         <button
-          onClick={() => router.push("/build")}
+          onClick={() => router.back()}
           className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-800 hover:bg-neutral-300 dark:hover:bg-neutral-700 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white flex items-center justify-center transition-colors"
         >
           <X className="w-4 h-4" />

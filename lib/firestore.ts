@@ -12,6 +12,8 @@ import {
   orderBy,
   getDocs,
   deleteDoc,
+  getCountFromServer,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { generateShareId } from "@/lib/generateId";
@@ -320,4 +322,146 @@ export async function saveDeployedUrl(
     deployedUrl,
     deployedAt: serverTimestamp(),
   });
+}
+
+/* -------------------------------------------------------
+   Track API usage per model — called after every LLM call.
+   Uses monthly-bucketed documents: apiUsage/YYYY-MM
+   Resets automatically each month (new doc = fresh counters).
+   Historical data is preserved in apiUsageHistory collection.
+------------------------------------------------------- */
+export async function trackApiUsage(
+  model: string,
+  outputTokens: number,
+  costUSD: number,
+  isGeneration = false, // set true for generate routes (not chat/qa)
+): Promise<void> {
+  if (!outputTokens || outputTokens <= 0) return;
+
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const usageRef = doc(db, "apiUsage", monthKey);
+
+  // Sanitize model name for use as a Firestore field key
+  const modelKey = model.replace(/\//g, "__");
+
+  const updates: Record<string, any> = {
+    totalTokens: increment(outputTokens),
+    totalCostUSD: increment(costUSD),
+    [`byModel.${modelKey}.tokens`]: increment(outputTokens),
+    [`byModel.${modelKey}.costUSD`]: increment(costUSD),
+    [`byModel.${modelKey}.calls`]: increment(1),
+    updatedAt: serverTimestamp(),
+  };
+  if (isGeneration) {
+    updates.generationsCount = increment(1);
+  }
+
+  try {
+    await updateDoc(usageRef, updates);
+  } catch {
+    // Doc doesn't exist yet — create it for this month
+    await setDoc(usageRef, {
+      monthKey,
+      totalTokens: outputTokens,
+      totalCostUSD: costUSD,
+      generationsCount: isGeneration ? 1 : 0,
+      byModel: {
+        [modelKey]: { tokens: outputTokens, costUSD, calls: 1 },
+      },
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+}
+
+/* -------------------------------------------------------
+   Admin metrics — aggregates all stats for the admin dashboard.
+   Only callable server-side (requires Firestore admin access).
+------------------------------------------------------- */
+export async function getAdminMetrics() {
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  // 30 days ago threshold for "active" users
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [
+    totalUsersSnap,
+    allUsersSnap,
+    apiUsageSnap,
+  ] = await Promise.all([
+    getCountFromServer(collection(db, "users")),
+    getDocs(query(collection(db, "users"), orderBy("createdAt", "desc"))),
+    getDoc(doc(db, "apiUsage", monthKey)),
+  ]);
+
+  const totalUsers = totalUsersSnap.data().count;
+
+  // TRUE generation counts — sum totalGenerated from every user doc
+  // This includes unsaved generations (deductCredits increments this regardless of save)
+  let totalGenerations = 0;
+  let activeUsers = 0;
+  const planPricesINR: Record<string, { monthly: number; annual: number }> = {
+    starter: { monthly: 599, annual: 5990 },
+    pro: { monthly: 1499, annual: 14990 },
+    agency: { monthly: 3999, annual: 39990 },
+  };
+  const subscriptionBreakdown: Record<string, { monthly: number; annual: number; total: number }> = {};
+  let estimatedMRR = 0;
+  let subscribedUsers = 0;
+
+  for (const userDoc of allUsersSnap.docs) {
+    const data = userDoc.data();
+    totalGenerations += data.totalGenerated ?? 0;
+    // Active = has generated at least once
+    if ((data.totalGenerated ?? 0) > 0) activeUsers++;
+
+    if (data.subscriptionStatus === "active" && data.subscriptionPlan) {
+      const plan = data.subscriptionPlan as string;
+      const period = (data.subscriptionPeriod as string) ?? "monthly";
+      if (!subscriptionBreakdown[plan]) {
+        subscriptionBreakdown[plan] = { monthly: 0, annual: 0, total: 0 };
+      }
+      subscriptionBreakdown[plan][period as "monthly" | "annual"]++;
+      subscriptionBreakdown[plan].total++;
+      subscribedUsers++;
+
+      const prices = planPricesINR[plan];
+      if (prices) {
+        estimatedMRR += period === "annual"
+          ? Math.round(prices.annual / 12)
+          : prices.monthly;
+      }
+    }
+  }
+
+  // API usage this month
+  const apiUsage = apiUsageSnap.exists() ? apiUsageSnap.data() : null;
+  const currentMonthTokens = apiUsage?.totalTokens ?? 0;
+  const currentMonthCostUSD = apiUsage?.totalCostUSD ?? 0;
+  // generationsCount is incremented by trackApiUsage(isGeneration=true) in generate routes
+  const totalGenerationsThisMonth = apiUsage?.generationsCount ?? 0;
+
+  // Per-model breakdown — convert sanitized keys back to readable names
+  const byModel: Record<string, { tokens: number; costUSD: number; calls: number }> = {};
+  if (apiUsage?.byModel) {
+    for (const [key, val] of Object.entries(apiUsage.byModel)) {
+      const modelName = key.replace(/__/g, "/");
+      byModel[modelName] = val as { tokens: number; costUSD: number; calls: number };
+    }
+  }
+
+  return {
+    totalUsers,
+    activeUsers,
+    subscribedUsers,
+    totalGenerations,
+    totalGenerationsThisMonth,
+    subscriptionBreakdown,
+    estimatedMRR,
+    currentMonthTokens,
+    currentMonthCostUSD,
+    byModel,
+  };
 }

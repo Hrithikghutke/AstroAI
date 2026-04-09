@@ -189,6 +189,8 @@ export default function LandingPrompt() {
 
   return (
     <div className="relative flex flex-col items-center w-full min-h-[70vh] justify-center pb-12 pt-8 sm:pt-20 px-4 md:px-0">
+
+      
       
       {/* Deep Purple Aura / Glows */}
       <div 

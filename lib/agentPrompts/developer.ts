@@ -1,3 +1,6 @@
+
+
+
 // ══════════════════════════════════════════════════
 // PARALLEL GENERATION PROMPTS (used by Deep Dive v2)
 // ══════════════════════════════════════════════════
@@ -18,6 +21,75 @@ function navbarCss(style: UIDesignSpec["navbarStyle"] | undefined): string {
   return `fixed top-0 left-0 right-0 z-50 w-full border-b border-white/5`;
 }
 
+// Add this helper function near the top of developer.ts, outside any function
+
+function resolveFonts(architect?: ArchitectOutput): {
+  displayUrl: string;
+  bodyUrl: string;
+  monoUrl: string;
+  display: string;
+  body: string;
+  mono: string;
+} {
+  const mood = architect?.visualMood;
+  const monoUrl = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">`;
+  const mono = "Geist Mono";
+
+  if (mood === "editorial-clean" || mood === "corporate-precision") {
+    return {
+      display: "Cabinet Grotesk",
+      body: "Geist Sans",
+      mono,
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/400.css">\n     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/500.css">`,
+      monoUrl,
+    };
+  }
+
+  if (mood === "bold-energy") {
+    return {
+      display: "Barlow Condensed",
+      body: "Barlow",
+      mono,
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">`,
+      monoUrl,
+    };
+  }
+
+  if (mood === "luxury-minimal") {
+    return {
+      display: "Cormorant Garamond",
+      body: "Lato",
+      mono,
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">`,
+      monoUrl,
+    };
+  }
+
+  if (mood === "cinematic-dark") {
+    return {
+      display: "Bebas Neue",
+      body: "Inter",
+      mono,
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">`,
+      monoUrl,
+    };
+  }
+
+  // safe default
+  return {
+    display: "Cabinet Grotesk",
+    body: "Geist Sans",
+    mono,
+    displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap" rel="stylesheet">`,
+    bodyUrl: `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/400.css">`,
+    monoUrl,
+  };
+}
+
 function navbarInnerCss(style: UIDesignSpec["navbarStyle"] | undefined): string {
   if (style === "pill-floating") {
     return `max-w-5xl w-full mx-auto rounded-full px-6 py-3 flex items-center justify-between`;
@@ -31,6 +103,9 @@ export function getShellPrompt(
   architect?: ArchitectOutput,
   uiSpec?: UIDesignSpec,
 ): string {
+  // Resolve fonts deterministically before building the prompt
+  const resolvedFonts = resolveFonts(architect);
+  const isBold = architect?.visualMood === "bold-energy"; // ← add this
   const navLinkDetails = architect
     ? architect.pages
         .map((id, i) => `href="#${id}" label="${architect.pageLabels[i]}"`)
@@ -62,24 +137,27 @@ GENERATE IN THIS EXACT ORDER:
 2. <head> containing:
    - meta charset + viewport + descriptive <title>
    - CDN links above (in order)
-   - Google Fonts link: USE EXACTLY THIS URL: ${architect?.fonts.url ?? "pick 2 relevant fonts"}
+   - Font CDN links — paste ALL THREE in this exact order:
+     ${resolvedFonts.displayUrl}
+     ${resolvedFonts.bodyUrl}
+     ${resolvedFonts.monoUrl}
    - tailwind.config script with THESE EXACT values (do not change them):
      primary: '${architect?.colors.primary ?? "choose vivid brand color"}',
      secondary: '${architect?.colors.secondary ?? "choose complement"}',
      surface: '${architect?.colors.surface ?? "choose card bg"}',
-     display font: '${architect?.fonts.display ?? "choose heading font"}',
-     body font: '${architect?.fonts.body ?? "choose body font"}',
+     fontFamily: { display: ['${resolvedFonts.display}'], body: ['${resolvedFonts.body}'], mono: ['${resolvedFonts.mono}'] },
      Plus custom keyframes needed (marquee, gradient-shift, fade-in, counter, orb-float). No other custom CSS outside keyframes.
    - <style> block with ALL shared CSS classes pages will reference:
-     * body { font-family: body font; background-color: ${architect?.colors.background ?? "#0a0a0a"}; }
-     * .font-display { font-family: display font; }
+     * body { font-family: '${resolvedFonts.body}', sans-serif; background-color: ${architect?.colors.background ?? "#0a0a0a"}; }
+     * .font-display { font-family: '${resolvedFonts.display}', sans-serif; }
+     * .font-mono-ui { font-family: '${resolvedFonts.mono}', monospace; letter-spacing: 0.06em; }
      * .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
      * .page { display: none; }
      * .fade-in { } (JS will set opacity/transform via IntersectionObserver)
-     * .counter { } 
+     * .counter { }
      * Any orb / glow gradient helpers
     ⚠️ DO NOT add any noise, grain, or texture overlay classes — they degrade image quality and look unprofessional.
-     ⚠️ NEVER use external URLs in CSS (no url("https://...") for textures). CSS-only patterns only.
+    ⚠️ NEVER use external URLs in CSS (no url("https://...") for textures). CSS-only patterns only.
      ${(architect?.visualMood === "luxury-minimal" || architect?.visualMood === "cinematic-dark")
        ? "⚠️ LUXURY MODE: Do NOT add .orb class or any blurred blob elements — these look cheap in luxury contexts."
        : ""}
@@ -96,7 +174,9 @@ window.addEventListener('load',function(){showPage(window.location.hash.slice(1)
 
 GLOBAL DESIGN PHILOSOPHY:
 - Less is more: prefer whitespace over density. Section padding py-24 minimum.
-- Typography drives the design: use oversized font sizes (text-7xl, text-8xl, text-9xl) and weight contrast.
+- Container discipline — ALL sections must use: max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 xl:px-20. NEVER use px-6 alone as the only horizontal padding on desktop. Always include sm:/lg:/xl: steps.
+- Hero text panels specifically need generous left breathing room: minimum px-8 lg:px-20 xl:px-28 for corporate/luxury, px-6 lg:px-16 for bold contexts.
+- Typography drives the design: scale matters — hero h1 should feel large but never overwhelming. Preferred scale: text-5xl sm:text-6xl lg:text-7xl for hero, text-3xl md:text-4xl lg:text-5xl for section h2. NEVER use text-8xl or text-9xl unless visualMood is bold-energy.
 - Accent color (text-primary) SPARINGLY: stats numbers, overline labels, active nav, CTA buttons ONLY.
 - Borders over backgrounds: border border-white/10 preferred over glass cards for premium minimal look.
 - Letter spacing: uppercase labels always tracking-[0.25em] or wider.
@@ -116,6 +196,7 @@ GLOBAL DESIGN PHILOSOPHY:
    - Logo: font-display ${uiSpec?.typographyWeight === "medium" ? "font-medium text-xl" : uiSpec?.typographyWeight === "black" ? "font-black text-2xl" : "font-bold text-2xl"} ${uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : "tracking-tighter"} text-primary with nav-link class, href="#home"
      ${(architect?.visualMood === "luxury-minimal") ? "Luxury logo style: small dot (w-2 h-2 rounded-full bg-secondary mr-2) + brand name in font-medium text-lg tracking-tighter uppercase" : ""}
    - Desktop nav: hidden lg:flex centered links. ${isSinglePage ? "Single page — anchor links #hero #features #pricing #contact" : `Multi-page — use EXACTLY: ${navLinkDetails}. Each gets class="nav-link". Active gets text-primary.`}
+  Nav link style: text-sm font-medium tracking-wide${isBold ? " uppercase tracking-[0.15em]" : ""} text-white/70 hover:text-white transition-colors — do NOT add uppercase unless bold-energy mood
    - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full with subtle box-shadow glow
    - Hamburger: lg:hidden
    - Mobile slide-out menu — x-show="open":
@@ -182,21 +263,33 @@ export function getPagePrompt(
   const cardStyle = uiSpec?.cardStyle ?? "glass-elevated";
   const typographyScale = uiSpec?.typographyScale ?? "balanced";
   const heroOverlay = uiSpec?.heroOverlayStyle ?? "cinematic-dark";
-
-  const h1Size = typographyScale === "display-dominant"
-    ? "text-7xl md:text-8xl lg:text-9xl"
-    : typographyScale === "editorial"
-      ? "text-6xl md:text-8xl"
-      : "text-5xl md:text-7xl lg:text-8xl";
-
-  const h2Size = typographyScale === "display-dominant"
-    ? "text-5xl md:text-6xl lg:text-7xl"
-    : "text-4xl md:text-5xl";
-
-  // ── Font weight based on visual mood ──
+    // ── Font weight based on visual mood ──
   const mood = architect?.visualMood ?? "cinematic-dark";
   const isLuxury = mood === "luxury-minimal" || mood === "editorial-clean";
   const isBold = mood === "bold-energy";
+
+  const h1Size = isBold
+    ? (typographyScale === "display-dominant"
+        ? "text-6xl sm:text-7xl lg:text-8xl"
+        : "text-5xl sm:text-6xl lg:text-7xl")
+    : isLuxury
+      ? "text-5xl sm:text-6xl lg:text-7xl"
+      : (typographyScale === "display-dominant"
+          ? "text-5xl sm:text-6xl lg:text-7xl"
+          : "text-4xl sm:text-5xl lg:text-6xl");
+
+  const h2Size = isBold
+    ? "text-4xl sm:text-5xl lg:text-6xl"
+    : "text-3xl sm:text-4xl lg:text-5xl";
+
+  // ── Spacing system — derived from mood, not hardcoded ──
+  const heroTextPadding = isLuxury
+    ? "px-10 sm:px-16 lg:px-24 xl:px-32 py-32"
+    : isBold
+      ? "px-6 sm:px-10 lg:px-16 xl:px-20 py-24"
+      : "px-8 sm:px-12 lg:px-20 xl:px-28 py-28";
+
+  const sectionContainer = "max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 xl:px-20";
 
   const headingWeight = uiSpec?.typographyWeight === "black" ? "font-black" : uiSpec?.typographyWeight === "bold" ? "font-bold" : uiSpec?.typographyWeight === "medium" ? "font-medium" : (isLuxury ? "font-medium" : isBold ? "font-black" : "font-semibold");
   const headingTracking = uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : uiSpec?.typographyTracking === "tight" ? "tracking-tight" : (isLuxury ? "tracking-tighter" : isBold ? "tracking-tight" : "tracking-tight");
@@ -211,7 +304,7 @@ export function getPagePrompt(
     : `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/30 text-white text-sm font-medium tracking-widest uppercase leading-none hover:border-primary hover:text-primary transition-all duration-300 rounded-full`;
   const statNumberClass = isLuxury
     ? `font-display ${headingWeight} text-6xl md:text-7xl text-primary`
-    : `counter font-display ${headingWeight} ${headingTracking} text-6xl md:text-8xl lg:text-9xl text-primary`;
+    : `counter font-display ${headingWeight} ${headingTracking} text-5xl md:text-6xl text-primary`;
   const imageHover = isLuxury
     ? `grayscale-[20%] group-hover:grayscale-0 transition-all duration-700`
     : `transition-transform duration-700 group-hover:scale-105`;
@@ -245,9 +338,9 @@ export function getPagePrompt(
     "split-image-right": `
 <!-- CC:hero --><section class="relative pt-32 pb-0 min-h-screen grid lg:grid-cols-2 items-center">
   <!-- Left: Text panel -->
-  <div class="flex flex-col justify-center px-6 md:px-16 py-24 fade-in">
+  <div class="flex flex-col justify-center ${heroTextPadding} fade-in">
     <span class="inline-block text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 mb-8 self-start">${valueProps[0]}</span>
-    <h1 class="font-display ${headingWeight} ${h1Size} leading-tight ${headingTracking} mb-6">
+    <h1 class="font-display ${headingWeight} ${h1Size} leading-[1.05] ${headingTracking} mb-6">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}<br>
       <span class="${accentOnHeadline}">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -287,9 +380,9 @@ export function getPagePrompt(
     </div>
   </div>
   <!-- Right: Text panel -->
-  <div class="flex flex-col justify-center px-8 md:px-16 lg:px-20 py-32 lg:pt-40 fade-in">
+ <div class="flex flex-col justify-center ${heroTextPadding} lg:pt-40 fade-in">
     <span class="inline-block text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 mb-8 self-start">${valueProps[0]}</span>
-    <h1 class="font-display \ ${h1Size} leading-tight \ mb-6">
+    <h1 class="font-display \ ${h1Size} leading-[1.05]\ mb-6">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}<br>
       <span class="text-primary">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -308,13 +401,13 @@ export function getPagePrompt(
   <!-- Cinematic dark overlay -->
   <div class="absolute inset-0 ${isLuxury ? "bg-gradient-to-t from-background via-background/55 to-background/20" : "bg-gradient-to-b from-black/60 via-black/40 to-black/85"} pointer-events-none"></div>
   <!-- Content -->
-  <div class="relative z-10 px-6 max-w-5xl mx-auto pt-32 pb-24 fade-in">
+  <div class="relative z-10 px-6 sm:px-10 max-w-5xl mx-auto pt-32 pb-24 fade-in">
     <div class="flex items-center justify-center gap-4 mb-8">
       <div class="w-8 h-[1px] bg-primary"></div>
       <span class="text-xs ${bodyFontWeight} tracking-[0.3em] uppercase text-primary">${valueProps[0]}</span>
       <div class="w-8 h-[1px] bg-primary"></div>
     </div>
-    <h1 class="font-display ${headingWeight} ${h1Size} leading-tight ${headingTracking} mb-6 text-white">
+    <h1 class="font-display ${headingWeight} ${h1Size} leading-[1.05] ${headingTracking} mb-6 text-white">
       ${tagline}
     </h1>
     <p class="${bodyTextColor} text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed ${bodyFontWeight}">${subtagline}</p>
@@ -325,10 +418,10 @@ export function getPagePrompt(
 </section><!-- /CC:hero -->`,
 
     "minimal-text-only": `
-<!-- CC:hero --><section class="relative min-h-screen flex items-center justify-center px-6 md:px-16 max-w-7xl mx-auto pt-24 overflow-hidden text-center">
+<!-- CC:hero --><section class="relative min-h-screen flex items-center justify-center px-6 sm:px-10 max-w-6xl mx-auto pt-24 overflow-hidden text-center">
   <div class="fade-in flex flex-col items-center">
     <span class="inline-block text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-8 px-4 py-1.5 border border-primary/30 rounded-full">${valueProps[0]}</span>
-    <h1 class="font-display ${headingWeight} ${h1Size} leading-tight ${headingTracking} max-w-5xl mx-auto mb-8">
+    <h1 class="font-display ${headingWeight} ${h1Size} leading-[1.05] ${headingTracking} max-w-5xl mx-auto mb-8">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}
       <span class="text-primary/90">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -354,9 +447,9 @@ export function getPagePrompt(
     </div>
   </div>
   <!-- Right: Text panel -->
-  <div class="flex flex-col justify-center bg-surface px-10 md:px-16 py-24 pt-40 lg:pt-40 fade-in">
+  <div class="flex flex-col justify-center bg-surface ${heroTextPadding} pt-40 lg:pt-40 fade-in">
     <span class="inline-block text-xs tracking-[0.4em] uppercase text-primary border-b border-primary pb-2 mb-8 self-start">${valueProps[0]}</span>
-    <h1 class="font-display \ ${h1Size} leading-tight \ mb-6 text-white">
+    <h1 class="font-display \ ${h1Size} leading-[1.05] \ mb-6 text-white">
       ${tagline.split(" ").slice(0, Math.ceil(tagline.split(" ").length / 2)).join(" ")}<br>
       <span class="text-primary">${tagline.split(" ").slice(Math.ceil(tagline.split(" ").length / 2)).join(" ")}</span>
     </h1>
@@ -415,7 +508,7 @@ export function getPagePrompt(
     <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 pointer-events-none"></div>
     <div class="relative z-10 p-10 md:p-16 pb-16 fade-in max-w-2xl">
       <span class="text-xs tracking-[0.5em] uppercase text-primary mb-4 block">0${i + 1}</span>
-      <h2 class="font-display ${headingWeight} ${headingTracking} text-5xl md:text-6xl leading-tight text-white mb-4">${featureNames[i]}</h2>
+    <h2 class="font-display ${headingWeight} ${headingTracking} ${h2Size} leading-tight text-white mb-4">${featureNames[i]}</h2>
       <p class="text-white/60 text-base leading-relaxed mb-6 max-w-md">${featureDescriptions[i]}</p>
       <a href="#contact" class="btn btn-outline btn-sm rounded-none px-8 text-white border-white/40 hover:border-primary hover:text-primary">${ctaButtonText}</a>
     </div>
@@ -700,22 +793,41 @@ STYLE RULES:
 - Use .glass for panels (or ${cardCss} for feature cards)
 - Use .fade-in on sections and cards
 - font-display class for all headings, ${headingWeight} for all headings
+- Heading size scale — follow exactly:
+  * Section h2: ${h2Size} leading-[1.1] — NEVER bigger than this
+  * Card/item h3: text-lg md:text-xl font-display — NOT text-3xl or text-4xl
+  * Overline (above h2): text-xs font-mono-ui tracking-[0.2em] uppercase text-primary
+  * Body copy: text-base leading-relaxed text-white/60
+  * Mobile: always start from text-2xl minimum for h2, text-base for body
 - ${bodyFontWeight} for body text and captions
 - Section padding: py-24 minimum. ${isLuxury ? "py-32 for key sections" : ""}
-- Containers: max-w-7xl mx-auto px-6
+- ALL CTA buttons must use href="#contact" — NEVER href="#apply", href="#fund", href="#signup" or any other hash. The contact page is the only valid destination for CTAs. This is non-negotiable.
+- Containers: ${sectionContainer} — always use this exact string, never just px-6 alone
 - Cubic-bezier transitions: 0.75s cubic-bezier(0.25,0.46,0.45,0.94) — NEVER linear
 - Image overlay: always use a cinematic gradient overlay on feature images for depth
 
 ACCENT COLOR RULES — THE ONE-RULE SYSTEM:
-Primary color (text-primary / bg-primary) is allowed on EXACTLY:
-  1. CTA buttons
-  2. Active nav link  
-  3. Overline labels above section headings (the tiny uppercase label)
-  4. Stats / counter numbers
-  5. Thin separator lines (h-[1px] bg-primary)
-BANNED: logo text, section headings, paragraph text, card borders,
-  footer copy, nav links (non-active), testimonial names, dividers.
-  When unsure — use text-zinc-400 or text-white/${isLuxury ? "50" : "60"} instead.
+ACCENT COLOR BUDGET — treat text-primary like a limited resource:
+- You get a MAXIMUM of 6 uses of text-primary OR bg-primary per page. Count them.
+- ALLOWED: (1) CTA buttons, (2) active nav link, (3) overline label text, (4) stats/counter numbers, (5) one word in the hero h1 via <span>, (6) thin hr lines
+- BANNED on: logo, all card titles, all h2/h3 headings, body paragraphs, footer text, nav links, borders, badges, icons
+
+TYPOGRAPHY SYSTEM — 3 font roles, strict hierarchy:
+  .font-display → section h1, h2 only. Size: ${h1Size} for h1, ${h2Size} for h2 — do not deviate. Weight: font-semibold or font-bold ONLY (no font-black on display). NOT uppercase by default — only uppercase for bold-energy/gym contexts.
+  body font → all p, li, span description text. Size: text-sm to text-lg. Weight: font-normal or font-medium.
+  .font-mono-ui → overline labels, metadata, step numbers, bracket UI, data labels. Size: text-xs or text-sm. Weight: font-medium. Always tracking-[0.15em] uppercase.
+
+HEADING SIZE DISCIPLINE — follow this scale exactly:
+  Hero h1: ${h1Size}, leading-[1.05], font-display ${headingWeight}
+  Section h2: ${h2Size}, leading-[1.1], font-display ${headingWeight}
+  Card/item h3: text-lg md:text-xl, font-display font-semibold (NOT font-bold, NOT uppercase, NOT text-3xl or bigger)
+  Overline (above h2): text-xs font-mono-ui tracking-[0.2em] uppercase text-primary (NOT font-display)
+  Body copy: text-base leading-relaxed text-white/60
+  Captions/meta: text-xs font-mono-ui text-white/30
+
+UPPERCASE DISCIPLINE:
+  Only use uppercase for: overline labels, navbar links in bold-energy mood, gym/construction contexts.
+  For VC, SaaS, luxury, law, restaurant — headings are sentence case or title case. NEVER ALL-CAPS on h2/h3.
 
 ${isLuxury ? `LUXURY DESIGN RULES:
 - Add image offset frame to hero/about images: absolute border border-primary/15 translate-x-3 translate-y-3
@@ -818,7 +930,7 @@ ${designTokens}
 GENERATE IN ORDER:
 1. HERO — id="hero", pt-32 min. Split layout: image right, text left for physical businesses. Centered for SaaS/tech. Include: badge pill, h1 with primary accent span, subtext, 2 CTAs. Use hero image URL.
 2. SOCIAL PROOF STRIP — py-8 border-y border-white/5, marquee animation, 8 industry names, text-white/20.
-3. STATS ROW — id="stats", grid 4-col desktop. Each: counter div data-target="NUMBER" class="counter font-display font-black text-7xl text-primary", label.
+3. STATS ROW — id="stats", grid 4-col desktop. Each: counter div data-target="NUMBER" class="counter font-display font-bold text-5xl md:text-6xl text-primary", label below in text-xs tracking-[0.3em] uppercase text-white/40.
 4. FEATURES — id="features", py-24. 6 feature cards grid-cols-3, each .glass, icon emoji, h3, description. hover:-translate-y-2.
 
 ⚠️ NO noise overlays. Cinematic gradient on hero image. Grayscale only for corporate/construction businesses.`;

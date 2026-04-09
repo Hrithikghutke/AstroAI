@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getUserCredits, deductCredits } from "@/lib/firestore";
+import { getUserCredits, deductCredits, trackApiUsage } from "@/lib/firestore";
 import {
   getShellPrompt,
   getPagePrompt,
@@ -122,7 +122,7 @@ async function callOpenRouterJson(
   userMessage: string,
   signal?: AbortSignal,
   maxTokens: number = 1000,
-): Promise<string> {
+): Promise<{ content: string; outputTokens: number }> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     signal,
@@ -141,7 +141,10 @@ async function callOpenRouterJson(
     }),
   });
   const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "";
+  return {
+    content: data.choices?.[0]?.message?.content ?? "",
+    outputTokens: data.usage?.completion_tokens ?? 0,
+  };
 }
 
 // ── Robustly extract a JSON object from a model response ──
@@ -195,7 +198,10 @@ function defaultArchitect(prompt: string): ArchitectOutput {
     fonts: {
       display: isTech ? "Space Grotesk" : isFood ? "Cormorant Garamond" : isGym ? "Barlow Condensed" : isConstruction ? "Bebas Neue" : "Inter",
       body: isTech ? "DM Sans" : isFood ? "Lato" : isGym ? "Barlow" : "Inter",
-      url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
+      mono: isTech ? "Space Mono" : isFood ? "Roboto Mono" : isGym ? "Barlow Mono" : "Inter",
+      displayUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
+      bodyUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
+      monoUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
     },
     pages: [
       "home",
@@ -616,6 +622,8 @@ export async function POST(req: Request) {
       // Declare outside try so catch block can access them
       let creditsDone = false;
       let totalOutputTokens = 0;
+      let haikuTokens = 0;
+      let devTokens = 0;
       let totalCreditsToDeduct = 5;
 
       try {
@@ -670,11 +678,13 @@ export async function POST(req: Request) {
 
         let architect: ArchitectOutput;
         try {
-          const rawArchitect = await callOpenRouterJson(
+          const { content: rawArchitect, outputTokens: architectTokens } = await callOpenRouterJson(
             getArchitectPrompt(),
             `Business to build a website for: ${prompt}`,
             clientSignal,
           );
+          haikuTokens += architectTokens;
+          totalOutputTokens += architectTokens;
           const clean = extractJson(rawArchitect);
           const parsed = JSON.parse(clean);
           // Validate required fields
@@ -712,7 +722,7 @@ export async function POST(req: Request) {
         let uiSpec: UIDesignSpec | undefined;
 
         try {
-          const [rawContent, rawUISpec] = await Promise.all([
+          const [contentResult, uiSpecResult] = await Promise.all([
             callOpenRouterJson(
               getContentStrategistPrompt(),
               `Business: ${prompt}`,
@@ -726,18 +736,20 @@ export async function POST(req: Request) {
               1000,
             ),
           ]);
+          haikuTokens += contentResult.outputTokens + uiSpecResult.outputTokens;
+          totalOutputTokens += contentResult.outputTokens + uiSpecResult.outputTokens;
 
           try {
-            contentBrief = JSON.parse(extractJson(rawContent)) as ContentBrief;
+            contentBrief = JSON.parse(extractJson(contentResult.content)) as ContentBrief;
             console.log(`[ContentStrategist] tagline: "${contentBrief.tagline}"`);
             push("CONTENT_STRATEGIST_DONE", { tagline: contentBrief.tagline });
           } catch (e) {
-            console.warn("[ContentStrategist] Failed to parse:", (e as Error).message, "\nRaw:", rawContent.slice(0, 200));
+            console.warn("[ContentStrategist] Failed to parse:", (e as Error).message, "\nRaw:", contentResult.content.slice(0, 200));
             push("CONTENT_STRATEGIST_DONE", { tagline: null });
           }
 
           try {
-            uiSpec = JSON.parse(extractJson(rawUISpec)) as UIDesignSpec;
+            uiSpec = JSON.parse(extractJson(uiSpecResult.content)) as UIDesignSpec;
             console.log(`[UIDesigner] hero: ${uiSpec.heroVariant} | features: ${uiSpec.featuresVariant} | navbar: ${uiSpec.navbarStyle}`);
             push("UI_DESIGNER_DONE", {
               heroVariant: uiSpec.heroVariant,
@@ -745,7 +757,7 @@ export async function POST(req: Request) {
               navbarStyle: uiSpec.navbarStyle,
             });
           } catch (e) {
-            console.warn("[UIDesigner] Failed to parse:", (e as Error).message, "\nRaw:", rawUISpec.slice(0, 200));
+            console.warn("[UIDesigner] Failed to parse:", (e as Error).message, "\nRaw:", uiSpecResult.content.slice(0, 200));
             push("UI_DESIGNER_DONE", { heroVariant: null, featuresVariant: null });
           }
         } catch (err) {
@@ -765,6 +777,7 @@ export async function POST(req: Request) {
             DEVELOPER_MODEL,
             clientSignal,
           );
+        devTokens += shellTokens;
         totalOutputTokens += shellTokens;
 
         if (!shellHtml.includes("<nav") || !shellHtml.includes("<!DOCTYPE")) {
@@ -1069,10 +1082,12 @@ export async function POST(req: Request) {
             result?.status === "fulfilled" ? result.value : fallback(pageId);
           const tokens =
             result?.status === "fulfilled" ? result.value.outputTokens : 0;
+          devTokens += tokens;
           totalOutputTokens += tokens;
           return isSinglePage ? content : validatePageSection(content, pageId);
         });
 
+        devTokens += footerTokens;
         totalOutputTokens += footerTokens;
 
         // Clean footer
@@ -1178,12 +1193,14 @@ export async function POST(req: Request) {
         
         let finalOutputHtml = finalHtml;
         try {
-          const rawQa = await callOpenRouterJson(
+          const { content: rawQa, outputTokens: qaTokens } = await callOpenRouterJson(
             getQaPrompt(),
             `Here is the complete HTML to review:\n\n${finalHtml}`,
             clientSignal,
             1200
           );
+          haikuTokens += qaTokens;
+          totalOutputTokens += qaTokens;
           
           const qaReport = JSON.parse(extractJson(rawQa));
           const isPassed = qaReport.passed === true;
@@ -1211,6 +1228,7 @@ export async function POST(req: Request) {
             
             if (r.content && r.content.length > 200) {
                 finalOutputHtml = r.content.replace(/^```html\s*/i, "").replace(/```\s*$/i, "").trim();
+                devTokens += r.outputTokens;
                 totalOutputTokens += r.outputTokens;
                 push("DEVELOPER_FIX", { stepId: "qa-fix-done", message: "✓ QA fixes applied." });
             }
@@ -1237,6 +1255,23 @@ export async function POST(req: Request) {
           console.log(
             `[Credits] Deducted ${totalCreditsToDeduct} credits for ${DEVELOPER_MODEL} (${totalOutputTokens} tokens)`,
           );
+          // Track API usage — fire-and-forget, non-blocking
+          const { getModelConfig } = await import("@/lib/modelConfig");
+          
+          const HAIKU_MODEL = "anthropic/claude-haiku-4.5";
+          const HAIKU_COST_PER_TOKEN = 0.000000125;
+          
+          const mc = getModelConfig(DEVELOPER_MODEL);
+          
+          // Haiku handles Architect + ContentStrategist + UIDesigner + QA reviewer
+          if (haikuTokens > 0) {
+            trackApiUsage(HAIKU_MODEL, haikuTokens, haikuTokens * HAIKU_COST_PER_TOKEN, true).catch(console.warn);
+          }
+          
+          // The developer model handles Shell + Pages + Footer + QA Fixer
+          if (devTokens > 0) {
+            trackApiUsage(DEVELOPER_MODEL, devTokens, devTokens * mc.costPerOutputToken, false).catch(console.warn);
+          }
         }
       } catch (err: any) {
         if (err.name === "AbortError" || clientSignal.aborted) {

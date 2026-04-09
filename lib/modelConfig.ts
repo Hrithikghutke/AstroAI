@@ -66,6 +66,16 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     minCreditsToStart: 5,
     maxOutputTokens: 32000,
   },
+  {
+    model: "google/gemma-4-31b-it:free",
+    label: "Google Gemma",
+    sublabel: "Best value · Fast & powerful coding model",
+    credits: "5-10 credits",
+    logo: GEMINI_LOGO_SVG,
+    costPerOutputToken: 0,
+    minCreditsToStart: 5,
+    maxOutputTokens: 32000,
+  },
 ];
 
 // ── Model lookup helpers — import these in route files ──

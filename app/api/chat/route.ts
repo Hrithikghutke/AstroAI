@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { trackApiUsage } from "@/lib/firestore";
 
 export const maxDuration = 30;
 
@@ -136,6 +137,13 @@ Existing pages in site: ${existingPages?.length ? existingPages.join(", ") : "no
   const data = await res.json();
   if (!res.ok) {
     return NextResponse.json({ error: "AI error" }, { status: 500 });
+  }
+
+  // Track chat token usage — fire-and-forget
+  const chatTokens: number = data.usage?.completion_tokens ?? 0;
+  if (chatTokens > 0) {
+    const HAIKU_COST_PER_TOKEN = 0.000000125;
+    trackApiUsage("anthropic/claude-haiku-4.5", chatTokens, chatTokens * HAIKU_COST_PER_TOKEN).catch(console.warn);
   }
 
   const raw = (data.choices?.[0]?.message?.content ?? "").trim();

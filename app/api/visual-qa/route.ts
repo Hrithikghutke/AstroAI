@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { trackApiUsage } from "@/lib/firestore";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -119,6 +120,13 @@ passed = true only if zero layout issues found across ALL screenshots.`,
 
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content ?? "";
+
+    // Track visual QA token usage — fire-and-forget
+    const qaTokens: number = data.usage?.completion_tokens ?? 0;
+    if (qaTokens > 0) {
+      const GEMINI_FLASH_COST_PER_TOKEN = 0.0000004; // $0.40 per 1M output tokens
+      trackApiUsage("google/gemini-1.5-flash", qaTokens, qaTokens * GEMINI_FLASH_COST_PER_TOKEN).catch(console.warn);
+    }
 
     const cleaned = raw
       .replace(/^```json\s*/i, "")

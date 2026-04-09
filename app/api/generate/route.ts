@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getUserCredits, deductCredit } from "@/lib/firestore";
+import { getUserCredits, deductCredit, trackApiUsage } from "@/lib/firestore";
 import { generateLogo } from "@/lib/generateLogo";
 import { fetchUnsplashImage } from "@/lib/fetchUnsplash"; // ← NEW
 
@@ -238,6 +238,7 @@ OUTPUT this exact JSON shape (fill every field with real content):
     );
 
     const layoutData = await layoutResponse.json();
+    const layoutTokens: number = layoutData.usage?.completion_tokens ?? 0;
 
     if (!layoutResponse.ok) {
       console.error("Haiku error:", layoutData);
@@ -424,6 +425,7 @@ OUTPUT this exact JSON shape (fill every field with real content):
     }
 
     let devRaw = "";
+    let devTokens = 0;
     try {
       const primaryColor = parsedLayout?.branding?.primaryColor ?? "#6366f1";
       const secondaryColor =
@@ -527,6 +529,7 @@ The brand uses primaryColor: ${primaryColor}, theme: ${isDarkTheme ? "dark" : "l
       );
 
       const devData = await devAgentResponse.json();
+      devTokens = devData.usage?.completion_tokens ?? 0;
       // console.log(
       //   "🔍 Dev agent full response:",
       //   JSON.stringify(devData, null, 2),
@@ -572,6 +575,12 @@ The brand uses primaryColor: ${primaryColor}, theme: ${isDarkTheme ? "dark" : "l
 
     // ── Deduct credit ──
     await deductCredit(userId);
+    // Track API usage for fast mode — both calls use Haiku
+    const totalFastTokens = layoutTokens + devTokens;
+    if (totalFastTokens > 0) {
+      const HAIKU_COST_PER_TOKEN = 0.000000125; // $0.125 per 1M output tokens
+      trackApiUsage("anthropic/claude-haiku-4.5", totalFastTokens, totalFastTokens * HAIKU_COST_PER_TOKEN, true).catch(console.warn);
+    }
 
     return NextResponse.json({ layout: parsedLayout });
   } catch (error) {

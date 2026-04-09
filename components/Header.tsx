@@ -1,12 +1,11 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Zap } from "lucide-react";
+import { Zap, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { useCredits } from "@/context/CreditsContext";
 import Logo from "@/assets/logo.svg";
 import cname from "@/assets/cname.svg";
 import Link from "next/link";
-import { LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -18,9 +17,10 @@ export default function Header({
   onNavigate?: (href: string) => void;
   transparent?: boolean;
 }) {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
   const { credits } = useCredits();
   const router = useRouter();
+  const isAdmin = user?.primaryEmailAddress?.emailAddress === "hrithikghutke01@gmail.com";
   const nav = (href: string) =>
     onNavigate ? onNavigate(href) : router.push(href);
 
@@ -28,7 +28,7 @@ export default function Header({
     <header 
       className={`flex items-center justify-between px-4 sm:px-6 lg:px-10 transition-colors ${
         transparent 
-          ? "bg-transparent py-6 border-b border-transparent" 
+          ? "bg-transparent py-6 border-b border-transparent " 
           : "bg-white dark:bg-neutral-950 py-3 sm:py-4 border-b border-neutral-200 dark:border-neutral-900"
       }`}
     >
@@ -70,6 +70,17 @@ export default function Header({
           >
             <LayoutDashboard className="w-4 h-4" />
             <span className="hidden sm:inline">Dashboard</span>
+          </button>
+        )}
+
+        {isAdmin && (
+          <button
+            onClick={() => nav("/admin")}
+            className="flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors cursor-pointer"
+            title="Admin Dashboard"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span className="hidden sm:inline">Admin</span>
           </button>
         )}
 
