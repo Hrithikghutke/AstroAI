@@ -286,10 +286,14 @@ export default function AdminDashboard() {
                                 {shortName}
                               </span>
                               <div className="flex items-center gap-3 text-xs text-neutral-400">
-                                <span>{(data.tokens / 1000).toFixed(1)}K tokens</span>
-                                <span>{data.calls} calls</span>
+                                <span>
+                                  {((data?.tokens ?? 0) / 1000).toFixed(1)}K tokens
+                                </span>
+                                <span>
+                                  {data?.calls ?? 0} calls
+                                </span>
                                 <span className="font-bold text-neutral-700 dark:text-neutral-200">
-                                  ${data.costUSD.toFixed(5)}
+                                  ${Number(data?.costUSD ?? 0).toFixed(5)}
                                 </span>
                               </div>
                             </div>

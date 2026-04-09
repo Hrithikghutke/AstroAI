@@ -106,51 +106,61 @@ CRITICAL COLOR RULES:
 - For dark themes: background must be in #040408–#121220 range. NEVER #1a1a2e type purple-dark unless explicitly agency/creative.
 - surface must be 8-15% lighter than background only.
 
-FONT RULES — use EXACTLY the font + CDN source listed. No substitutions.
+FONT RULES — CURATED PAIRINGS. Use Fontshare CDN as primary. Google Fonts as fallback only.
 
-Display fonts (use Fontshare CDN — more reliable than Google Fonts for these):
-  Construction/corporate: "Bebas Neue"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-  Gym/fitness/bold-energy: "Barlow Condensed"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
-  SaaS/tech/agency: "Cabinet Grotesk"
-    displayUrl: <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap" rel="stylesheet">
-  Restaurant high-end / hotel / luxury: "Cormorant Garamond"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
-  Law/finance/VC: "DM Serif Display"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
-  Real estate: "Playfair Display"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&display=swap" rel="stylesheet">
-  Medical/clinic: "Inter"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  Restaurant casual: "Syne"
-    displayUrl: <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+Fontshare CDN format: <link href="https://api.fontshare.com/v2/css?f[]=font-name@weights&display=swap" rel="stylesheet">
+Google Fonts format: <link href="https://fonts.googleapis.com/css2?family=Font+Name:wght@400;500;700&display=swap" rel="stylesheet">
 
-Body fonts (always Google Fonts, these work reliably):
-  Modern/tech: "DM Sans" — <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  Premium/editorial: "Geist Sans (via fontsource)" — use two link tags:
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/400.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/500.css">
-  Serif/luxury: "Lato" — <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;500;700&display=swap" rel="stylesheet">
-  Corporate: "Inter" — <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  Gym/energy: "Barlow" — <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+Pick ONE display + body pair below that BEST matches the business type. Include the correct CDN link tags.
 
-Mono fonts (ALWAYS include one — used for UI labels, overlines, metadata):
-  ALL dark themes: "Geist Mono"
+CURATED FONT PAIRINGS (grouped by mood):
+
+▸ Corporate & High-Trust — Law, Finance, Consulting, Insurance, Medical, Corporate:
+  1. display="Satoshi"          body="General Sans"     → <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=general-sans@400,500&display=swap" rel="stylesheet">
+  2. display="Cabinet Grotesk"  body="Satoshi"          → <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+  3. display="Switzer"          body="Satoshi"          → <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+
+▸ Elegant & Editorial — Hotel, Luxury Restaurant, Real Estate, Wine, Art, Fashion:
+  1. display="Zodiak"           body="Switzer"          → <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,700&f[]=switzer@400,500&display=swap" rel="stylesheet">
+  2. display="Boska"            body="General Sans"     → <link href="https://api.fontshare.com/v2/css?f[]=boska@400,500,700&f[]=general-sans@400,500&display=swap" rel="stylesheet">
+  3. display="Sentient"         body="Supreme"          → <link href="https://api.fontshare.com/v2/css?f[]=sentient@400,500,700&f[]=supreme@400,500&display=swap" rel="stylesheet">
+
+▸ Modern & Tech — SaaS, Startup, Fintech, EdTech, AI, Agency:
+  1. display="Clash Display"    body="Archivo"          → Display: <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">  Body: <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+  2. display="Outfit"           body="Switzer"          → Display: <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">  Body: <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500&display=swap" rel="stylesheet">
+  3. display="Archivo"          body="Satoshi"          → Display: <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">  Body: <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500&display=swap" rel="stylesheet">
+
+▸ Creative & Informal — Cafe, Kids, Wellness, Coworking, Pet, Food Truck:
+  1. display="Pally"            body="Neco"             → <link href="https://api.fontshare.com/v2/css?f[]=pally@400,500,700&f[]=neco@400&display=swap" rel="stylesheet">
+  2. display="Chubbo"           body="Supreme"          → <link href="https://api.fontshare.com/v2/css?f[]=chubbo@400,500,700&f[]=supreme@400,500&display=swap" rel="stylesheet">
+  3. display="Amulya"           body="Synonym"          → <link href="https://api.fontshare.com/v2/css?f[]=amulya@400,500,700&f[]=synonym@400,500&display=swap" rel="stylesheet">
+
+▸ Technical & Functional — Engineering, Construction, Architecture, Manufacturing, Dev Tools:
+  1. display="JetBrains Mono"   body="General Sans"     → Display: <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">  Body: <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500&display=swap" rel="stylesheet">
+  2. display="Khand"            body="Hind"             → <link href="https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&family=Hind:wght@400;500&display=swap" rel="stylesheet">
+  3. display="Tanker"           body="Bespoke Serif"    → <link href="https://api.fontshare.com/v2/css?f[]=tanker@400&f[]=bespoke-serif@400,500&display=swap" rel="stylesheet">
+
+▸ Bold & Energy — Gym, Sports, Events, Nightlife, Streetwear:
+  1. display="Khand"            body="Hind"             → <link href="https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&family=Hind:wght@400;500&display=swap" rel="stylesheet">
+  2. display="Stardom"          body="Satoshi"          → <link href="https://api.fontshare.com/v2/css?f[]=stardom@400,700&f[]=satoshi@400,500&display=swap" rel="stylesheet">
+
+Mono font (ALWAYS include — used for UI labels, overlines, metadata):
+  ALL themes: "Geist Mono"
     monoUrl: <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">
-  Light/corporate: "IBM Plex Mono"
-    monoUrl: <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-FONT PAIRING BY BUSINESS TYPE:
-  Construction/corporate:   display="Bebas Neue"         body="Inter"          mono="Geist Mono"
-  Gym/fitness:              display="Barlow Condensed"   body="Barlow"         mono="Geist Mono"
-  SaaS/tech/VC/agency:      display="Cabinet Grotesk"    body="Geist Sans"     mono="Geist Mono"
-  Restaurant high-end:      display="Cormorant Garamond" body="Lato"           mono="Geist Mono"
-  Restaurant casual:        display="Syne"               body="DM Sans"        mono="Geist Mono"
-  Law/finance:              display="DM Serif Display"   body="Inter"          mono="IBM Plex Mono"
-  Medical/clinic:           display="Inter"              body="Inter"          mono="IBM Plex Mono"
-  Hotel/luxury:             display="Cormorant Garamond" body="Lato"           mono="Geist Mono"
-  Real estate:              display="Playfair Display"   body="Lato"           mono="Geist Mono"
+FONT PAIRING BY BUSINESS TYPE (quick reference):
+  Construction/engineering:   display="Khand"             body="Hind"            mono="Geist Mono"
+  Gym/fitness/sports:         display="Khand"             body="Hind"            mono="Geist Mono"
+  SaaS/tech/startup:          display="Clash Display"     body="Archivo"         mono="Geist Mono"
+  Agency/creative:            display="Outfit"            body="Switzer"         mono="Geist Mono"
+  Restaurant high-end:        display="Zodiak"            body="Switzer"         mono="Geist Mono"
+  Restaurant casual:          display="Pally"             body="Neco"            mono="Geist Mono"
+  Law/finance/VC:             display="Satoshi"           body="General Sans"    mono="Geist Mono"
+  Medical/clinic:             display="Switzer"           body="Satoshi"         mono="Geist Mono"
+  Hotel/luxury:               display="Boska"             body="General Sans"    mono="Geist Mono"
+  Real estate:                display="Sentient"          body="Supreme"         mono="Geist Mono"
+  Cafe/wellness/kids:         display="Pally"             body="Neco"            mono="Geist Mono"
+  Dev tools/documentation:    display="JetBrains Mono"    body="General Sans"    mono="Geist Mono"
 
-Google Fonts URL format: https://fonts.googleapis.com/css2?family=DisplayFont:wght@400;600;700;900&family=BodyFont:wght@400;500;600&display=swap`;
+CRITICAL: Return the EXACT font names and CDN link tags as specified above. Do NOT invent CDN URLs.`;
 }

@@ -30,7 +30,22 @@ function extractSection(html: string, sectionName: string) {
   const close = `<!-- /CC:${sectionName} -->`;
   const startIdx = html.indexOf(open);
   const endIdx = html.indexOf(close);
-  if (startIdx === -1 || endIdx === -1) return { found: false as const };
+  if (startIdx === -1 || endIdx === -1) {
+    if (sectionName === "footer") {
+      const footerStart = html.search(/<footer\b/i);
+      const footerEnd = html.indexOf("</footer>", Math.max(0, footerStart));
+      if (footerStart !== -1 && footerEnd !== -1) {
+        const afterFooter = footerEnd + "</footer>".length;
+        return {
+          found: true as const,
+          content: html.slice(footerStart, afterFooter).trim(),
+          before: html.slice(0, footerStart),
+          after: html.slice(afterFooter),
+        };
+      }
+    }
+    return { found: false as const };
+  }
   return {
     found: true as const,
     content: html.slice(startIdx + open.length, endIdx).trim(),

@@ -23,6 +23,138 @@ function navbarCss(style: UIDesignSpec["navbarStyle"] | undefined): string {
 
 // Add this helper function near the top of developer.ts, outside any function
 
+// Simple hash for deterministic variety within a mood
+function fontHash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+interface FontConfig {
+  display: string;
+  body: string;
+  displayUrl: string;
+  bodyUrl: string;
+}
+
+// ── Curated Fontshare-first font pairs ──
+const FONT_POOLS: Record<string, FontConfig[]> = {
+  corporate: [
+    {
+      display: "Satoshi",
+      body: "General Sans",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Cabinet Grotesk",
+      body: "Satoshi",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Switzer",
+      body: "Satoshi",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500&display=swap" rel="stylesheet">`,
+    },
+  ],
+  elegant: [
+    {
+      display: "Zodiak",
+      body: "Switzer",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Boska",
+      body: "General Sans",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=boska@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Sentient",
+      body: "Supreme",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=sentient@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=supreme@400,500&display=swap" rel="stylesheet">`,
+    },
+  ],
+  tech: [
+    {
+      display: "Clash Display",
+      body: "Archivo",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Outfit",
+      body: "Switzer",
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Archivo",
+      body: "Satoshi",
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500&display=swap" rel="stylesheet">`,
+    },
+  ],
+  creative: [
+    {
+      display: "Pally",
+      body: "Neco",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=pally@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=neco@400&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Chubbo",
+      body: "Supreme",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=chubbo@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=supreme@400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Amulya",
+      body: "Synonym",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=amulya@400,500,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=synonym@400,500&display=swap" rel="stylesheet">`,
+    },
+  ],
+  boldEnergy: [
+    {
+      display: "Khand",
+      body: "Hind",
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Stardom",
+      body: "Satoshi",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=stardom@400,700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500&display=swap" rel="stylesheet">`,
+    },
+  ],
+  technical: [
+    {
+      display: "JetBrains Mono",
+      body: "General Sans",
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Khand",
+      body: "Hind",
+      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500&display=swap" rel="stylesheet">`,
+    },
+    {
+      display: "Tanker",
+      body: "Bespoke Serif",
+      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=tanker@400&display=swap" rel="stylesheet">`,
+      bodyUrl: `<link href="https://api.fontshare.com/v2/css?f[]=bespoke-serif@400,500&display=swap" rel="stylesheet">`,
+    },
+  ],
+};
+
 function resolveFonts(architect?: ArchitectOutput): {
   displayUrl: string;
   bodyUrl: string;
@@ -34,58 +166,40 @@ function resolveFonts(architect?: ArchitectOutput): {
   const mood = architect?.visualMood;
   const monoUrl = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">`;
   const mono = "Geist Mono";
+  const brand = architect?.brandName ?? "default";
 
-  if (mood === "editorial-clean" || mood === "corporate-precision") {
-    return {
-      display: "Cabinet Grotesk",
-      body: "Geist Sans",
-      mono,
-      displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap" rel="stylesheet">`,
-      bodyUrl: `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/400.css">\n     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/500.css">`,
-      monoUrl,
-    };
+  // Map visual mood → font pool
+  let pool: FontConfig[];
+  switch (mood) {
+    case "corporate-precision":
+      pool = FONT_POOLS.corporate;
+      break;
+    case "editorial-clean":
+      pool = FONT_POOLS.tech;
+      break;
+    case "luxury-minimal":
+      pool = FONT_POOLS.elegant;
+      break;
+    case "bold-energy":
+      pool = FONT_POOLS.boldEnergy;
+      break;
+    case "cinematic-dark":
+      // Cinematic-dark spans construction (technical) + restaurant (elegant)
+      pool = [...FONT_POOLS.technical, ...FONT_POOLS.elegant];
+      break;
+    default:
+      pool = FONT_POOLS.corporate;
   }
 
-  if (mood === "bold-energy") {
-    return {
-      display: "Barlow Condensed",
-      body: "Barlow",
-      mono,
-      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">`,
-      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">`,
-      monoUrl,
-    };
-  }
+  // Deterministic variety: pick from pool based on brand name hash
+  const pick = pool[fontHash(brand) % pool.length];
 
-  if (mood === "luxury-minimal") {
-    return {
-      display: "Cormorant Garamond",
-      body: "Lato",
-      mono,
-      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">`,
-      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">`,
-      monoUrl,
-    };
-  }
-
-  if (mood === "cinematic-dark") {
-    return {
-      display: "Bebas Neue",
-      body: "Inter",
-      mono,
-      displayUrl: `<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">`,
-      bodyUrl: `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">`,
-      monoUrl,
-    };
-  }
-
-  // safe default
   return {
-    display: "Cabinet Grotesk",
-    body: "Geist Sans",
+    display: pick.display,
+    body: pick.body,
     mono,
-    displayUrl: `<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800,900&display=swap" rel="stylesheet">`,
-    bodyUrl: `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.1/400.css">`,
+    displayUrl: pick.displayUrl,
+    bodyUrl: pick.bodyUrl,
     monoUrl,
   };
 }
@@ -129,6 +243,7 @@ STACK (exact CDN links, in this order):
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 
 GENERATE IN THIS EXACT ORDER:
 
@@ -167,20 +282,25 @@ GENERATE IN THIS EXACT ORDER:
 
 4. ROUTING SCRIPT — IMMEDIATELY after <body>, before navbar — no exceptions:
 <script>
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);}document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('text-primary'));var al=document.querySelector('.nav-link[href="#'+id+'"]');if(al)al.classList.add('text-primary');}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);}else{showPage('home');return;}
 window.addEventListener('hashchange',function(){showPage(window.location.hash.slice(1)||'home');});
 window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');});
 </script>
 
 GLOBAL DESIGN PHILOSOPHY:
-- Less is more: prefer whitespace over density. Section padding py-24 minimum.
-- Container discipline — ALL sections must use: max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 xl:px-20. NEVER use px-6 alone as the only horizontal padding on desktop. Always include sm:/lg:/xl: steps.
-- Hero text panels specifically need generous left breathing room: minimum px-8 lg:px-20 xl:px-28 for corporate/luxury, px-6 lg:px-16 for bold contexts.
-- Typography drives the design: scale matters — hero h1 should feel large but never overwhelming. Preferred scale: text-5xl sm:text-6xl lg:text-7xl for hero, text-3xl md:text-4xl lg:text-5xl for section h2. NEVER use text-8xl or text-9xl unless visualMood is bold-energy.
+- Less is more: prefer whitespace over density. Section padding py-28 minimum, py-32 for key sections.
+- Container discipline — ALL sections must use: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24. NEVER use px-6 alone as the only horizontal padding. Always include responsive steps. max-w-6xl (1152px) keeps content centered with generous margins on wide screens.
+- Hero text panels specifically need generous breathing room: minimum px-10 lg:px-20 xl:px-28 for corporate/luxury, px-8 lg:px-16 for bold contexts.
+- Typography scale — be refined, NOT oversized:
+  Hero h1: text-4xl sm:text-5xl lg:text-6xl (standard). NEVER exceed text-7xl unless bold-energy mood.
+  Section h2: text-3xl sm:text-4xl lg:text-5xl — NEVER bigger.
+  Card h3: text-lg md:text-xl — always subtle.
+  Body copy: text-base leading-relaxed, max-w-prose (65ch) for readability.
 - Accent color (text-primary) SPARINGLY: stats numbers, overline labels, active nav, CTA buttons ONLY.
 - Borders over backgrounds: border border-white/10 preferred over glass cards for premium minimal look.
 - Letter spacing: uppercase labels always tracking-[0.25em] or wider.
 - Cubic-bezier transitions always: transition: X 0.7s cubic-bezier(0.25,0.46,0.45,0.94) — NEVER linear.
+- ICONS: Use Lucide icons via <i data-lucide="icon-name" class="w-5 h-5"></i>. Common icons: shield-check, target, flame, gem, rocket, settings, mail, phone, map-pin, star, users, trending-up, zap, award, clock, check-circle, arrow-right. Do NOT use emoji for UI elements — always use Lucide.
 
 5. Complete <nav id="navbar"> — implement EXACTLY this style: ${uiSpec?.navbarStyle ?? "full-minimal"}
    
@@ -193,16 +313,17 @@ GLOBAL DESIGN PHILOSOPHY:
    }
 
    Always include:
-   - Logo: font-display ${uiSpec?.typographyWeight === "medium" ? "font-medium text-xl" : uiSpec?.typographyWeight === "black" ? "font-black text-2xl" : "font-bold text-2xl"} ${uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : "tracking-tighter"} text-primary with nav-link class, href="#home"
+   - Logo: font-display ${uiSpec?.typographyWeight === "medium" ? "font-medium text-xl" : uiSpec?.typographyWeight === "black" ? "font-black text-2xl" : "font-bold text-2xl"} ${uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : "tracking-normal"} text-primary with nav-link class, href="#home"
      ${(architect?.visualMood === "luxury-minimal") ? "Luxury logo style: small dot (w-2 h-2 rounded-full bg-secondary mr-2) + brand name in font-medium text-lg tracking-tighter uppercase" : ""}
    - Desktop nav: hidden lg:flex centered links. ${isSinglePage ? "Single page — anchor links #hero #features #pricing #contact" : `Multi-page — use EXACTLY: ${navLinkDetails}. Each gets class="nav-link". Active gets text-primary.`}
   Nav link style: text-sm font-medium tracking-wide${isBold ? " uppercase tracking-[0.15em]" : ""} text-white/70 hover:text-white transition-colors — do NOT add uppercase unless bold-energy mood
    - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full with subtle box-shadow glow
    - Hamburger: lg:hidden
    - Mobile slide-out menu — x-show="open":
-     ⚠️ MOBILE MENU — both rules required:
+     ⚠️ MOBILE MENU — rules required:
      1. ALWAYS solid opaque background: style="background:${architect?.colors.background ?? "#0a0a0a"}"
      2. NEVER put display:none in style attribute — Alpine x-show manages display.
+     3. ALWAYS include a completely visible close button at the top right of the menu (e.g., <button @click="open=false" class="absolute top-6 right-6 p-4">...</button>).
    - Backdrop overlay: x-show="open" @click="open=false" fixed inset-0 bg-black/60
 
 6. After </nav>, write this EXACT comment and STOP:
@@ -270,13 +391,13 @@ export function getPagePrompt(
 
   const h1Size = isBold
     ? (typographyScale === "display-dominant"
-        ? "text-6xl sm:text-7xl lg:text-8xl"
-        : "text-5xl sm:text-6xl lg:text-7xl")
+        ? "text-5xl sm:text-6xl lg:text-7xl"
+        : "text-4xl sm:text-5xl lg:text-6xl")
     : isLuxury
-      ? "text-5xl sm:text-6xl lg:text-7xl"
+      ? "text-4xl sm:text-5xl lg:text-6xl"
       : (typographyScale === "display-dominant"
-          ? "text-5xl sm:text-6xl lg:text-7xl"
-          : "text-4xl sm:text-5xl lg:text-6xl");
+          ? "text-4xl sm:text-5xl lg:text-6xl"
+          : "text-3xl sm:text-4xl lg:text-5xl xl:text-6xl");
 
   const h2Size = isBold
     ? "text-4xl sm:text-5xl lg:text-6xl"
@@ -284,12 +405,12 @@ export function getPagePrompt(
 
   // ── Spacing system — derived from mood, not hardcoded ──
   const heroTextPadding = isLuxury
-    ? "px-10 sm:px-16 lg:px-24 xl:px-32 py-32"
+    ? "px-12 sm:px-16 lg:px-24 xl:px-32 py-36"
     : isBold
-      ? "px-6 sm:px-10 lg:px-16 xl:px-20 py-24"
-      : "px-8 sm:px-12 lg:px-20 xl:px-28 py-28";
+      ? "px-8 sm:px-12 lg:px-16 xl:px-20 py-28"
+      : "px-10 sm:px-14 lg:px-20 xl:px-28 py-32";
 
-  const sectionContainer = "max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 xl:px-20";
+  const sectionContainer = "max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24";
 
   const headingWeight = uiSpec?.typographyWeight === "black" ? "font-black" : uiSpec?.typographyWeight === "bold" ? "font-bold" : uiSpec?.typographyWeight === "medium" ? "font-medium" : (isLuxury ? "font-medium" : isBold ? "font-black" : "font-semibold");
   const headingTracking = uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : uiSpec?.typographyTracking === "tight" ? "tracking-tight" : (isLuxury ? "tracking-tighter" : isBold ? "tracking-tight" : "tracking-tight");
@@ -303,8 +424,8 @@ export function getPagePrompt(
     ? `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/20 text-white text-sm ${bodyFontWeight} tracking-[0.15em] uppercase leading-none hover:border-primary hover:text-primary transition-all duration-500`
     : `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/30 text-white text-sm font-medium tracking-widest uppercase leading-none hover:border-primary hover:text-primary transition-all duration-300 rounded-full`;
   const statNumberClass = isLuxury
-    ? `font-display ${headingWeight} text-6xl md:text-7xl text-primary`
-    : `counter font-display ${headingWeight} ${headingTracking} text-5xl md:text-6xl text-primary`;
+    ? `font-display ${headingWeight} text-5xl md:text-6xl text-primary`
+    : `counter font-display ${headingWeight} ${headingTracking} text-4xl md:text-5xl text-primary`;
   const imageHover = isLuxury
     ? `grayscale-[20%] group-hover:grayscale-0 transition-all duration-700`
     : `transition-transform duration-700 group-hover:scale-105`;
@@ -556,7 +677,7 @@ export function getPagePrompt(
 
     "corporate-3col": `
 <!-- CC:features-preview -->
-<section class="py-24 max-w-7xl mx-auto px-6">
+<section class="py-28 max-w-6xl mx-auto px-8 sm:px-12 lg:px-20">
   <div class="mb-16 text-center fade-in">
     <span class="text-xs tracking-[0.4em] uppercase text-primary mb-4 block">What We Offer</span>
     <h2 class="font-display \ ${h2Size}">Built for <span class="text-primary">${featureNames[0]}</span></h2>
@@ -565,7 +686,7 @@ export function getPagePrompt(
   <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10">
     ${featureNames.slice(0, 6).map((name, i) => `
     <div class="${cardCss} ${i % 3 !== 2 ? "border-r border-white/10" : ""} p-10 fade-in">
-      <div class="text-3xl mb-6">${["⚡","🎯","🔥","💎","🚀","⚙️"][i]}</div>
+      <i data-lucide="${["zap","target","flame","gem","rocket","settings"][i]}" class="w-8 h-8 text-primary mb-4"></i>
       <h3 class="font-display \ text-xl mb-3">${name}</h3>
       <p class="text-white/50 text-sm leading-relaxed">${featureDescriptions[i]}</p>
     </div>`).join("")}
@@ -574,7 +695,7 @@ export function getPagePrompt(
   <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
     ${valueProps.map((vp, i) => `
     <div class="fade-in">
-      <div class="font-display \ text-6xl text-primary/20 mb-4">0${i + 1}</div>
+      <div class="font-display \ text-5xl text-primary/20 mb-4">0${i + 1}</div>
       <h3 class="font-display \ text-xl mb-2">${vp}</h3>
       <p class="text-white/40 text-sm">${featureDescriptions[i] ?? ""}</p>
     </div>`).join("")}
@@ -628,8 +749,8 @@ export function getPagePrompt(
   // ── STATS ROW ──
 const statsRow = `
 <!-- CC:stats -->
-<section class="border-y border-white/8 py-16 md:py-20">
-  <div class="max-w-7xl mx-auto px-6 grid divide-x divide-white/8" style="grid-template-columns:repeat(${Math.min(stats.length, 4)},1fr)">
+<section class="border-y border-white/8 py-20 md:py-24">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 grid divide-x divide-white/8" style="grid-template-columns:repeat(${Math.min(stats.length, 4)},1fr)">
     ${stats.map(s => `
     <div class="text-center px-4 md:px-8 fade-in min-w-0">
       <div class="${statNumberClass.replace("text-7xl md:text-8xl lg:text-9xl", "text-5xl md:text-6xl lg:text-7xl")}" data-target="${s.value.replace(/[^0-9.]/g, "")}">${s.value}</div>
@@ -797,14 +918,15 @@ STYLE RULES:
   * Section h2: ${h2Size} leading-[1.1] — NEVER bigger than this
   * Card/item h3: text-lg md:text-xl font-display — NOT text-3xl or text-4xl
   * Overline (above h2): text-xs font-mono-ui tracking-[0.2em] uppercase text-primary
-  * Body copy: text-base leading-relaxed text-white/60
+  * Body copy: text-base leading-relaxed text-white/60 max-w-prose
   * Mobile: always start from text-2xl minimum for h2, text-base for body
 - ${bodyFontWeight} for body text and captions
-- Section padding: py-24 minimum. ${isLuxury ? "py-32 for key sections" : ""}
-- ALL CTA buttons must use href="#contact" — NEVER href="#apply", href="#fund", href="#signup" or any other hash. The contact page is the only valid destination for CTAs. This is non-negotiable.
+- Section padding: py-28 minimum. ${isLuxury ? "py-32 for key sections" : ""}
 - Containers: ${sectionContainer} — always use this exact string, never just px-6 alone
+- ALL CTA buttons must use href="#contact" — NEVER href="#apply", href="#fund", href="#signup" or any other hash. The contact page is the only valid destination for CTAs. This is non-negotiable.
 - Cubic-bezier transitions: 0.75s cubic-bezier(0.25,0.46,0.45,0.94) — NEVER linear
 - Image overlay: always use a cinematic gradient overlay on feature images for depth
+- ICONS: Use Lucide icons — <i data-lucide="icon-name" class="w-6 h-6"></i>. NEVER use emoji for UI elements. Use contextual icons: shield-check, target, flame, gem, rocket, settings, mail, phone, map-pin, star, users, trending-up, zap, award, clock, check-circle, arrow-right, building, heart, globe, layers, code, palette, truck, utensils, dumbbell, briefcase, stethoscope, home, key.
 
 ACCENT COLOR RULES — THE ONE-RULE SYSTEM:
 ACCENT COLOR BUDGET — treat text-primary like a limited resource:
@@ -869,7 +991,8 @@ ${designTokens}
 
 GENERATE IN ORDER:
 
-1. <footer> — bg-black/40 border-t border-white/5 py-20 px-6
+1. Wrap the entire footer in exact comments: <!-- CC:footer --> and <!-- /CC:footer -->
+   <footer class="bg-black/40 border-t border-white/5 py-20 px-6">
    Inside: max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20
    Col 1 (span 2 on mobile): Logo font-display font-black text-primary + brand tagline + 3 social icon buttons circular glass w-10 h-10
    Col 2: "Quick Links" heading + 4 relevant page links for this business type
@@ -902,6 +1025,9 @@ ${isSinglePage
      ? `e. Mouse parallax for .orb elements:\\n      document.addEventListener('mousemove',function(e){document.querySelectorAll('.orb').forEach(function(orb,i){var speed=(i+1)*0.02;orb.style.transform='translate('+(e.clientX*speed)+'px,'+(e.clientY*speed)+'px)';});});`
      : "// no orb parallax for this visual mood"}
 
+   f. Lucide icon initialization — REQUIRED, must be LAST in the script block:
+      lucide.createIcons();
+
 3. </body></html>`;
 }
 
@@ -928,12 +1054,12 @@ ${designTokens}
 - No closing </body> or </html> tags
 
 GENERATE IN ORDER:
-1. HERO — id="hero", pt-32 min. Split layout: image right, text left for physical businesses. Centered for SaaS/tech. Include: badge pill, h1 with primary accent span, subtext, 2 CTAs. Use hero image URL.
+1. HERO — id="hero", pt-32 min. Split layout: image right, text left for physical businesses. Centered for SaaS/tech. Include: badge pill, h1 (text-4xl sm:text-5xl lg:text-6xl font-display) with primary accent span, subtext max-w-prose, 2 CTAs. Use hero image URL. Container: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20.
 2. SOCIAL PROOF STRIP — py-8 border-y border-white/5, marquee animation, 8 industry names, text-white/20.
-3. STATS ROW — id="stats", grid 4-col desktop. Each: counter div data-target="NUMBER" class="counter font-display font-bold text-5xl md:text-6xl text-primary", label below in text-xs tracking-[0.3em] uppercase text-white/40.
-4. FEATURES — id="features", py-24. 6 feature cards grid-cols-3, each .glass, icon emoji, h3, description. hover:-translate-y-2.
+3. STATS ROW — id="stats", grid 4-col desktop, max-w-6xl mx-auto. Each: counter div data-target="NUMBER" class="counter font-display font-bold text-4xl md:text-5xl text-primary", label below in text-xs tracking-[0.3em] uppercase text-white/40.
+4. FEATURES — id="features", py-28. 6 feature cards grid-cols-3, each .glass, Lucide icon (<i data-lucide="icon-name" class="w-7 h-7 text-primary mb-4"></i>), h3 (text-lg font-display), description. hover:-translate-y-2. Container: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20.
 
-⚠️ NO noise overlays. Cinematic gradient on hero image. Grayscale only for corporate/construction businesses.`;
+⚠️ NO noise overlays. NO emoji — use Lucide icons only. Cinematic gradient on hero image. Grayscale only for corporate/construction businesses.`;
 }
 
 export function getSinglePageBottomPrompt(
@@ -954,10 +1080,10 @@ ${designTokens}
 - Do NOT write <footer>, </body> or </html>
 
 GENERATE IN ORDER:
-1. PRICING — 3 cards: Starter (outline), Pro (scale-105, gradient, Most Popular badge), Enterprise.
-2. TESTIMONIALS — 3 cards grid-cols-3, large ❝ quote mark, testimonial, avatar initials, name+role.
-3. CTA BANNER — rounded-3xl gradient primary→secondary, dot grid overlay, centered headline+button.
-4. CONTACT — id="contact", grid lg:grid-cols-2. LEFT: contact details with icons. RIGHT: .glass form card.
+1. PRICING — 3 cards: Starter (outline), Pro (scale-105, gradient, Most Popular badge), Enterprise. Container: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20. py-28.
+2. TESTIMONIALS — 3 cards grid-cols-3, large ❝ quote mark, testimonial, avatar initials, name+role. py-28.
+3. CTA BANNER — rounded-3xl gradient primary→secondary, dot grid overlay, centered headline+button. max-w-6xl mx-auto.
+4. CONTACT — id="contact", grid lg:grid-cols-2. LEFT: contact details with Lucide icons (<i data-lucide="mail" class="w-5 h-5"></i>, <i data-lucide="phone">, <i data-lucide="map-pin">). RIGHT: .glass form card. Container: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20. py-28.
 
-⚠️ NO noise overlays anywhere.`;
+⚠️ NO noise overlays. NO emoji — use Lucide icons only.`;
 }

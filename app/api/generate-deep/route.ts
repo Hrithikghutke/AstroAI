@@ -945,15 +945,25 @@ export async function POST(req: Request) {
               });
               pageResults.push({ status: "fulfilled", value: r });
             } catch (err: any) {
-              console.error(
-                `[Page ${pageId}] Sequential failed:`,
-                err?.message,
-              );
-              push("DEVELOPER_FIX", {
-                stepId: `page-${pageId}`,
-                message: `⚠ ${pageLabel} page failed`,
-              });
-              pageResults.push({ status: "rejected", reason: err });
+              console.warn(`[Page ${pageId}] First attempt failed — retrying after 3s`);
+              await delay(3000);
+              try {
+                const retry = await silentStream(
+                  getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
+                  `Generate the complete ${pageLabel} page section.`,
+                  budgets.page,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                );
+                pushProgressiveHtml(pageId, validatePageSection(retry.content, pageId));
+                push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `✓ ${pageLabel} page complete (retry)` });
+                pageResults.push({ status: "fulfilled", value: retry });
+              } catch (retryErr: any) {
+                console.error(`[Page ${pageId}] Retry also failed:`, retryErr?.message);
+                push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `⚠ ${pageLabel} page failed` });
+                pageResults.push({ status: "rejected", reason: retryErr });
+              }
             }
           }
           // Footer — always last for DeepSeek
@@ -1034,6 +1044,38 @@ export async function POST(req: Request) {
               }),
           );
           pageResults = await Promise.allSettled(parallelPageCalls);
+
+          // ── Retry any failed pages ──
+          const failedIndexes = architect.pages
+            .map((pageId, i) => ({ pageId, i }))
+            .filter(({ i }) => pageResults[i]?.status === "rejected");
+
+          if (failedIndexes.length > 0) {
+            console.warn(`[Retry] ${failedIndexes.length} pages failed — retrying: ${failedIndexes.map(f => f.pageId).join(", ")}`);
+            await delay(2000);
+            const retryResults = await Promise.allSettled(
+              failedIndexes.map(({ pageId, i }) => {
+                const pageLabel = architect.pageLabels[i];
+                const heroUrl = pageId === "home" ? heroImageUrl : undefined;
+                return silentStream(
+                  getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
+                  `Generate the complete ${pageLabel} page section.`,
+                  budgets.page,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                  callTimeout,
+                ).then((r) => {
+                  pushProgressiveHtml(pageId, validatePageSection(r.content, pageId));
+                  push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `✓ ${pageLabel} page complete (retry)` });
+                  return r;
+                });
+              })
+            );
+            // Patch retried results back into pageResults
+            failedIndexes.forEach(({ i }, retryIndex) => {
+              pageResults[i] = retryResults[retryIndex];
+            });
+          }
         }
 
         // Log results for debugging
@@ -1156,7 +1198,7 @@ export async function POST(req: Request) {
         // For single page — remove .page class so content is always visible
         // In multipage .page { display:none } hides everything until showPage() runs
         // In single page there's no routing so content must always be visible
-        const finalHtml = isSinglePage
+        let finalHtml = isSinglePage
           ? htmlOutput
               .replace(
                 /(<section[^>]*)\bclass="([^"]*\b)page\b([^"]*)"/g,
@@ -1164,6 +1206,21 @@ export async function POST(req: Request) {
               )
               .replace(/(<section[^>]*)class="page"/g, '$1class=""')
           : htmlOutput;
+
+          // ── Post-assembly: check all architect pages are present ──
+        const missingPages = architect.pages.filter(
+          pageId => !finalHtml.includes(`id="page-${pageId}"`)
+        );
+        if (missingPages.length > 0) {
+          console.warn(`[Assembly] Missing pages after assembly: ${missingPages.join(", ")} — injecting placeholders`);
+          // Inject a visible placeholder so nav links don't go blank
+          const placeholders = missingPages.map(pageId => {
+            const label = architect.pageLabels[architect.pages.indexOf(pageId)];
+            return `\n<section id="page-${pageId}" class="page"><div class="min-h-screen flex items-center justify-center py-40"><div class="text-center opacity-50"><p class="font-display text-3xl font-bold mb-4">${label}</p><p class="text-white/40 text-sm">This page could not be generated. Please regenerate.</p></div></div></section>`;
+          }).join("");
+          // Insert placeholders before </main>
+          finalHtml = finalHtml.replace("</main>", placeholders + "\n</main>");
+        }
 
         // Quality check log
         const pageCount = (finalHtml.match(/id="page-/g) || []).length;

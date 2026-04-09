@@ -471,10 +471,10 @@ CSS GUIDELINES:
 - Match the themeStyle "${themeStyleUsed}" — ${themeStyleUsed === "bold" ? "high contrast, punchy, strong shadows" : themeStyleUsed === "minimal" ? "subtle, refined, lots of whitespace" : themeStyleUsed === "glassmorphism" ? "frosted glass, glowing borders, translucent cards" : themeStyleUsed === "elegant" ? "sophisticated, gold accents, serif-friendly" : "professional, clean, trust-building"}
 - Background is ${isDarkTheme ? "dark (#0a0a0a)" : "light (#ffffff)"}
 FONT GUIDELINES:
-- Choose a TWO-FONT pairing: one display font for headings, one body font for everything else
-- fontUrl: single Google Fonts CSS2 URL loading BOTH fonts e.g. "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;600&display=swap"
-- displayFamily: the display font CSS value e.g. "'Playfair Display', serif"
-- bodyFamily: the body font CSS value e.g. "'Lato', sans-serif"
+- Choose a TWO-FONT pairing from the approved Fontshare pairs below. Use Fontshare CDN as primary.
+- fontUrl: CDN link(s) loading BOTH fonts. Can be a single Fontshare URL or Fontshare + Google Fonts combo.
+- displayFamily: the display font CSS value e.g. "'Clash Display', sans-serif"
+- bodyFamily: the body font CSS value e.g. "'Archivo', sans-serif"
 - CRITICAL: Your CSS output MUST include these exact rules so fonts apply correctly:
     body, nav, footer, p, a, button, li, input, textarea, label { font-family: <bodyFamily>; }
     h1, h2, h3, h4, h5, h6 { font-family: <displayFamily>; }
@@ -485,14 +485,24 @@ FONT GUIDELINES:
   This is required because the preview environment uses a CSS framework that overrides font-weight without !important.
 - Never target span elements with a font-family rule — spans must inherit from their parent element.
   Replace <bodyFamily> and <displayFamily> with your chosen values. These rules must be at the TOP of your CSS, before any other rules.
-- Font pairings by themeStyle:
-  - elegant: Playfair Display + Lato — sophisticated serif headings, clean body
-  - minimal: Cormorant Garamond + DM Sans — OR Fraunces + Inter
-  - bold: Oswald + Inter — OR Bebas Neue + Roboto
-  - glassmorphism: Syne + Outfit — OR Space Grotesk + Inter
-  - corporate: Merriweather + Nunito Sans — OR DM Serif Display + Inter
-- Always adapt to the business type too — a law firm gets different fonts than a gym
+- APPROVED FONT PAIRINGS by business type (use Fontshare CDN format: https://api.fontshare.com/v2/css?f[]=font-name@weights&display=swap):
+  - SaaS/tech/startup: Clash Display + Archivo  OR  Outfit + Switzer  OR  Archivo + Satoshi
+  - Law/finance/VC: Satoshi + General Sans  OR  Cabinet Grotesk + Satoshi
+  - Gym/sports/events: Khand + Hind  OR  Stardom + Satoshi
+  - Restaurant high-end/hotel: Zodiak + Switzer  OR  Boska + General Sans  OR  Sentient + Supreme
+  - Restaurant casual/cafe: Pally + Neco  OR  Chubbo + Supreme
+  - Construction/engineering: Khand + Hind  OR  JetBrains Mono + General Sans  OR  Tanker + Bespoke Serif
+  - Agency/creative: Outfit + Switzer  OR  Amulya + Synonym
+  - Medical/corporate: Switzer + Satoshi  OR  Cabinet Grotesk + Satoshi
+  - Real estate: Sentient + Supreme  OR  Zodiak + Switzer
 - The bodyFamily must always be highly readable at small sizes — never use a decorative font for body
+- Fontshare CDN example: "https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500&display=swap"
+- Google Fonts fallback example: "https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&family=Hind:wght@400;500&display=swap"
+
+ICON GUIDELINES:
+- Include Lucide Icons CDN in your JS initialization: add a script tag for "https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"
+- After DOMContentLoaded, call: if(typeof lucide!=='undefined')lucide.createIcons();
+- The layout JSON may use emoji icons — these should be treated as visual placeholders only. The Lucide library is available at runtime.
 
 JS GUIDELINES:
 - Always wrap everything in: document.addEventListener('DOMContentLoaded', function() { ... });

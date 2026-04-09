@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARVC Capitals | Institutional Venture Capital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+    <script defer="" src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <link href="https://api.fontshare.com/v2/css?f[]=sentient@400,500,700&amp;display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=supreme@400,500&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#C9A84C',
+                        secondary: '#8B7D3F',
+                        surface: '#1A1917',
+                    },
+                    fontFamily: {
+                        display: ['Sentient', 'serif'],
+                        body: ['Supreme', 'sans-serif'],
+                        mono: ['Geist Mono', 'monospace'],
+                    },
+                    keyframes: {
+                        'marquee': {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-100%)' }
+                        },
+                        'orb-float': {
+                            '0%, 100%': { transform: 'translateY(0) scale(1)' },
+                            '50%': { transform: 'translateY(-20px) scale(1.05)' }
+                        },
+                        'fade-in': {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+                        'marquee': 'marquee 40s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Supreme', sans-serif; background-color: #0D0C0A; color: #E8E4DC; }
+        .font-display { font-family: 'Sentient', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+        .font-mono-ui { font-family: 'Geist Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.75rem; }
+        .glass { background: rgba(26, 25, 23, 1); border: 1px solid rgba(255,255,255,0.08); }
+        .page { display: none; }
+        .nav-link { position: relative; transition: color 0.4s ease; }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 1px; bottom: -2px; left: 0; background-color: #C9A84C; transition: width 0.4s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .btn-brutalist { border-radius: 0 !important; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; transition: all 0.3s ease; }
+        .border-gold-glow:hover { border-color: #C9A84C; box-shadow: 0 0 15px rgba(201, 168, 76, 0.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0D0C0A; }
+        ::-webkit-scrollbar-thumb { background: #1A1917; border: 1px solid #C9A84C20; }
+    </style>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Design a dark, high-end venture capital firm website called ARVC Capitals with the following specifications BRAND  VISUAL IDENTITY Color palette Near-bl">
+  <meta name="keywords" content="design, venture, capital, called, capitals, following, specifications, brand, visual, identity">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="ARVC Capitals">
+
+  <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ARVC Capitals">
+  <meta property="og:description" content="Design a dark, high-end venture capital firm website called ARVC Capitals with the following specifications BRAND  VISUAL IDENTITY Color palette Near-bl">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1587620931276-d97f425f62b9?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w4ODUwMTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzU3MjY0Mjh8&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ARVC Capitals">
+  <meta name="twitter:description" content="Design a dark, high-end venture capital firm website called ARVC Capitals with the following specifications BRAND  VISUAL IDENTITY Color palette Near-bl">
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1587620931276-d97f425f62b9?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w4ODUwMTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzU3MjY0Mjh8&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080">
+</head>
+<body x-data="{ open: false, scrolled: false }" @scroll.window="scrolled = (window.pageYOffset &gt; 20)">
+
+<script>
+function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+    var el=document.getElementById('page-'+id);
+    if(el){
+        el.style.display='block';
+        window.scrollTo(0,0);
+        lucide.createIcons();
+    } else {
+        showPage('home');
+    }
+}
+window.addEventListener('hashchange', function(){ showPage(window.location.hash.slice(1)||'home'); });
+window.addEventListener('load', function(){ 
+    showPage(window.location.hash.slice(1)||'home');
+    lucide.createIcons();
+});
+</script>
+
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/5 transition-all duration-500" :style="scrolled ? 'background:rgba(13,12,10,0.98)' : 'background:rgba(13,12,10,0.93)'">
+    <div class="max-w-7xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="#home" class="flex items-center gap-3 group">
+            <div class="w-6 h-6 bg-primary flex items-center justify-center" style="clip-path: polygon(50% 0%, 0% 100%, 100% 100%);"></div>
+            <span class="font-display text-xl tracking-tighter text-white uppercase">ARVC <span class="text-primary/80">Capitals</span></span>
+        </a>
+
+        <!-- Desktop Nav -->
+        <div class="hidden lg:flex items-center gap-10">
+            <a href="#portfolio" class="nav-link font-mono-ui text-white/60 hover:text-white">Portfolio</a>
+            <a href="#thesis" class="nav-link font-mono-ui text-white/60 hover:text-white">Thesis</a>
+            <a href="#process" class="nav-link font-mono-ui text-white/60 hover:text-white">Process</a>
+            <a href="#team" class="nav-link font-mono-ui text-white/60 hover:text-white">Team</a>
+        </div>
+
+        <!-- Desktop Actions -->
+        <div class="hidden lg:flex items-center gap-6">
+            <a href="#fund" class="font-mono-ui text-white/40 hover:text-primary transition-colors">[ VIEW FUND ]</a>
+            <a href="#contact" class="btn btn-outline border-white/20 text-white btn-sm px-6 rounded-none font-mono-ui hover:bg-white hover:text-black hover:border-white transition-all">
+                Apply Now
+            </a>
+        </div>
+
+        <!-- Mobile Toggle -->
+        <button class="lg:hidden text-white" @click="open = !open">
+            <i data-lucide="menu" x-show="!open"></i>
+            <i data-lucide="x" x-show="open"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="lg:hidden fixed inset-0 z-40 flex flex-col pt-24 px-8" style="background:#0D0C0A">
+        <div class="flex flex-col gap-8">
+            <a href="#portfolio" @click="open=false" class="text-3xl font-display text-white">Portfolio</a>
+            <a href="#thesis" @click="open=false" class="text-3xl font-display text-white">Thesis</a>
+            <a href="#process" @click="open=false" class="text-3xl font-display text-white">Process</a>
+            <a href="#team" @click="open=false" class="text-3xl font-display text-white">Team</a>
+            <div class="h-px bg-white/10 my-4"></div>
+            <a href="#fund" @click="open=false" class="font-mono-ui text-primary">[ VIEW FUND ]</a>
+            <a href="#contact" @click="open=false" class="btn btn-primary rounded-none">Apply Now</a>
+        </div>
+    </div>
+</nav>
+<main>
+<section id="page-home" class="page">
+
+<!-- CC:hero -->
+<section class="relative pt-32 pb-0 min-h-screen grid lg:grid-cols-2 items-center bg-[#0d0c0a]">
+  <!-- Left: Text panel -->
+  <div class="flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-24 py-12 lg:py-32 fade-in">
+    <div class="flex items-center gap-3 mb-8">
+        <span class="font-mono-ui text-white/30">■ /000/ MANIFESTO</span>
+    </div>
+    <h1 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight mb-8">
+      Back founders before the market sees them. <span class="text-primary">ARVC Capitals.</span>
+    </h1>
+    <p class="text-white/60 text-lg max-w-lg mb-12 leading-relaxed font-normal">
+      €420M deployed across 47 companies. 3.8× MOIC. We lead, we don't follow.
+    </p>
+    <div class="flex flex-wrap gap-6 items-center">
+      <a href="#contact" class="btn-brutalist inline-flex items-center justify-center h-14 px-10 bg-white text-black text-sm border border-white hover:bg-primary hover:border-primary transition-all duration-700">Apply Now</a>
+      <a href="#contact" class="font-mono-ui text-white/80 hover:text-primary transition-colors">[ VIEW PORTFOLIO ]</a>
+    </div>
+  </div>
+
+  <!-- Right: Portfolio Panel -->
+  <div class="relative h-full min-h-[600px] flex items-center justify-center lg:justify-end lg:pr-20 px-8 py-20 lg:py-0">
+    <!-- Background Image with Cinematic Overlay -->
+    <div class="absolute inset-0 z-0">
+        <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1080&amp;q=80" alt="Venture Capital" class="w-full h-full object-cover opacity-40 grayscale">
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0d0c0a] via-[#0d0c0a]/80 to-transparent"></div>
+    </div>
+
+    <!-- Portfolio Card -->
+    <div class="glass relative z-10 w-full max-w-md border border-white/10 p-1 shadow-2xl fade-in">
+        <div class="bg-surface p-6">
+            <div class="flex justify-between items-center mb-8">
+                <span class="font-mono-ui text-white/90">PORTFOLIO / ACTIVE</span>
+                <i data-lucide="more-horizontal" class="w-4 h-4 text-white/40"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <!-- Row 1 (Active State) -->
+                <div class="flex items-center justify-between p-4 border-l-2 border-primary bg-white/5">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-primary/20 flex items-center justify-center font-display text-primary text-sm">N</div>
+                        <div>
+                            <div class="text-sm font-bold">Nexus Defense</div>
+                            <div class="font-mono-ui text-[10px] text-white/40">DEFENSE</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-white">+412%</div>
+                        <div class="flex justify-end"><div class="w-1.5 h-1.5 rounded-full bg-green-500"></div></div>
+                    </div>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="flex items-center justify-between p-4 border-l-2 border-transparent hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white/10 flex items-center justify-center font-display text-white/60 text-sm">V</div>
+                        <div>
+                            <div class="text-sm font-bold">Vertex Climate</div>
+                            <div class="font-mono-ui text-[10px] text-white/40">CLIMATE</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-white">+185%</div>
+                        <div class="flex justify-end"><div class="w-1.5 h-1.5 rounded-full bg-green-500"></div></div>
+                    </div>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="flex items-center justify-between p-4 border-l-2 border-transparent hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white/10 flex items-center justify-center font-display text-white/60 text-sm">M</div>
+                        <div>
+                            <div class="text-sm font-bold">Meridian Sys</div>
+                            <div class="font-mono-ui text-[10px] text-white/40">INFRASTRUCTURE</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-white/40">SERIES B</div>
+                        <div class="flex justify-end"><div class="w-1.5 h-1.5 rounded-full bg-amber-500"></div></div>
+                    </div>
+                </div>
+
+                <!-- Row 4 -->
+                <div class="flex items-center justify-between p-4 border-l-2 border-transparent hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white/10 flex items-center justify-center font-display text-white/60 text-sm">A</div>
+                        <div>
+                            <div class="text-sm font-bold">Axon AI</div>
+                            <div class="font-mono-ui text-[10px] text-white/40">AI / ML</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-white">+340%</div>
+                        <div class="flex justify-end"><div class="w-1.5 h-1.5 rounded-full bg-green-500"></div></div>
+                    </div>
+                </div>
+
+                <!-- Row 5 -->
+                <div class="flex items-center justify-between p-4 border-l-2 border-transparent hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-white/10 flex items-center justify-center font-display text-white/60 text-sm">Q</div>
+                        <div>
+                            <div class="text-sm font-bold">Quartz Pay</div>
+                            <div class="font-mono-ui text-[10px] text-white/40">FINTECH</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-white/40">SERIES A</div>
+                        <div class="flex justify-end"><div class="w-1.5 h-1.5 rounded-full bg-green-500"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Bottom Ticker -->
+  <div class="absolute bottom-0 left-0 w-full border-t border-white/10 py-4 bg-[#0d0c0a] z-20">
+      <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 font-mono-ui text-[10px] text-white/30 flex justify-between items-center">
+          <span>BACKED BY 6 INSTITUTIONAL LPS</span>
+          <span class="hidden sm:inline">//</span>
+          <span>AVERAGE CHECK €8M–€15M</span>
+      </div>
+  </div>
+</section><!-- /CC:hero -->
+
+<!-- CC:social-proof -->
+<section class="py-12 border-b border-white/5">
+  <p class="text-center font-mono-ui text-[10px] text-white/30 mb-8 tracking-[0.4em]">Strategic LP Network</p>
+  <div class="overflow-hidden" style="mask-image:linear-gradient(to right,transparent,black 15%,black 85%,transparent)">
+    <div class="flex gap-16 animate-marquee whitespace-nowrap">
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">TEMASEK</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">NORGES BANK</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">BRIDGEPOINT</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">EURAZEO</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">SOFINA</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">AXION</span>
+      <!-- Duplicate for loop -->
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">TEMASEK</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">NORGES BANK</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">BRIDGEPOINT</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">EURAZEO</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">SOFINA</span>
+      <span class="font-display font-bold tracking-tight text-2xl text-white/20">AXION</span>
+    </div>
+  </div>
+</section><!-- /CC:social-proof -->
+
+<!-- CC:stats -->
+<section class="border-b border-white/5 py-24 bg-[#0d0c0a]">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-0 md:divide-x md:divide-white/10">
+    <div class="text-center px-4 fade-in">
+      <div class="font-display font-bold text-4xl lg:text-5xl text-primary">€420M</div>
+      <div class="font-mono-ui text-[10px] text-white/35 mt-4">Capital deployed</div>
+    </div>
+    <div class="text-center px-4 fade-in">
+      <div class="font-display font-bold text-4xl lg:text-5xl text-primary">47</div>
+      <div class="font-mono-ui text-[10px] text-white/35 mt-4">Active Portfolio</div>
+    </div>
+    <div class="text-center px-4 fade-in">
+      <div class="font-display font-bold text-4xl lg:text-5xl text-primary">3.8×</div>
+      <div class="font-mono-ui text-[10px] text-white/35 mt-4">Average MOIC</div>
+    </div>
+    <div class="text-center px-4 fade-in">
+      <div class="font-display font-bold text-4xl lg:text-5xl text-primary">12%</div>
+      <div class="font-mono-ui text-[10px] text-white/35 mt-4">Acceptance Rate</div>
+    </div>
+  </div>
+</section><!-- /CC:stats -->
+
+<!-- CC:features-preview -->
+<section class="py-28 bg-[#0d0c0a]">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20">
+    <div class="mb-20 fade-in">
+      <span class="text-primary font-mono-ui mb-4 block">Our Process</span>
+      <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl max-w-2xl leading-tight">We build unit economics that survive downturns.</h2>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div class="group fade-in">
+        <div class="mb-8 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&amp;q=80" alt="Thesis" class="w-full h-48 object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
+        </div>
+        <div class="font-mono-ui text-primary mb-4">01 / THESIS</div>
+        <h3 class="font-display font-semibold text-xl mb-4">Deep Diligence</h3>
+        <p class="text-white/60 text-base leading-relaxed">We invest in infrastructure and defense—not noise. Every check aligns to a 5-year thesis stress-tested by sector experts.</p>
+      </div>
+
+      <div class="group fade-in">
+        <div class="mb-8 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600&amp;q=80" alt="Network" class="w-full h-48 object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
+        </div>
+        <div class="font-mono-ui text-primary mb-4">02 / NETWORK</div>
+        <h3 class="font-display font-semibold text-xl mb-4">Operator Access</h3>
+        <p class="text-white/60 text-base leading-relaxed">Direct access to 200+ operating partners who unblock customer acquisition and technical hiring at peak velocity.</p>
+      </div>
+
+      <div class="group fade-in">
+        <div class="mb-8 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?w=600&amp;q=80" alt="Capital" class="w-full h-48 object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
+        </div>
+        <div class="font-mono-ui text-primary mb-4">03 / CAPITAL</div>
+        <h3 class="font-display font-semibold text-xl mb-4">Follow-on Reserve</h3>
+        <p class="text-white/60 text-base leading-relaxed">We reserve 30% of our fund for follow-on rounds, ensuring our founders scale without constant fundraising pressure.</p>
+      </div>
+    </div>
+  </div>
+</section><!-- /CC:features-preview -->
+
+<!-- CC:testimonials -->
+<section class="py-28 border-t border-white/5 bg-[#0d0c0a]">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20">
+    <div class="grid lg:grid-cols-2 gap-16 items-start">
+      <div class="fade-in">
+        <span class="text-primary font-mono-ui mb-4 block">Founder Voice</span>
+        <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl mb-8">Institutional trust. Early-stage speed.</h2>
+        <div class="flex gap-4">
+            <button class="w-12 h-12 border border-white/10 flex items-center justify-center hover:border-primary transition-colors"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+            <button class="w-12 h-12 border border-white/10 flex items-center justify-center hover:border-primary transition-colors"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        </div>
+      </div>
+      
+      <div class="glass p-12 relative fade-in">
+        <i data-lucide="quote" class="w-12 h-12 text-primary opacity-20 absolute top-8 right-8"></i>
+        <p class="text-xl text-white/80 font-normal leading-relaxed italic mb-10">
+          "ARVC led our Series A when we had zero revenue. Eighteen months later, we hit €8.4M ARR. Their operator network unlocked three enterprise pilots that defined our trajectory."
+        </p>
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/5 flex items-center justify-center font-display text-primary">HB</div>
+          <div>
+            <div class="text-sm font-bold">Helena Bergström</div>
+            <div class="font-mono-ui text-xs text-white/40">CEO, Meridian Systems</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section><!-- /CC:testimonials -->
+
+<!-- CC:cta-banner -->
+<section class="py-28 bg-[#0d0c0a]">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20">
+    <div class="relative overflow-hidden bg-primary p-12 lg:p-24 text-center">
+      <!-- Minimal texture -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, black 1px, transparent 0); background-size: 32px 32px;"></div>
+      
+      <div class="relative z-10">
+        <h2 class="font-display font-bold text-4xl md:text-6xl text-black mb-8">Ready to move fast.</h2>
+        <p class="text-black/70 text-lg max-w-xl mx-auto mb-12 font-medium">We review applications weekly. Founders typically hear back within 10 business days.</p>
+        <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <a href="#contact" class="btn-brutalist h-14 px-12 bg-black text-white hover:bg-zinc-900 transition-all flex items-center justify-center">Submit Application</a>
+          <a href="#contact" class="font-mono-ui text-black font-bold border-b border-black pb-1 hover:opacity-60 transition-opacity">Request LP Deck</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section><!-- /CC:cta-banner -->
+
+</section><!-- end page-home -->
+<section id="page-portfolio" class="page">
+
+<!-- CC:page-hero -->
+<div class="pt-40 pb-16 bg-[#0D0C0A]">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="fade-in">
+            <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-6 block">■ /001/ Portfolio</span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.05] mb-8">
+                Backing the architects of <span class="text-primary">tomorrow's infrastructure.</span>
+            </h1>
+            <p class="text-base md:text-lg leading-relaxed text-white/60 max-w-2xl">
+                We concentrate capital into high-conviction positions. Our portfolio represents a disciplined selection of founders solving hard problems across deep tech, defense, and sovereign fintech.
+            </p>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-hero -->
+
+<!-- CC:main-content-1 -->
+<div class="py-28 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+            <div class="max-w-xl">
+                <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-white/40 mb-4 block">Selection</span>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1]">Active Positions</h2>
+            </div>
+            <div class="flex gap-4 font-mono-ui text-[10px]">
+                <span class="px-3 py-1 border border-white/20 text-white/40">[ ALL SECTORS ]</span>
+                <span class="px-3 py-1 border border-primary text-primary">[ HIGH GROWTH ]</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-px bg-white/10 border border-white/10">
+            <!-- Project Row 1 -->
+            <div class="glass p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-surface/80 transition-all duration-700 group">
+                <div class="flex items-center gap-8 mb-6 md:mb-0">
+                    <div class="w-16 h-16 bg-white/5 flex items-center justify-center text-2xl font-display border border-white/10 group-hover:border-primary/50 transition-colors">V</div>
+                    <div>
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-1">Vanguard Defense</h3>
+                        <p class="text-sm text-white/40 font-mono-ui tracking-wider uppercase">Applied Robotics / Defense</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8 w-full md:w-auto text-left md:text-right">
+                    <div>
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">STAGE</span>
+                        <span class="text-sm text-white/80">Series B</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">ENTRY</span>
+                        <span class="text-sm text-white/80">2021</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">PERFORMANCE</span>
+                        <span class="text-sm text-white font-medium">+412%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Row 2 -->
+            <div class="glass p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-surface/80 transition-all duration-700 group">
+                <div class="flex items-center gap-8 mb-6 md:mb-0">
+                    <div class="w-16 h-16 bg-white/5 flex items-center justify-center text-2xl font-display border border-white/10 group-hover:border-primary/50 transition-colors">K</div>
+                    <div>
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-1">Krypton OS</h3>
+                        <p class="text-sm text-white/40 font-mono-ui tracking-wider uppercase">Cloud Infrastructure</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8 w-full md:w-auto text-left md:text-right">
+                    <div>
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">STAGE</span>
+                        <span class="text-sm text-white/80">Seed</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">ENTRY</span>
+                        <span class="text-sm text-white/80">2023</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">PERFORMANCE</span>
+                        <span class="text-sm text-white font-medium">+185%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Row 3 -->
+            <div class="glass p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between hover:bg-surface/80 transition-all duration-700 group">
+                <div class="flex items-center gap-8 mb-6 md:mb-0">
+                    <div class="w-16 h-16 bg-white/5 flex items-center justify-center text-2xl font-display border border-white/10 group-hover:border-primary/50 transition-colors">A</div>
+                    <div>
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-1">Aethel Energy</h3>
+                        <p class="text-sm text-white/40 font-mono-ui tracking-wider uppercase">Sovereign Grid / Climate</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8 w-full md:w-auto text-left md:text-right">
+                    <div>
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">STAGE</span>
+                        <span class="text-sm text-white/80">Series A</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">ENTRY</span>
+                        <span class="text-sm text-white/80">2022</span>
+                    </div>
+                    <div class="hidden md:block">
+                        <span class="block text-[10px] font-mono-ui text-white/30 mb-1">PERFORMANCE</span>
+                        <span class="text-sm text-white font-medium">+340%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-1 -->
+
+<!-- CC:main-content-2 -->
+<div class="py-28 bg-[#0D0C0A]">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+            <div class="sticky top-40">
+                <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-6 block">■ Investment Thesis</span>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-8">Concentrated conviction over broad diversification.</h2>
+                <p class="text-base leading-relaxed text-white/60 mb-10">
+                    We don't play the numbers game. We lead rounds in companies where we have a unique technological or geopolitical edge. Our portfolio is intentionally lean, allowing us to deploy massive operational support to every founder we back.
+                </p>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4 p-6 glass border-l-2 border-l-primary/50">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-white/40 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-display font-semibold mb-1">National Security</h3>
+                            <p class="text-sm text-white/50">Protecting sovereign interests through dual-use technology and supply chain resilience.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-6 glass">
+                        <i data-lucide="zap" class="w-6 h-6 text-white/40 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-display font-semibold mb-1">Energy Independence</h3>
+                            <p class="text-sm text-white/50">Decentralizing power generation and storage for a post-carbon economy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-8">
+                <div class="relative aspect-[4/5] overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0D0C0A] via-transparent to-transparent z-10"></div>
+                    <img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&amp;fit=crop&amp;q=80&amp;w=800" alt="Tech Infrastructure" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100">
+                    <div class="absolute bottom-8 left-8 z-20">
+                        <span class="font-mono-ui text-[10px] text-primary mb-2 block tracking-widest">REAL ASSETS</span>
+                        <h3 class="text-2xl font-display font-bold">Industrial Automation</h3>
+                    </div>
+                </div>
+                <div class="relative aspect-[4/5] overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0D0C0A] via-transparent to-transparent z-10"></div>
+                    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&amp;fit=crop&amp;q=80&amp;w=800" alt="Satellite Data" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 scale-105 group-hover:scale-100">
+                    <div class="absolute bottom-8 left-8 z-20">
+                        <span class="font-mono-ui text-[10px] text-primary mb-2 block tracking-widest">AEROSPACE</span>
+                        <h3 class="text-2xl font-display font-bold">Orbital Logistics</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-2 -->
+
+<!-- CC:page-cta -->
+<div class="py-28">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="relative bg-gradient-to-br from-surface to-[#0D0C0A] p-12 md:p-20 border border-white/10 overflow-hidden">
+            <div class="relative z-10 text-center max-w-3xl mx-auto">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-8">
+                    Building the foundation of the next century?
+                </h2>
+                <p class="text-lg text-white/60 mb-10">
+                    We review proposals on a rolling basis. ARVC Capitals is looking for technical founders with a bias toward action.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <a href="#contact" class="px-8 py-4 bg-primary text-black font-mono-ui text-sm font-bold tracking-widest hover:bg-white transition-colors w-full sm:w-auto">
+                        SUBMIT THESIS
+                    </a>
+                    <a href="#contact" class="px-8 py-4 border border-white/20 hover:border-primary font-mono-ui text-sm tracking-widest transition-all w-full sm:w-auto">
+                        [ VIEW CRITERIA ]
+                    </a>
+                </div>
+            </div>
+            <!-- Background Decorative Element -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32"></div>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-cta -->
+
+</section><!-- end page-portfolio -->
+<section id="page-thesis" class="page">
+
+<!-- CC:page-hero -->
+<div class="pt-40 pb-16 bg-[#0D0C0A]">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="fade-in">
+            <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-6 block">/ 001 / Investment Thesis</span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.05] mb-8">
+                Investing in the <span class="text-primary">Asymmetric</span> edge of technical founders.
+            </h1>
+            <p class="text-lg md:text-xl text-white/60 max-w-2xl font-normal leading-relaxed">
+                We believe the next decade of value creation belongs to those solving hard engineering problems at the intersection of sovereign infrastructure and intelligence.
+            </p>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-hero -->
+
+<!-- CC:main-content-1 -->
+<div class="py-28 bg-[#0D0C0A] border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <div class="fade-in">
+                <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-white/40 mb-4 block">Core Principles</span>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-10">The ARVC Framework</h2>
+                <div class="space-y-12">
+                    <div class="border-b border-white/10 pb-8 hover:border-primary/40 transition-colors duration-700 group">
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-3 group-hover:text-white transition-colors">01. Technical Moats</h3>
+                        <p class="text-base text-white/60 font-normal">We prioritize companies where the primary advantage is a breakthrough in engineering or science, not just a superior go-to-market strategy.</p>
+                    </div>
+                    <div class="border-b border-white/10 pb-8 hover:border-primary/40 transition-colors duration-700 group">
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-3 group-hover:text-white transition-colors">02. Sovereign Systems</h3>
+                        <p class="text-base text-white/60 font-normal">We back founders building defense, energy, and financial rails that ensure institutional autonomy and resilience.</p>
+                    </div>
+                    <div class="border-b border-white/10 pb-8 hover:border-primary/40 transition-colors duration-700 group">
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-3 group-hover:text-white transition-colors">03. High Conviction, Low Volume</h3>
+                        <p class="text-base text-white/60 font-normal">We only lead 4-6 deals per year. When we commit, we provide the full weight of our operational and capital network.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="relative fade-in" style="animation-delay: 0.2s;">
+                <div class="aspect-[4/5] bg-surface relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0D0C0A] via-transparent to-transparent z-10"></div>
+                    <div class="absolute inset-0 flex items-center justify-center border border-white/5">
+                        <i data-lucide="target" class="w-32 h-32 text-white/5 group-hover:text-primary/20 transition-all duration-700"></i>
+                    </div>
+                    <div class="absolute bottom-10 left-10 z-20">
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-4xl font-display font-bold text-primary">3.8×</span>
+                            <span class="text-xs font-mono-ui text-white/40 uppercase">Average MOIC</span>
+                        </div>
+                        <p class="text-sm text-white/40 mt-2 font-mono-ui tracking-wider">[ PERFORMANCE DATA Q4 2023 ]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-1 -->
+
+<!-- CC:main-content-2 -->
+<div class="py-28 bg-surface">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="mb-16 fade-in">
+            <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4 block">Verticals of Interest</span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1]">Where we deploy capital.</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 border border-white/10 fade-in">
+            <!-- Sector 1 -->
+            <div class="bg-[#0D0C0A] p-10 hover:bg-surface transition-all duration-500 group">
+                <i data-lucide="shield-check" class="w-8 h-8 text-white/40 mb-8 group-hover:text-primary transition-colors"></i>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-4">Applied Defense</h3>
+                <p class="text-sm text-white/60 leading-relaxed mb-6">Dual-use technology that bridges the gap between commercial innovation and national security requirements.</p>
+                <span class="text-[10px] font-mono-ui text-white/30 border border-white/10 px-2 py-1">CHECK SIZE: €10M+</span>
+            </div>
+            <!-- Sector 2 -->
+            <div class="bg-[#0D0C0A] p-10 hover:bg-surface transition-all duration-500 group">
+                <i data-lucide="zap" class="w-8 h-8 text-white/40 mb-8 group-hover:text-primary transition-colors"></i>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-4">Energy Transition</h3>
+                <p class="text-sm text-white/60 leading-relaxed mb-6">Next-generation grid software, modular fission, and high-density storage solutions for industrial scale.</p>
+                <span class="text-[10px] font-mono-ui text-white/30 border border-white/10 px-2 py-1">CHECK SIZE: €8M+</span>
+            </div>
+            <!-- Sector 3 -->
+            <div class="bg-[#0D0C0A] p-10 hover:bg-surface transition-all duration-500 group">
+                <i data-lucide="layers" class="w-8 h-8 text-white/40 mb-8 group-hover:text-primary transition-colors"></i>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-4">Core AI Infra</h3>
+                <p class="text-sm text-white/60 leading-relaxed mb-6">Foundational models and orchestration layers that prioritize data privacy and compute efficiency.</p>
+                <span class="text-[10px] font-mono-ui text-white/30 border border-white/10 px-2 py-1">CHECK SIZE: €5M+</span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-2 -->
+
+<!-- CC:page-cta -->
+<div class="py-28 bg-[#0D0C0A]">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="relative overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/5 border border-primary/20 p-12 md:p-20 text-center fade-in">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-8">
+                Building the future is a lonely pursuit.<br>Let's change that.
+            </h2>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <a href="#contact" class="btn-brutalist bg-primary text-black px-10 py-4 text-sm font-bold border border-primary hover:bg-transparent hover:text-primary transition-all duration-500">
+                    Apply for Funding
+                </a>
+                <a href="#contact" class="font-mono-ui text-white/80 hover:text-primary transition-colors duration-500">
+                    [ REQUEST INVESTOR DECK ]
+                </a>
+            </div>
+            <!-- Decorative UI -->
+            <div class="absolute top-4 left-4 font-mono-ui text-[10px] text-white/20">ARVC_CAPITALS_VER_4.0</div>
+            <div class="absolute bottom-4 right-4 font-mono-ui text-[10px] text-white/20">EST. 2018 / LONDON / BERLIN</div>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-cta -->
+
+</section><!-- end page-thesis -->
+<section id="page-process" class="page">
+
+<!-- CC:page-hero -->
+<div class="pt-40 pb-16 fade-in">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4 block">■ /002/ Methodology</span>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.05] mb-8">
+            Precision over volume. <br>
+            The <span class="text-primary">ARVC</span> selection engine.
+        </h1>
+        <p class="text-lg text-white/60 max-w-2xl leading-relaxed">
+            We don't play the spray-and-pray game. Our deployment process is built on deep technical due diligence, macroeconomic forecasting, and a relentless focus on MOIC.
+        </p>
+    </div>
+</div>
+<!-- /CC:page-hero -->
+
+<!-- CC:main-content-1 -->
+<div class="py-28 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            <div>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-6">
+                    How we deploy capital.
+                </h2>
+                <p class="text-base text-white/60 mb-12">
+                    Our investment committee operates with the speed of a startup and the rigor of an institution. Every deal passes through four distinct gates of verification.
+                </p>
+                
+                <div class="space-y-0">
+                    <div class="group py-8 border-b border-white/10 hover:border-primary/40 transition-colors">
+                        <div class="flex items-start gap-6">
+                            <span class="font-mono-ui text-white/30 pt-1">01</span>
+                            <div>
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2">Thesis Alignment</h3>
+                                <p class="text-sm text-white/50">Initial screening against our current fund focus: Deep Tech, Defense, and Sovereign Infrastructure. We ignore trends; we follow physics.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="group py-8 border-b border-white/10 hover:border-primary/40 transition-colors">
+                        <div class="flex items-start gap-6">
+                            <span class="font-mono-ui text-white/30 pt-1">02</span>
+                            <div>
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2">Technical Audit</h3>
+                                <p class="text-sm text-white/50">Our internal engineering team stress-tests the stack. We look for defensible IP and architectural resilience that scales to 100M+ users.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="group py-8 border-b border-white/10 hover:border-primary/40 transition-colors">
+                        <div class="flex items-start gap-6">
+                            <span class="font-mono-ui text-white/30 pt-1">03</span>
+                            <div>
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2">Market Logic</h3>
+                                <p class="text-sm text-white/50">Quantitative modeling of the TAM and competitive landscape. We calculate the path to a 10x return before the first check is cut.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-8 lg:p-12 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-20">
+                    <i data-lucide="layers" class="w-24 h-24"></i>
+                </div>
+                <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-white/40 mb-8 block">[ IC PROTOCOL ]</span>
+                <div class="space-y-8">
+                    <div class="flex justify-between items-end border-b border-white/5 pb-4">
+                        <span class="text-sm text-white/60">Average Diligence Period</span>
+                        <span class="text-xl font-mono-ui text-primary">14 DAYS</span>
+                    </div>
+                    <div class="flex justify-between items-end border-b border-white/5 pb-4">
+                        <span class="text-sm text-white/60">Pass Rate from Series A</span>
+                        <span class="text-xl font-mono-ui text-primary">0.42%</span>
+                    </div>
+                    <div class="flex justify-between items-end border-b border-white/5 pb-4">
+                        <span class="text-sm text-white/60">Follow-on Commitment</span>
+                        <span class="text-xl font-mono-ui text-primary">85%</span>
+                    </div>
+                    <div class="flex justify-between items-end border-b border-white/5 pb-4">
+                        <span class="text-sm text-white/60">LP Reporting Frequency</span>
+                        <span class="text-xl font-mono-ui">QUARTERLY</span>
+                    </div>
+                </div>
+                <div class="mt-12 bg-white/5 p-6 border border-white/10">
+                    <p class="text-xs font-mono-ui text-white/40 leading-relaxed uppercase">
+                        "The ARVC process is designed to eliminate bias. We prioritize hard data and technical viability over the pedigree of the founding team."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-1 -->
+
+<!-- CC:main-content-2 -->
+<div class="py-28 bg-[#11100e]">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="mb-16">
+            <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4 block">■ Post-Investment Support</span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1]">The ARVC Platform.</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10">
+            <div class="p-10 border-b md:border-b-0 md:border-r border-white/10 hover:bg-white/[0.02] transition-colors group">
+                <i data-lucide="zap" class="w-8 h-8 mb-6 text-white/40 group-hover:text-primary transition-colors"></i>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-4">Network Access</h3>
+                <p class="text-sm text-white/50 leading-relaxed">Direct lines to Fortune 500 CTOs and government procurement officers. We open doors that are usually locked.</p>
+            </div>
+            <div class="p-10 border-b md:border-b-0 md:border-r border-white/10 hover:bg-white/[0.02] transition-colors group">
+                <i data-lucide="users" class="w-8 h-8 mb-6 text-white/40 group-hover:text-primary transition-colors"></i>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-4">Talent Pipeline</h3>
+                <p class="text-sm text-white/50 leading-relaxed">Access our proprietary database of pre-vetted engineers and operators ready for the 0-to-1 phase.</p>
+            </div>
+            <div class="p-10 hover:bg-white/[0.02] transition-colors group">
+                <i data-lucide="trending-up" class="w-8 h-8 mb-6 text-white/40 group-hover:text-primary transition-colors"></i>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-4">Capital Strategy</h3>
+                <p class="text-sm text-white/50 leading-relaxed">Expert guidance on Series B/C structuring, secondary markets, and IPO readiness from our late-stage partners.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-2 -->
+
+<!-- CC:page-cta -->
+<div class="py-28">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="bg-gradient-to-br from-surface to-[#2a2824] rounded-none p-12 lg:p-20 text-center border border-white/10 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 pointer-events-none">
+                <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px]"></div>
+            </div>
+            
+            <div class="relative z-10">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-8">
+                    Ready for the next stage?
+                </h2>
+                <p class="text-base text-white/60 mb-10 max-w-xl mx-auto">
+                    If your technology challenges the status quo, we want to see the data. Our team reviews every submission within 48 hours.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="#contact" class="px-10 py-4 bg-primary text-black font-mono-ui font-bold hover:bg-white transition-all duration-500 w-full sm:w-auto">
+                        Submit Deck
+                    </a>
+                    <a href="#contact" class="px-10 py-4 border border-white/20 font-mono-ui hover:border-primary transition-all duration-500 w-full sm:w-auto">
+                        [ Contact LPs ]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-cta -->
+
+</section><!-- end page-process -->
+<section id="page-team" class="page">
+
+<!-- CC:page-hero -->
+<div class="pt-40 pb-16">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="fade-in">
+            <p class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4">■ /003/ OPERATORS</p>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.05] mb-8">
+                The architecture of <span class="text-primary">capital.</span>
+            </h1>
+            <p class="text-base md:text-lg leading-relaxed text-white/60 max-w-2xl">
+                We are not career financiers. We are former founders, engineers, and clinical researchers who understand that the hardest problems aren't solved on spreadsheets, but in the trenches of scale.
+            </p>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-hero -->
+
+<!-- CC:main-content-1 -->
+<div class="py-28 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-16 gap-x-12">
+            
+            <!-- Partner 1 -->
+            <div class="group fade-in border-b border-white/10 pb-8 hover:border-primary/40 transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]">
+                <div class="aspect-square bg-surface mb-6 flex items-center justify-center relative overflow-hidden">
+                    <span class="text-4xl font-display text-white/20 group-hover:text-primary/40 transition-colors duration-500">MK</span>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0d0c0a] to-transparent opacity-40"></div>
+                </div>
+                <p class="text-xs font-mono-ui text-white/30 mb-2">[ MANAGING PARTNER ]</p>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-3">Marcus Kahl</h3>
+                <p class="text-sm text-white/60 mb-6 font-normal">Former CTO at Valance. 15 years in distributed systems. Lead architect for our Infrastructure and Defense thesis.</p>
+                <div class="flex gap-4">
+                    <a href="#contact" class="text-white/40 hover:text-primary transition-colors"><i data-lucide="briefcase" class="w-4 h-4"></i></a>
+                    <a href="#contact" class="text-white/40 hover:text-primary transition-colors"><i data-lucide="globe" class="w-4 h-4"></i></a>
+                </div>
+            </div>
+
+            <!-- Partner 2 -->
+            <div class="group fade-in border-b border-white/10 pb-8 hover:border-primary/40 transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]">
+                <div class="aspect-square bg-surface mb-6 flex items-center justify-center relative overflow-hidden">
+                    <span class="text-4xl font-display text-white/20 group-hover:text-primary/40 transition-colors duration-500">ES</span>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0d0c0a] to-transparent opacity-40"></div>
+                </div>
+                <p class="text-xs font-mono-ui text-white/30 mb-2">[ GENERAL PARTNER ]</p>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-3">Elena Solovy</h3>
+                <p class="text-sm text-white/60 mb-6 font-normal">Ex-Goldman Principal. Specialist in late-stage liquidity and cross-border M&amp;A. Orchestrated €1.2B in exits.</p>
+                <div class="flex gap-4">
+                    <a href="#contact" class="text-white/40 hover:text-primary transition-colors"><i data-lucide="trending-up" class="w-4 h-4"></i></a>
+                    <a href="#contact" class="text-white/40 hover:text-primary transition-colors"><i data-lucide="briefcase" class="w-4 h-4"></i></a>
+                </div>
+            </div>
+
+            <!-- Partner 3 -->
+            <div class="group fade-in border-b border-white/10 pb-8 hover:border-primary/40 transition-all duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]">
+                <div class="aspect-square bg-surface mb-6 flex items-center justify-center relative overflow-hidden">
+                    <span class="text-4xl font-display text-white/20 group-hover:text-primary/40 transition-colors duration-500">JD</span>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#0d0c0a] to-transparent opacity-40"></div>
+                </div>
+                <p class="text-xs font-mono-ui text-white/30 mb-2">[ OPERATING PARTNER ]</p>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-3">Julian Drane</h3>
+                <p class="text-sm text-white/60 mb-6 font-normal">Founding Engineer at Hyperion. Scales technical organizations from 10 to 500. Head of ARVC Platform.</p>
+                <div class="flex gap-4">
+                    <a href="#contact" class="text-white/40 hover:text-primary transition-colors"><i data-lucide="layers" class="w-4 h-4"></i></a>
+                    <a href="#contact" class="text-white/40 hover:text-primary transition-colors"><i data-lucide="zap" class="w-4 h-4"></i></a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-1 -->
+
+<!-- CC:main-content-2 -->
+<div class="py-28 bg-[#11100e]">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <div class="lg:col-span-5">
+                <p class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4">■ THE ARVC NETWORK</p>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-6">Unfair advantages for our founders.</h2>
+                <p class="text-base leading-relaxed text-white/60 mb-8">
+                    Capital is a commodity. Expertise is not. Every founder we back gains immediate access to our Venture Partners—a global network of C-suite advisors and technical specialists.
+                </p>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 py-3 border-b border-white/5">
+                        <span class="text-primary font-mono-ui text-sm">01</span>
+                        <span class="text-sm font-medium">Regulatory Navigation &amp; Lobbying</span>
+                    </div>
+                    <div class="flex items-center gap-4 py-3 border-b border-white/5">
+                        <span class="text-primary font-mono-ui text-sm">02</span>
+                        <span class="text-sm font-medium">GTM Strategy &amp; Enterprise Sales</span>
+                    </div>
+                    <div class="flex items-center gap-4 py-3 border-b border-white/5">
+                        <span class="text-primary font-mono-ui text-sm">03</span>
+                        <span class="text-sm font-medium">Talent Acquisition (Series A/B)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:col-span-7 grid grid-cols-2 gap-4">
+                <div class="glass p-8 flex flex-col justify-between aspect-square">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-white/20"></i>
+                    <div>
+                        <p class="text-2xl font-display mb-1">12</p>
+                        <p class="text-xs font-mono-ui text-white/40 uppercase tracking-widest">Venture Partners</p>
+                    </div>
+                </div>
+                <div class="glass p-8 flex flex-col justify-between aspect-square">
+                    <i data-lucide="award" class="w-8 h-8 text-white/20"></i>
+                    <div>
+                        <p class="text-2xl font-display mb-1">140+</p>
+                        <p class="text-xs font-mono-ui text-white/40 uppercase tracking-widest">Years Experience</p>
+                    </div>
+                </div>
+                <div class="glass p-8 flex flex-col justify-between aspect-square">
+                    <i data-lucide="target" class="w-8 h-8 text-white/20"></i>
+                    <div>
+                        <p class="text-2xl font-display mb-1">€2.1B</p>
+                        <p class="text-xs font-mono-ui text-white/40 uppercase tracking-widest">Total Exit Value</p>
+                    </div>
+                </div>
+                <div class="glass p-8 flex flex-col justify-between aspect-square border-primary/20">
+                    <i data-lucide="star" class="text-primary w-8 h-8"></i>
+                    <div>
+                        <p class="text-2xl font-display mb-1">TOP 1%</p>
+                        <p class="text-xs font-mono-ui text-white/40 uppercase tracking-widest">Performance Tier</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-2 -->
+
+<!-- CC:page-cta -->
+<div class="py-28">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="relative overflow-hidden bg-gradient-to-br from-surface to-[#0d0c0a] border border-white/10 p-12 lg:p-20 text-center">
+            <div class="relative z-10">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-[1.1] mb-8">Build with the elite.</h2>
+                <p class="text-base text-white/60 mb-10 max-w-xl mx-auto">
+                    We review pitch decks on a rolling basis. If you are solving a hard technical problem with a clear GTM path, we want to hear from you.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <a href="#contact" class="btn-brutalist bg-primary text-black px-10 py-4 text-sm font-bold hover:bg-white transition-all w-full sm:w-auto">
+                        Apply for Funding
+                    </a>
+                    <a href="#contact" class="btn-brutalist border border-white/20 px-10 py-4 text-sm font-bold hover:border-primary transition-all w-full sm:w-auto">
+                        [ OUR THESIS ]
+                    </a>
+                </div>
+            </div>
+            <!-- Subtle background branding -->
+            <div class="absolute -bottom-20 -right-20 opacity-[0.03] pointer-events-none">
+                <i data-lucide="layers" class="w-96 h-96"></i>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-cta -->
+
+</section><!-- end page-team -->
+<section id="page-contact" class="page">
+
+<!-- CC:contact-hero -->
+<div class="pt-40 pb-20 fade-in">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <span class="font-mono-ui text-primary mb-6 block">■ /004/ INQUIRIES</span>
+        <h1 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl leading-[1.05] max-w-4xl">
+            High conviction requires <span class="text-primary">direct access.</span>
+        </h1>
+        <p class="mt-8 text-base md:text-lg text-white/60 max-w-xl">
+            We operate at the speed of the market. Whether you are an institutional LP or a founder building the next category leader, our response is decisive.
+        </p>
+    </div>
+</div>
+<!-- /CC:contact-hero -->
+
+<!-- CC:contact-form -->
+<div class="py-20 fade-in" style="animation-delay: 0.2s;">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="grid lg:grid-cols-2 gap-16 items-start">
+            
+            <div class="space-y-12">
+                <div>
+                    <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl leading-[1.1] mb-6">Connect with the partnership.</h2>
+                    <p class="text-base text-white/60 max-w-prose">
+                        Our offices are strategically positioned in global financial hubs to ensure 24/7 coverage of our portfolio’s expansion.
+                    </p>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="flex items-start gap-5">
+                        <div class="mt-1 text-white/40"><i data-lucide="mail" class="w-6 h-6"></i></div>
+                        <div>
+                            <p class="font-mono-ui text-xs text-white/30 mb-1">Electronic Correspondence</p>
+                            <p class="text-lg font-medium">partnership@arvc-capitals.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-5">
+                        <div class="mt-1 text-white/40"><i data-lucide="building" class="w-6 h-6"></i></div>
+                        <div>
+                            <p class="font-mono-ui text-xs text-white/30 mb-1">Global Headquarters</p>
+                            <p class="text-lg font-medium">Mayfair, London <br>W1J 5JD, United Kingdom</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-5">
+                        <div class="mt-1 text-white/40"><i data-lucide="phone" class="w-6 h-6"></i></div>
+                        <div>
+                            <p class="font-mono-ui text-xs text-white/30 mb-1">Direct Line</p>
+                            <p class="text-lg font-medium">+44 (0) 20 7946 0128</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-8 sm:p-10 border-b border-white/10 hover:border-primary/40 transition-colors duration-700">
+                <form action="#" method="POST" class="space-y-6">
+                    <div class="grid sm:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="font-mono-ui text-xs text-white/40">Full Name</label>
+                            <input type="text" placeholder="John Doe" class="w-full bg-white/5 border border-white/10 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-white">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="font-mono-ui text-xs text-white/40">Organization</label>
+                            <input type="text" placeholder="Venture X" class="w-full bg-white/5 border border-white/10 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-white">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-mono-ui text-xs text-white/40">Email Address</label>
+                        <input type="email" placeholder="contact@domain.com" class="w-full bg-white/5 border border-white/10 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-white">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-mono-ui text-xs text-white/40">Inquiry Type</label>
+                        <select class="w-full bg-white/5 border border-white/10 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-white/60">
+                            <option>Investor Relations</option>
+                            <option>Founder Pitch</option>
+                            <option>Press &amp; Media</option>
+                            <option>General Inquiry</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="font-mono-ui text-xs text-white/40">Message</label>
+                        <textarea rows="5" placeholder="Brief context of your inquiry..." class="w-full bg-white/5 border border-white/10 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-white resize-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-primary text-black font-mono-ui py-4 font-bold tracking-widest hover:bg-white transition-all duration-500 btn-brutalist">
+                        Transmit Inquiry
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- /CC:contact-form -->
+
+<!-- CC:contact-cta -->
+<div class="py-28 fade-in">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24">
+        <div class="relative overflow-hidden bg-gradient-to-br from-surface to-secondary/20 p-12 sm:p-20 border border-white/5">
+            <div class="relative z-10 text-center max-w-3xl mx-auto">
+                <h2 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl leading-[1.1] mb-6">Ready to scale?</h2>
+                <p class="text-white/60 text-lg mb-10">
+                    We are currently reviewing Series A and B opportunities for the Q4 deployment cycle.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+                    <a href="#contact" class="bg-primary text-black px-10 py-4 font-mono-ui font-bold hover:bg-white transition-all btn-brutalist">
+                        Submit Pitch Deck
+                    </a>
+                    <a href="#contact" class="font-mono-ui text-white/60 hover:text-primary transition-colors">
+                        [ VIEW INVESTMENT THESIS ]
+                    </a>
+                </div>
+            </div>
+            <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+        </div>
+    </div>
+</div>
+<!-- /CC:contact-cta -->
+
+</section><!-- end page-contact -->
+</main>
+<footer class="bg-black/40 border-t border-white/5 py-20 px-6">
+    <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20">
+        <div class="col-span-2 md:col-span-1">
+            <div class="flex items-center gap-2 mb-6">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-primary">
+                    <path d="M12 4L20 20H4L12 4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="bevel"></path>
+                </svg>
+                <span class="font-display font-black text-xl text-primary tracking-tighter uppercase">ARVC Capitals</span>
+            </div>
+            <p class="text-white/50 font-mono-ui mb-8 max-w-xs leading-relaxed">
+                Backing the founders who define the next epoch of industrial and digital infrastructure.
+            </p>
+            <div class="flex gap-4">
+                <a href="#" class="glass w-10 h-10 flex items-center justify-center hover:border-primary transition-colors">
+                    <i data-lucide="twitter" class="w-4 h-4 text-white"></i>
+                </a>
+                <a href="#" class="glass w-10 h-10 flex items-center justify-center hover:border-primary transition-colors">
+                    <i data-lucide="linkedin" class="w-4 h-4 text-white"></i>
+                </a>
+                <a href="#" class="glass w-10 h-10 flex items-center justify-center hover:border-primary transition-colors">
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 text-white"></i>
+                </a>
+            </div>
+        </div>
+        <div>
+            <h4 class="font-mono-ui text-white mb-6">Quick Links</h4>
+            <ul class="space-y-4 font-mono-ui text-white/40">
+                <li><a href="#" class="hover:text-primary transition-colors">Portfolio</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Thesis</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Process</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">LPs Only</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-mono-ui text-white mb-6">Company</h4>
+            <ul class="space-y-4 font-mono-ui text-white/40">
+                <li><a href="#" class="hover:text-primary transition-colors">About</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Blog</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Careers</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Contact</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-mono-ui text-white mb-6">Legal</h4>
+            <ul class="space-y-4 font-mono-ui text-white/40">
+                <li><a href="#" class="hover:text-primary transition-colors">Privacy Policy</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Terms of Service</a></li>
+                <li><a href="#" class="hover:text-primary transition-colors">Cookie Policy</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="font-mono-ui text-[10px] text-white/30">© 2024 ARVC Capitals. All rights reserved.</p>
+        <p class="font-mono-ui text-[10px] text-white/30 uppercase tracking-widest">Built with CrawlCube</p>
+        <p class="font-mono-ui text-[10px] text-white/30">EU / GLOBAL</p>
+    </div>
+</footer>
+<!-- /CC:footer -->
+
+<script>
+window.addEventListener('scroll',function(){var n=document.getElementById('navbar');if(n){var c=n.querySelector('div');if(c)c.style.background=window.scrollY>50?'#0D0C0AF5':'#0D0C0ADD';}});
+
+var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,raw=el.dataset.target,t=parseFloat(raw);if(isNaN(t)){co.unobserve(el);return;}var suffix=el.dataset.suffix||'',c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){var display=t>=1000?Math.round(t).toLocaleString():Number.isInteger(t)?t:t;el.textContent=display+(t>=100?'+':'')+suffix;clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
+
+var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.75s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.75s cubic-bezier(0.25,0.46,0.45,0.94)';fo.observe(el);});
+
+document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var menu=document.querySelector('[x-show="open"].fixed.right-0');if(!menu)return;var bg=window.getComputedStyle(menu).backgroundColor;var isTransparent=!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent';if(isTransparent)menu.style.background='#0D0C0A';},500);});
+
+lucide.createIcons();
+</script>
+
+</body></html>

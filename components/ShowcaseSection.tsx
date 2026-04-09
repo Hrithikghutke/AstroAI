@@ -28,7 +28,7 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
     categoryId: "landing",
     description: "A dark-themed, stunning official homepage showcasing AI generation powers.",
-    iframeUrl: "/CrawlCube.html"
+    iframeUrl: "showcase_html/CrawlCube.html"
   },
   {
     id: 2,
@@ -37,7 +37,16 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
     categoryId: "apps",
     description: "A highly complex, data-centric web app layout tailored for management.",
-    iframeUrl: "/mce.html"
+    iframeUrl: "showcase_html/mce.html"
+  },
+   {
+    id: 3,
+    title: "ARVC Capitals",
+    category: "Business Tools",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+    categoryId: "business",
+    description: "A highly complex, data-centric web app layout tailored for management.",
+    iframeUrl: "showcase_html/ARVC.html"
   },
  
  
