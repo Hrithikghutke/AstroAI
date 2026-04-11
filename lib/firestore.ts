@@ -106,7 +106,7 @@ export async function saveGeneration(
     siteName: deepHtml
       ? extractTitleFromHtml(deepHtml)
       : (layout?.branding?.logoText ?? "Untitled"),
-    themeStyle: layout?.themeStyle ?? "corporate",
+    themeStyle: deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate"),
     thumbnail: thumbnail ?? null,
     createdAt: serverTimestamp(),
   });

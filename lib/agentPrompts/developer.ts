@@ -282,9 +282,9 @@ GENERATE IN THIS EXACT ORDER:
 
 4. ROUTING SCRIPT — IMMEDIATELY after <body>, before navbar — no exceptions:
 <script>
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);}else{showPage('home');return;}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.style.display='none');var el=document.getElementById('page-'+id);if(el){el.style.display='block';window.scrollTo(0,0);if(window.lucide)lucide.createIcons();}else{showPage('home');return;}}
 window.addEventListener('hashchange',function(){showPage(window.location.hash.slice(1)||'home');});
-window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');});
+window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');if(window.lucide)lucide.createIcons();});
 </script>
 
 GLOBAL DESIGN PHILOSOPHY:
