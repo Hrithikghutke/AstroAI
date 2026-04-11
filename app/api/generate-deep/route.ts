@@ -185,23 +185,56 @@ function defaultArchitect(prompt: string): ArchitectOutput {
   const isGym = /(gym|fitness|workout)/i.test(prompt);
   const isConstruction = /(construction|engineering|architect|structural)/i.test(prompt);
   const isLaw = /(law|legal|attorney|lawyer)/i.test(prompt);
+  const isHotel = /(hotel|resort|hospitality)/i.test(prompt);
+  const isAgency = /(agency|marketing|creative|design)/i.test(prompt);
+  const isMedical = /(medical|health|clinic|doctor|dental)/i.test(prompt);
+  const isRealEstate = /(real estate|property|housing|realty)/i.test(prompt);
+  const monoUrl = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">`;
+
+  // Pick fonts matching the curated pairings from architect prompt
+  let display = "Satoshi", body = "General Sans";
+  let displayUrl = `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">`;
+  let bodyUrl = `<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500&display=swap" rel="stylesheet">`;
+
+  if (isFood || isHotel || isRealEstate) {
+    display = "Zodiak"; body = "Switzer";
+    displayUrl = `<link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,700&display=swap" rel="stylesheet">`;
+    bodyUrl = `<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500&display=swap" rel="stylesheet">`;
+  } else if (isTech || isAgency) {
+    display = "Clash Display"; body = "Archivo";
+    displayUrl = `<link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap" rel="stylesheet">`;
+    bodyUrl = `<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">`;
+  } else if (isGym) {
+    display = "Khand"; body = "Hind";
+    displayUrl = `<link href="https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&display=swap" rel="stylesheet">`;
+    bodyUrl = `<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500&display=swap" rel="stylesheet">`;
+  } else if (isConstruction) {
+    display = "Khand"; body = "Hind";
+    displayUrl = `<link href="https://fonts.googleapis.com/css2?family=Khand:wght@400;500;700&display=swap" rel="stylesheet">`;
+    bodyUrl = `<link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500&display=swap" rel="stylesheet">`;
+  } else if (isLaw || isMedical) {
+    display = "Satoshi"; body = "General Sans";
+    displayUrl = `<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">`;
+    bodyUrl = `<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500&display=swap" rel="stylesheet">`;
+  }
+
   return {
     brandName: "Your Brand",
     theme: "dark",
-    visualMood: isTech ? "editorial-clean" : isGym ? "bold-energy" : isConstruction ? "cinematic-dark" : isLaw ? "corporate-precision" : "cinematic-dark",
+    visualMood: isTech ? "editorial-clean" : isGym ? "bold-energy" : isConstruction ? "cinematic-dark" : isLaw ? "corporate-precision" : isFood || isHotel ? "luxury-minimal" : "cinematic-dark",
     colors: {
-      primary: isTech ? "#7C3AED" : isFood ? "#C8956C" : isGym ? "#E8FF47" : isConstruction ? "#7FA67A" : isLaw ? "#8BA3BE" : "#6366F1",
+      primary: isTech ? "#7C3AED" : isFood ? "#C8956C" : isGym ? "#E8FF47" : isConstruction ? "#7FA67A" : isLaw ? "#8BA3BE" : isHotel ? "#D4AF7A" : isRealEstate ? "#B87333" : "#6366F1",
       secondary: "#8B5CF6",
       background: "#060606",
       surface: "#0F0F0F",
     },
     fonts: {
-      display: isTech ? "Space Grotesk" : isFood ? "Cormorant Garamond" : isGym ? "Barlow Condensed" : isConstruction ? "Bebas Neue" : "Inter",
-      body: isTech ? "DM Sans" : isFood ? "Lato" : isGym ? "Barlow" : "Inter",
-      mono: isTech ? "Space Mono" : isFood ? "Roboto Mono" : isGym ? "Barlow Mono" : "Inter",
-      displayUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
-      bodyUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
-      monoUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap",
+      display,
+      body,
+      mono: "Geist Mono",
+      displayUrl,
+      bodyUrl,
+      monoUrl,
     },
     pages: [
       "home",
@@ -228,13 +261,19 @@ function extractDesignTokens(shellHtml: string): string {
     /<script>\s*tailwind\.config[\s\S]*?<\/script>/,
   );
   const styleMatch = shellHtml.match(/<style>([\s\S]*?)<\/style>/);
-  const fontMatch = shellHtml.match(/fonts\.googleapis\.com\/css2\?[^"']+/);
+
+  // Capture both Google Fonts AND Fontshare CDN URLs
+  const googleFontMatches = shellHtml.match(/fonts\.googleapis\.com\/css2\?[^"']+/g) ?? [];
+  const fontshareMatches = shellHtml.match(/api\.fontshare\.com\/v2\/css\?[^"']+/g) ?? [];
+  const allFontUrls = [...googleFontMatches, ...fontshareMatches];
 
   const tailwind = tailwindMatch
     ? tailwindMatch[0].replace(/<\/?script>/g, "").trim()
     : "";
   const styles = styleMatch ? styleMatch[1].trim() : "";
-  const fonts = fontMatch ? `Google Fonts URL: ${fontMatch[0]}` : "";
+  const fonts = allFontUrls.length > 0
+    ? `Font CDN URLs:\n${allFontUrls.map(u => `  ${u}`).join("\n")}`
+    : "";
 
   // Limit to ~2500 chars to avoid bloating each page prompt
   return [tailwind, styles, fonts]
@@ -902,7 +941,7 @@ export async function POST(req: Request) {
             stagger(2)
               .then(() =>
                 silentStream(
-                  getFooterPrompt(prompt, designTokens, true),
+                  getFooterPrompt(prompt, designTokens, true, architect),
                   "Generate footer and scripts.",
                   budgets.footer,
                   DEVELOPER_MODEL,

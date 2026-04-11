@@ -217,8 +217,8 @@ export function getShellPrompt(
   architect?: ArchitectOutput,
   uiSpec?: UIDesignSpec,
 ): string {
-  // Resolve fonts deterministically before building the prompt
-  const resolvedFonts = resolveFonts(architect);
+  // Resolve fonts from architect if provided, otherwise fallback to deterministic hash
+  const resolvedFonts = architect?.fonts || resolveFonts(architect);
   const isBold = architect?.visualMood === "bold-energy"; // ← add this
   const navLinkDetails = architect
     ? architect.pages
@@ -243,7 +243,7 @@ STACK (exact CDN links, in this order):
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 
 GENERATE IN THIS EXACT ORDER:
 
@@ -749,12 +749,12 @@ export function getPagePrompt(
   // ── STATS ROW ──
 const statsRow = `
 <!-- CC:stats -->
-<section class="border-y border-white/8 py-20 md:py-24">
-  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 grid divide-x divide-white/8" style="grid-template-columns:repeat(${Math.min(stats.length, 4)},1fr)">
+<section class="py-20 md:py-24">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 grid gap-8" style="grid-template-columns:repeat(${Math.min(stats.length, 4)},1fr)">
     ${stats.map(s => `
     <div class="text-center px-4 md:px-8 fade-in min-w-0">
       <div class="${statNumberClass.replace("text-7xl md:text-8xl lg:text-9xl", "text-5xl md:text-6xl lg:text-7xl")}" data-target="${s.value.replace(/[^0-9.]/g, "")}">${s.value}</div>
-      <div class="text-[10px] md:text-xs tracking-[0.3em] uppercase text-white/35 mt-3 md:mt-4 ${bodyFontWeight}">${s.label}</div>
+      <div class="text-[10px] md:text-xs tracking-[0.3em] uppercase text-white/40 mt-3 md:mt-4 ${bodyFontWeight}">${s.label}</div>
     </div>`).join("")}
   </div>
 </section><!-- /CC:stats -->`;
@@ -957,7 +957,7 @@ ${isLuxury ? `LUXURY DESIGN RULES:
 - No orb blobs, no gradient backgrounds on CTA sections
 - Overlines: w-8 h-[1px] bg-primary inline-block mr-3 (horizontal rule before text)
 - Image captions: absolute corner element with brand initials, rotated 3-6deg
-- Prefer borderless dividers (w-full h-[1px] bg-white/8) over card boxes for lists` : `
+- Prefer borderless dividers (w-full h-[1px] bg-white/10) over card boxes for lists` : `
 BOLD DESIGN RULES:
 - Orb blobs are allowed for tech/SaaS/gym contexts only
 - CTA sections: use gradient from primary to secondary`}
