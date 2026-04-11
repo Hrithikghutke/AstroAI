@@ -1281,7 +1281,7 @@ export async function POST(req: Request) {
           const isLightTheme = html.includes('data-theme="light"');
           const menuBg = isLightTheme ? "#ffffff" : "#0f172a";
 
-          return (
+          let processedHtml = (
             html
               // SEO — inject meta tags before </head>
               .replace("</head>", `  ${seoTags}\n</head>`)
@@ -1319,12 +1319,34 @@ export async function POST(req: Request) {
             // In multipage, .page { display:none } hides everything until showPage() runs
             // In single page, there's no routing so content must always be visible
             // Fix 7 — force page-home visible immediately via inline style
-            // Ensures home page shows even before JS showPage() runs (CDN race condition)
             .replace(
               /id="page-home"\s*class="page"/,
               'id="page-home" class="page" style="display:block"',
             )
           );
+
+          // Fix 8 — sanitizeHtml: Fix incorrectly closed tags (script, style, head, body)
+          const tagFixes = [
+            { tag: 'script', wrong: 'style' },
+            { tag: 'style', wrong: 'script' },
+            { tag: 'head', wrong: 'body', preserveWrong: true }, // <head>...<body> -> <head>...</head><body>
+            { tag: 'body', wrong: 'html', preserveWrong: true }, // <body>...</html> -> <body>...</body></html>
+          ];
+
+          tagFixes.forEach(({ tag, wrong, preserveWrong }) => {
+            const regex = new RegExp(`<${tag}(\\b[^>]*)>([\\s\\S]*?)<\\/${wrong}>`, 'gi');
+            processedHtml = processedHtml.replace(regex, (match, attrs, content) => {
+              // Ensure we aren't eating a valid closing tag inside the content
+              if (!content.includes(`</${tag}>`)) {
+                return preserveWrong 
+                  ? `<${tag}${attrs}>${content}</${tag}>\n</${wrong}>`
+                  : `<${tag}${attrs}>${content}</${tag}>`;
+              }
+              return match;
+            });
+          });
+
+          return processedHtml;
         };
 
         // Build fallback images script for broken Unsplash URLs

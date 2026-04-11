@@ -358,11 +358,16 @@ export function getPagePrompt(
   // ── Build content variables from ContentBrief or defaults ──
   const tagline = contentBrief?.tagline ?? "Build Something Remarkable";
   const subtagline = contentBrief?.subtagline ?? "We help ambitious businesses achieve their goals.";
-  const stats = contentBrief?.stats ?? [
+  const rawStats = contentBrief?.stats ?? [
     { value: "500+", label: "Projects Completed" },
     { value: "12", label: "Years of Experience" },
     { value: "98%", label: "Client Satisfaction" },
   ];
+  // Auto-format large numbers to use 'k' abbreviation (e.g. 10,000+ -> 10k+) to prevent wrap/overflow
+  const stats = rawStats.map(s => ({
+    ...s,
+    value: s.value.replace(/(\d+),?000(\+?)/g, '$1k$2')
+  }));
   const socialProofNames = contentBrief?.socialProofNames ?? [
     "ArchGroup", "MetroBuilds", "UrbanFrame", "SteelCore", "NovaCivil", "ApexEng", "CityDev", "StructWorks"
   ];

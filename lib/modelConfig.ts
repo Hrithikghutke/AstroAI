@@ -15,6 +15,16 @@ export interface ModelOption {
 }
 
 export const DEEP_DIVE_MODELS: ModelOption[] = [
+   {
+    model: "google/gemini-3.1-pro-preview",
+    label: "Gemini 3.1 Pro Preview",
+    sublabel: "Google's Best Model",
+    credits: "150-200 credits",
+    logo: GEMINI_LOGO_SVG,
+    costPerOutputToken: 0.000012,
+    minCreditsToStart: 350,
+    maxOutputTokens: 32000,
+  },
   {
     model: "anthropic/claude-sonnet-4.6",
     label: "Claude 4.6 Sonnet",
@@ -26,18 +36,6 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     maxOutputTokens: 32000,
   },
   {
-    model: "anthropic/claude-opus-4",
-    label: "Claude 4 Opus",
-    sublabel: "Best quality · May take 3-5 minutes",
-    credits: "300-500 credits",
-    logo: CLAUDE_LOGO_SVG,
-    costPerOutputToken: 0.000075,
-    minCreditsToStart: 500,
-    maxOutputTokens: 32000,
-  },
-
-
-  {
     model: "google/gemini-3-flash-preview",
     label: "Gemini 3 Flash Preview",
     sublabel: "Best value · Fast & powerful coding model",
@@ -47,8 +45,6 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     minCreditsToStart: 5,
     maxOutputTokens: 32000,
   },
-
-
 ];
 
 // ── Model lookup helpers — import these in route files ──
