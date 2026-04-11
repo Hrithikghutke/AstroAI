@@ -168,6 +168,11 @@ export default function DeepPreview({
           
           const inlineStyle = target.getAttribute('style') || '';
           const innerHTML = target.innerHTML || '';
+          const attributes: any = {};
+          if (target.tagName === 'IMG') {
+            attributes.src = target.getAttribute('src') || '';
+            attributes.alt = target.getAttribute('alt') || '';
+          }
           
           let current = target;
           const hierarchy = [];
@@ -187,6 +192,7 @@ export default function DeepPreview({
               computedStyles: styles,
               inlineStyle: inlineStyle,
               innerHTML: innerHTML,
+              attributes: attributes,
               hierarchy: hierarchy
             }
           }, '*');
@@ -320,8 +326,8 @@ export default function DeepPreview({
       className="rounded-lg shadow-2xl transition-all duration-300 border-0"
       style={{
         width: viewport === "mobile" ? "390px" : "100%",
-        height: "100%",
-        minHeight: "600px",
+        flex: 1,
+        minHeight: 0,
         background: "white",
         display: "block",
       }}

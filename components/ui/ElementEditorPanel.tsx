@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Type, PaintBucket, Maximize, Code, GripHorizontal, Link as LinkIcon, Unlink, AlignHorizontalSpaceAround, Settings2, Square } from "lucide-react";
+import { X, Type, PaintBucket, Maximize, Code, GripHorizontal, Link as LinkIcon, Unlink, AlignHorizontalSpaceAround, Settings2, Square, Image as ImageIcon } from "lucide-react";
 
 const SliderInput = ({ label, value, onChange, min = 0, max = 100, defaultUnit = "px", step = 1 }: any) => {
   const numMatch = (value || "").toString().match(/^-?\d*\.?\d+/);
@@ -240,15 +240,17 @@ export default function ElementEditorPanel({
   onClose,
   onUpdateStyle,
   onUpdateContent,
+  onUpdateAttribute,
   onSelectElement,
   onResetStyle,
 }: {
   element: any;
-  activeTab?: "typography" | "colors" | "spacing" | "borders" | "css";
-  onTabChange?: (tab: "typography" | "colors" | "spacing" | "borders" | "css") => void;
+  activeTab?: "typography" | "colors" | "spacing" | "borders" | "css" | "image";
+  onTabChange?: (tab: "typography" | "colors" | "spacing" | "borders" | "css" | "image") => void;
   onClose: () => void;
   onUpdateStyle: (styles: Record<string, string>) => void;
   onUpdateContent: (content: string) => void;
+  onUpdateAttribute?: (attributes: Record<string, string>) => void;
   onSelectElement?: (id: string) => void;
   onResetStyle?: (initialStyle: string) => void;
 }) {
@@ -260,19 +262,22 @@ export default function ElementEditorPanel({
     temp.innerHTML = element.innerHTML || "";
     return temp.textContent || "";
   });
-  const [_internalTab, _setInternalTab] = useState<"typography" | "colors" | "spacing" | "borders" | "css">("colors");
+  const [_internalTab, _setInternalTab] = useState<"typography" | "colors" | "spacing" | "borders" | "css" | "image">("colors");
   const tag = (element.tagName || "").toUpperCase();
   const isTextElement = ['H1','H2','H3','H4','H5','H6','P','SPAN','A','BUTTON','LI','LABEL','STRONG','EM','B','I'].includes(tag);
   const isImageNode = tag === 'IMG' || tag === 'SVG';
-  const defaultTab = isTextElement ? "typography" : "colors";
+  const defaultTab = isTextElement ? "typography" : (isImageNode ? "image" : "colors");
   
   useEffect(() => { if (!onTabChange && _internalTab !== defaultTab) _setInternalTab(defaultTab); }, [element.tagName]);
 
-  let currentTab = onTabChange ? activeTab : _internalTab;
-  if (currentTab === "typography" && !isTextElement) currentTab = "colors";
+  let currentTab = onTabChange ? (activeTab as any) : _internalTab;
+  if (currentTab === "typography" && !isTextElement) currentTab = isImageNode ? "image" : "colors";
+  if (currentTab === "image" && !isImageNode) currentTab = "colors";
   const setTab = onTabChange || _setInternalTab;
 
   const [customCss, setCustomCss] = useState(element.inlineStyle || "");
+  const [imgSrc, setImgSrc] = useState(element.attributes?.src || "");
+  const [imgAlt, setImgAlt] = useState(element.attributes?.alt || "");
 
   const handleStyleChange = (key: string, value: string) => {
     setStyles({ ...styles, [key]: value });
@@ -308,6 +313,7 @@ export default function ElementEditorPanel({
 
   const tabsToRender = [
     ...(isTextElement ? [{ id: "typography", icon: Type, title: "Text" }] : []),
+    ...(isImageNode ? [{ id: "image", icon: ImageIcon, title: "Image" }] : []),
     { id: "colors", icon: PaintBucket, title: "Color" },
     { id: "spacing", icon: Maximize, title: "Space" },
     { id: "borders", icon: Square, title: "Border" },
@@ -542,6 +548,39 @@ export default function ElementEditorPanel({
                </div>
             </div>
 
+          </div>
+        )}
+
+        {currentTab === "image" && isImageNode && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="flex flex-col space-y-2">
+              <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Image Source URL</label>
+              <textarea
+                value={imgSrc}
+                onChange={(e) => {
+                  setImgSrc(e.target.value);
+                  if (onUpdateAttribute) onUpdateAttribute({ src: e.target.value });
+                }}
+                className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 rounded-xl p-3 text-sm text-neutral-800 dark:text-neutral-100 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all shadow-inner"
+                rows={3}
+                placeholder="https://images.unsplash.com/..."
+              />
+            </div>
+            {tag === 'IMG' && (
+              <div className="flex flex-col space-y-2">
+                <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">Alt Text</label>
+                <input
+                  type="text"
+                  value={imgAlt}
+                  onChange={(e) => {
+                    setImgAlt(e.target.value);
+                    if (onUpdateAttribute) onUpdateAttribute({ alt: e.target.value });
+                  }}
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 rounded-xl px-3 py-2 text-sm text-neutral-800 dark:text-neutral-100 outline-none focus:border-blue-500 shadow-inner"
+                  placeholder="Describe the image..."
+                />
+              </div>
+            )}
           </div>
         )}
 

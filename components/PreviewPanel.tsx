@@ -126,7 +126,7 @@ export default function PreviewPanel({
 }) {
   const { resolvedTheme } = useTheme();
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
-  const [editorActiveTab, setEditorActiveTab] = useState<"typography" | "colors" | "spacing" | "borders" | "css">("colors");
+  const [editorActiveTab, setEditorActiveTab] = useState<"typography" | "colors" | "spacing" | "borders" | "css" | "image">("colors");
   const [saving, setSaving] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -279,6 +279,26 @@ export default function PreviewPanel({
         const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
         if (target) {
           target.innerHTML = content;
+          localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
+          setPendingChanges(true);
+          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct DOM sync failed", e);
+    }
+  };
+
+  const handleAttributeUpdate = (id: string, attributes: Record<string, string>) => {
+    try {
+      const iframe = document.querySelector('iframe[title="Deep Dive Preview"]') as HTMLIFrameElement;
+      if (iframe?.contentDocument) {
+        const target = iframe.contentDocument.querySelector(`[data-editor-id="${id}"]`) as HTMLElement;
+        if (target) {
+          for (const [key, value] of Object.entries(attributes)) {
+            target.setAttribute(key, value);
+          }
           localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
           setPendingChanges(true);
           if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
@@ -622,7 +642,7 @@ export default function PreviewPanel({
   return (
     <div className="flex flex-col h-full bg-[#fcfcfc] dark:bg-[#111111]">
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between px-4 py-3 border-b border-transparent dark:border-white/5 bg-[#fcfcfc] dark:bg-[#111111] gap-3 relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between px-4 py-3 border-b border-transparent dark:border-white/5 bg-[#fcfcfc] dark:bg-[#111111] gap-3">
         {/* Left Controls & URL bar */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           {/* Chat Toggle (Desktop only) */}
@@ -751,7 +771,7 @@ export default function PreviewPanel({
       </div>
 
       {/* Code / Preview tabs */}
-      <div className="flex justify-center px-4 pt-4 pb-3 bg-[#fcfcfc] dark:bg-[#111111] z-10 relative">
+      <div className="flex justify-center px-4 pt-4 pb-3 bg-[#fcfcfc] dark:bg-[#111111]">
         <div className="flex items-center p-1 bg-transparent border border-neutral-300 dark:border-white/10 rounded-full w-full max-w-sm">
           <button
             onClick={() => setActiveTab("code")}
@@ -869,7 +889,7 @@ export default function PreviewPanel({
             <div ref={codeEndRef} />
           </div>
         ) : (
-          <div className="flex-1 overflow-hidden bg-neutral-200/50 dark:bg-neutral-800 flex items-start justify-center p-4 relative">
+          <div className="flex-1 overflow-hidden bg-neutral-200/50 dark:bg-neutral-800 flex flex-col items-center p-4 relative">
             {isDeepMode ? (
               // Deep Dive — raw HTML in iframe
               <>
@@ -883,6 +903,7 @@ export default function PreviewPanel({
                     onClose={() => setSelectedElement(null)}
                     onUpdateStyle={(styles) => handleStyleUpdate(selectedElement.id, styles)}
                     onUpdateContent={(content) => handleContentUpdate(selectedElement.id, content)}
+                    onUpdateAttribute={(attributes) => handleAttributeUpdate(selectedElement.id, attributes)}
                     onSelectElement={handleSelectElement}
                     onResetStyle={(initial) => handleResetStyle(selectedElement.id, initial)}
                   />

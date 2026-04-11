@@ -1330,7 +1330,7 @@ export async function POST(req: Request) {
         // Build fallback images script for broken Unsplash URLs
         const category = getBusinessCategory(prompt);
         const fallbackPhotos = FALLBACK_IMAGES[category] || FALLBACK_IMAGES.default;
-        const fallbackScript = `\n<script>\n(function(){\n  var fb=${JSON.stringify(fallbackPhotos.map(id => 'https://images.unsplash.com/' + id + '?w=900&q=80'))};\n  var idx=0;\n  document.querySelectorAll('img').forEach(function(img){\n    img.onerror=function(){\n      this.onerror=null;\n      this.src=fb[idx%fb.length];\n      idx++;\n    };\n  });\n})();\n</script>`;
+        const fallbackScript = `\n<script>\n(function(){\n  var fb=${JSON.stringify(fallbackPhotos.map(id => 'https://images.unsplash.com/' + id + '?w=900&q=80'))};\n  var idx=0;\n  document.querySelectorAll('img').forEach(function(img){\n    function h(){\n      img.onerror=null;\n      img.src=fb[idx%fb.length];\n      idx++;\n    }\n    img.onerror=h;\n    if(img.complete && img.naturalHeight===0) h();\n  });\n})();\n</script>`;
 
         const pageParts = validPageHtmls.map((html) => "\n" + html);
         const htmlOutput = postProcess(
