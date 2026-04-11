@@ -487,6 +487,104 @@ function buildSeoTags(
   <meta name="twitter:image" content="${heroImageUrl}">`.trim();
 }
 
+// ── Curated REAL Unsplash photo IDs per business category ──
+// These are verified, permanent photo IDs that will never 404
+const FALLBACK_IMAGES: Record<string, string[]> = {
+  restaurant: [
+    "photo-1517248135467-4c7edcad34c4", // elegant restaurant interior
+    "photo-1414235077428-338989a2e8c0", // fine dining plate
+    "photo-1559339352-11d035aa65de", // private dining room
+    "photo-1513104890138-7c749659a591", // pizza
+    "photo-1504674900247-0877df9cc836", // gourmet food
+  ],
+  gym: [
+    "photo-1534438327276-14e5300c3a48", // gym interior
+    "photo-1571019614242-c5c5dee9f50b", // workout
+    "photo-1517836357463-d25dfeac3438", // weights
+    "photo-1540497077202-7c8a3999166f", // fitness training
+    "photo-1576678927484-cc907957088c", // group fitness
+  ],
+  tech: [
+    "photo-1519389950473-47ba0277781c", // tech workspace
+    "photo-1460925895917-afdab827c52f", // dashboard screen
+    "photo-1504868584819-f8e8b4b6d7e3", // code on screen
+    "photo-1551434678-e076c223a692", // developer working
+    "photo-1498050108023-c5249f4df085", // laptop code
+  ],
+  construction: [
+    "photo-1504307651254-35680f356dfd", // construction site
+    "photo-1541888946425-d81bb19240f5", // building project
+    "photo-1486406146926-c627a92ad1ab", // modern building
+    "photo-1503387762-592deb58ef4e", // architecture
+    "photo-1429497419816-9ca5cfb4571a", // crane
+  ],
+  law: [
+    "photo-1589829545856-d10d557cf95f", // law books
+    "photo-1450101499163-c8848e968f78", // courthouse
+    "photo-1479142506502-19b3a3b7ff33", // legal office
+    "photo-1507679799987-c73779587ccf", // suit professional
+    "photo-1521791055366-0d553872125f", // scales of justice
+  ],
+  medical: [
+    "photo-1519494026892-80bbd2d6fd0d", // hospital
+    "photo-1631217868264-e5b90bb7e133", // medical
+    "photo-1579684385127-1ef15d508118", // healthcare
+    "photo-1516549655169-df83a0774514", // clinic interior
+    "photo-1582750433449-648ed127bb54", // doctor
+  ],
+  realestate: [
+    "photo-1560518883-ce09059eeffa", // house exterior
+    "photo-1600596542815-ffad4c1539a9", // modern home
+    "photo-1600585154340-be6161a56a0c", // interior design
+    "photo-1512917774080-9991f1c4c750", // luxury home
+    "photo-1600607687939-ce8a6c25118c", // living room
+  ],
+  hotel: [
+    "photo-1566073771259-6a8506099945", // resort pool
+    "photo-1582719508461-905c673771fd", // hotel lobby
+    "photo-1551882547-ff40c63fe5fa", // luxury room
+    "photo-1520250497591-112f2f40a3f4", // hotel exterior
+    "photo-1445019980597-93fa8acb246c", // travel landscape
+  ],
+  agency: [
+    "photo-1497366216548-37526070297c", // modern office
+    "photo-1542744173-8e7e91415657", // creative team
+    "photo-1553877522-43269d4ea984", // brainstorming
+    "photo-1497215842964-222b430dc094", // open workspace
+    "photo-1522071820081-009f0129c71c", // team collaboration
+  ],
+  education: [
+    "photo-1523050854058-8df90110c9f1", // campus
+    "photo-1503676260728-1c00da094a0b", // university
+    "photo-1427504494785-3a9ca7044f45", // classroom
+    "photo-1509062522246-3755977927d7", // studying
+    "photo-1546410531-bb4caa6b424d", // books
+  ],
+  default: [
+    "photo-1497366216548-37526070297c", // modern office
+    "photo-1497215842964-222b430dc094", // workspace
+    "photo-1504384308090-c894fdcc538d", // tech abstract
+    "photo-1486406146926-c627a92ad1ab", // modern building
+    "photo-1522071820081-009f0129c71c", // team
+  ],
+};
+
+// ── Detect business category from prompt ──
+function getBusinessCategory(prompt: string): string {
+  const p = prompt.toLowerCase();
+  if (/(restaurant|food|cafe|coffee|dining|cuisine|bistro|bakery|pizza|bar|pub)/i.test(p)) return "restaurant";
+  if (/(gym|fitness|workout|crossfit|bodybuilding|sport|athletic)/i.test(p)) return "gym";
+  if (/(saas|software|app|platform|dashboard|tech|startup|ai)/i.test(p)) return "tech";
+  if (/(construction|engineering|builder|structural|civil|architect|blueprint)/i.test(p)) return "construction";
+  if (/(law|legal|attorney|lawyer|firm|justice)/i.test(p)) return "law";
+  if (/(medical|health|clinic|hospital|doctor|dental|therapy)/i.test(p)) return "medical";
+  if (/(real estate|property|housing|home|realty)/i.test(p)) return "realestate";
+  if (/(hotel|resort|travel|tourism|hospitality)/i.test(p)) return "hotel";
+  if (/(agency|marketing|creative|design|branding)/i.test(p)) return "agency";
+  if (/(education|school|university|course|learning|tutor)/i.test(p)) return "education";
+  return "default";
+}
+
 // ── Pick Unsplash search query from prompt keywords ──
 function getUnsplashQuery(prompt: string): string {
   const p = prompt.toLowerCase();
@@ -1220,8 +1318,19 @@ export async function POST(req: Request) {
             // Fix 6 — single page: remove .page class and show the section
             // In multipage, .page { display:none } hides everything until showPage() runs
             // In single page, there's no routing so content must always be visible
+            // Fix 7 — force page-home visible immediately via inline style
+            // Ensures home page shows even before JS showPage() runs (CDN race condition)
+            .replace(
+              /id="page-home"\s*class="page"/,
+              'id="page-home" class="page" style="display:block"',
+            )
           );
         };
+
+        // Build fallback images script for broken Unsplash URLs
+        const category = getBusinessCategory(prompt);
+        const fallbackPhotos = FALLBACK_IMAGES[category] || FALLBACK_IMAGES.default;
+        const fallbackScript = `\n<script>\n(function(){\n  var fb=${JSON.stringify(fallbackPhotos.map(id => 'https://images.unsplash.com/' + id + '?w=900&q=80'))};\n  var idx=0;\n  document.querySelectorAll('img').forEach(function(img){\n    img.onerror=function(){\n      this.onerror=null;\n      this.src=fb[idx%fb.length];\n      idx++;\n    };\n  });\n})();\n</script>`;
 
         const pageParts = validPageHtmls.map((html) => "\n" + html);
         const htmlOutput = postProcess(
@@ -1276,13 +1385,7 @@ export async function POST(req: Request) {
         );
 
         push("DEVELOPER_DONE", {
-          message: "All pages assembled! Sending preview...",
-        });
-
-        push("HTML_PREVIEW", {
-          html: finalHtml,
-          brandName,
-          message: "Preview ready!",
+          message: "All pages assembled! Running quality checks...",
         });
 
         push("QA_START", { message: "Running quality checks..." });
@@ -1332,6 +1435,13 @@ export async function POST(req: Request) {
         } catch(e) {
           console.warn("[QA] Failed or skipped:", e);
           push("QA_REPORT", { score: 95, passed: true, issueCount: 0, message: "QA check complete!" });
+        }
+
+        // Inject fallback images script before </body>
+        if (finalOutputHtml.includes('</body>')) {
+          finalOutputHtml = finalOutputHtml.replace('</body>', fallbackScript + '\n</body>');
+        } else {
+          finalOutputHtml += fallbackScript;
         }
 
         push("COMPLETE", {

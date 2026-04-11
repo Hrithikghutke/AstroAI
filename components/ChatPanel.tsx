@@ -1210,17 +1210,6 @@ export default function ChatPanel({
               onStreamCode?.(event.chunk);
               break;
 
-            case "HTML_PREVIEW":
-              // Show HTML in preview immediately — don't wait for QA
-              deepHtmlRef.current = event.html;
-              setDeepHtml?.(event.html, event.brandName);
-              updateStep(
-                "developer",
-                "done",
-                "Code complete! Showing preview...",
-              );
-              break;
-
             case "DEVELOPER_FIX": {
               const stepId = event.stepId as string | undefined;
               const msg = event.message ?? "";
