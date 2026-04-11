@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { getUserSubscription } from "@/lib/firestore";
 import PricingPage from "@/components/PricingPage";
+import { Suspense } from "react";
 
 export default async function Pricing() {
   const { userId } = await auth();
@@ -27,12 +28,14 @@ export default async function Pricing() {
   const isCancelled = subscription?.subscriptionStatus === "cancelled";
 
   return (
-    <PricingPage
-      isSubscribed={isSubscribed}
-      currentPlan={subscription?.subscriptionPlan ?? null}
-      currentPeriod={subscription?.subscriptionPeriod ?? null}
-      isCancelled={isCancelled}
-      subscriptionEndDate={endDate}
-    />
+    <Suspense fallback={<div className="min-h-screen bg-neutral-50 dark:bg-neutral-950" />}>
+      <PricingPage
+        isSubscribed={isSubscribed}
+        currentPlan={subscription?.subscriptionPlan ?? null}
+        currentPeriod={subscription?.subscriptionPeriod ?? null}
+        isCancelled={isCancelled}
+        subscriptionEndDate={endDate}
+      />
+    </Suspense>
   );
 }

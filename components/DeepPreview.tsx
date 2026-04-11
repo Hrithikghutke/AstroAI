@@ -168,7 +168,7 @@ export default function DeepPreview({
           
           const inlineStyle = target.getAttribute('style') || '';
           const innerHTML = target.innerHTML || '';
-          const attributes: any = {};
+          const attributes = {};
           if (target.tagName === 'IMG') {
             attributes.src = target.getAttribute('src') || '';
             attributes.alt = target.getAttribute('alt') || '';

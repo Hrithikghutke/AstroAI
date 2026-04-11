@@ -94,6 +94,7 @@ export default function LandingPrompt() {
       sessionStorage.removeItem("crawlcube_deep_html");
       sessionStorage.removeItem("crawlcube_messages");
       sessionStorage.removeItem("crawlcube_brief");
+      sessionStorage.removeItem("crawlcube_savedId");
 
       if (isDetailedPrompt) {
         sessionStorage.setItem("crawlcube_prompt", prompt);
@@ -164,6 +165,10 @@ export default function LandingPrompt() {
       sessionStorage.setItem("crawlcube_layout", JSON.stringify(normalized));
       sessionStorage.setItem("crawlcube_prompt", prompt);
       sessionStorage.setItem("crawlcube_mode", "fast");
+      sessionStorage.removeItem("crawlcube_savedId");
+      sessionStorage.removeItem("crawlcube_deep_html");
+      sessionStorage.removeItem("crawlcube_messages");
+      sessionStorage.removeItem("crawlcube_brief");
 
       await refreshCredits();
       router.push("/build");

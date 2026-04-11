@@ -434,6 +434,21 @@ export default function PreviewPanel({
           setSaved(true);
           setPendingChanges(false);
           onSaveComplete?.();
+        } else if (res.status === 404) {
+          // Document was likely deleted. Fall back to POST to recreate it.
+          const postRes = await fetch("/api/generations/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await postRes.json();
+          if (data.id && data.shareId) {
+            setShareId(data.shareId);
+            onSaved?.(data.id);
+            setSaved(true);
+            setPendingChanges(false);
+            onSaveComplete?.();
+          }
         }
       } else {
         const res = await fetch("/api/generations/save", {

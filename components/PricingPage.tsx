@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCredits } from "@/context/CreditsContext";
 import { useCurrency } from "@/lib/useCurrency";
+import { Toast } from "@/components/ui/Toast";
 import {
   SUBSCRIPTION_PLANS,
   TOPUP_PACKS,
@@ -56,6 +57,44 @@ export default function PricingPage({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    submessage?: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
+
+  const searchParams = useSearchParams();
+
+  // Show toast based on URL params without full page reload
+  useEffect(() => {
+    const subscribed = searchParams.get("subscribed");
+    const topup = searchParams.get("topup");
+    const cancelled = searchParams.get("cancelled");
+
+    if (subscribed) {
+      setToast({
+        message: "Subscription activated! 🎉",
+        submessage: "Your credits have been added to your account.",
+        type: "success",
+      });
+      router.replace("/pricing");
+    } else if (topup) {
+      setToast({
+        message: "Credits added successfully!",
+        submessage: "Your top-up credits are ready to use.",
+        type: "info",
+      });
+      router.replace("/pricing");
+    } else if (cancelled) {
+      setToast({
+        message: "Subscription cancelled",
+        submessage:
+          "You'll retain access until the end of your billing period.",
+        type: "error",
+      });
+      router.replace("/pricing");
+    }
+  }, [searchParams, router]);
 
   const currentPlanData = SUBSCRIPTION_PLANS.find((p) => p.id === currentPlan);
 
@@ -117,7 +156,7 @@ export default function PricingPage({
           const result = await verifyRes.json();
           if (result.success) {
             await refreshCredits();
-            router.push("/build?subscribed=true");
+            window.location.href = "/pricing?subscribed=true";
           }
         },
         modal: { ondismiss: () => setLoadingId(null) },
@@ -172,7 +211,7 @@ export default function PricingPage({
           const result = await verifyRes.json();
           if (result.success) {
             await refreshCredits();
-            router.push("/build?topup=true");
+            window.location.href = "/pricing?topup=true";
           }
         },
         modal: { ondismiss: () => setLoadingId(null) },
@@ -197,7 +236,7 @@ export default function PricingPage({
       const data = await res.json();
       if (data.success) {
         await refreshCredits();
-        router.push("/build?cancelled=true");
+        window.location.href = "/pricing?cancelled=true";
       }
     } catch (err) {
       console.error("[Pricing] Cancel error:", err);
@@ -212,6 +251,14 @@ export default function PricingPage({
 
   return (
     <div className=" min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white">
+      {toast && (
+        <Toast
+          message={toast.message}
+          submessage={toast.submessage}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       {/* ── Top bar with back button ── */}
       <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex items-center justify-between">
         <button

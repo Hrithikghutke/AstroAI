@@ -57,7 +57,10 @@ export async function PATCH(req: Request) {
       thumbnail ?? null
     );
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === "Not found") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     console.error("Update generation error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
