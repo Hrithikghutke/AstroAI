@@ -17,7 +17,7 @@ export interface ModelOption {
 export const DEEP_DIVE_MODELS: ModelOption[] = [
    {
     model: "google/gemini-3.1-pro-preview",
-    label: "Gemini 3.1 Pro Preview",
+    label: "Gemini 3.1 Pro",
     sublabel: "Google's Best Model",
     credits: "150-200 credits",
     logo: GEMINI_LOGO_SVG,

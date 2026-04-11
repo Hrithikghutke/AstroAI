@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Bella Cucina | Authentic Italian Dining Mumbai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet">
+    <script defer="" src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,700&amp;f[]=switzer@400,500&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.1/400.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#D4AF7A',
+                        secondary: '#8B4513',
+                        surface: '#0F0C08',
+                    },
+                    fontFamily: {
+                        display: ['Zodiak'],
+                        body: ['Switzer'],
+                        mono: ['Geist Mono'],
+                    },
+                    keyframes: {
+                        'marquee': { '0%': { transform: 'translateX(0%)' }, '100%': { transform: 'translateX(-100%)' } },
+                        'gradient-shift': { '0%, 100%': { 'background-position': '0% 50%' }, '50%': { 'background-position': '100% 50%' } },
+                        'fade-in': { '0%': { opacity: '0', transform: 'translateY(20px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        'orb-float': { '0%, 100%': { transform: 'translate(0, 0)' }, '50%': { transform: 'translate(10px, -20px)' } }
+                    },
+                    animation: {
+                        'fade-in': 'fade-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards',
+                        'marquee': 'marquee 30s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Switzer', sans-serif; background-color: #060504; color: #fdfcfb; }
+        .font-display { font-family: 'Zodiak', serif; }
+        .font-mono-ui { font-family: 'Geist Mono', monospace; letter-spacing: 0.06em; }
+        .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .page { display: none; }
+        .nav-link { position: relative; }
+        .nav-link::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 1px; background: #D4AF7A; transition: width 0.4s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .transition-luxury { transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        
+        [x-cloak] { display: none !important; }
+
+        .hero-gradient {
+            background: linear-gradient(to bottom, rgba(6,5,4,0.4) 0%, rgba(6,5,4,0.8) 70%, rgba(6,5,4,1) 100%);
+        }
+    </style>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Create a premium Italian restaurant website for 'La Bella Cucina' located in Mumbai. Design a luxurious, upscale aesthetic with warm, elegant colors deep">
+  <meta name="keywords" content="premium, italian, restaurant, bella, cucina, located, mumbai, design, luxurious, upscale">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="La Bella Cucina">
+
+  <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="La Bella Cucina">
+  <meta property="og:description" content="Create a premium Italian restaurant website for 'La Bella Cucina' located in Mumbai. Design a luxurious, upscale aesthetic with warm, elegant colors deep">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1758675083572-7fb50ad27963?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w4ODUwMTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzU5MjM3Mjl8&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="La Bella Cucina">
+  <meta name="twitter:description" content="Create a premium Italian restaurant website for 'La Bella Cucina' located in Mumbai. Design a luxurious, upscale aesthetic with warm, elegant colors deep">
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1758675083572-7fb50ad27963?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=M3w4ODUwMTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzU5MjM3Mjl8&amp;ixlib=rb-4.1.0&amp;q=80&amp;w=1080">
+<style id="crawlcube-custom-scrollbar">
+      ::-webkit-scrollbar { width: 12px !important; height: 12px !important; background: #1a1a1a !important; }
+      ::-webkit-scrollbar-track { background: #1a1a1a !important; }
+      ::-webkit-scrollbar-corner { background: #1a1a1a !important; }
+      ::-webkit-scrollbar-thumb { background: #404040 !important; border-radius: 10px !important; border: 3px solid #1a1a1a !important; }
+      ::-webkit-scrollbar-thumb:hover { background: #525252 !important; }
+      html, body { scrollbar-width: thin !important; scrollbar-color: #404040 #1a1a1a !important; }
+    </style><style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:Geist Mono;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.-bottom-24{bottom:-6rem}.-left-24{left:-6rem}.-right-24{right:-6rem}.-top-24{top:-6rem}.bottom-6{bottom:1.5rem}.left-0{left:0px}.left-1\/2{left:50%}.left-6{left:1.5rem}.right-0{right:0px}.right-10{right:2.5rem}.right-6{right:1.5rem}.right-8{right:2rem}.top-0{top:0px}.top-1\/2{top:50%}.top-32{top:8rem}.top-6{top:1.5rem}.top-8{top:2rem}.-z-10{z-index:-10}.z-10{z-index:10}.z-50{z-index:50}.z-\[55\]{z-index:55}.z-\[60\]{z-index:60}.order-last{order:9999}.col-span-2{grid-column:span 2 / span 2}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-10{margin-bottom:2.5rem}.mb-12{margin-bottom:3rem}.mb-16{margin-bottom:4rem}.mb-2{margin-bottom:0.5rem}.mb-20{margin-bottom:5rem}.mb-32{margin-bottom:8rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-3{margin-left:0.75rem}.mr-3{margin-right:0.75rem}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mt-16{margin-top:4rem}.mt-20{margin-top:5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.aspect-\[4\/5\]{aspect-ratio:4/5}.h-1{height:0.25rem}.h-10{height:2.5rem}.h-12{height:3rem}.h-14{height:3.5rem}.h-2{height:0.5rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-8{height:2rem}.h-96{height:24rem}.h-\[1px\]{height:1px}.h-\[50vh\]{height:50vh}.h-\[600px\]{height:600px}.h-auto{height:auto}.h-full{height:100%}.h-screen{height:100vh}.min-h-0{min-height:0px}.min-h-\[70vh\]{min-height:70vh}.min-h-screen{min-height:100vh}.w-1\/3{width:33.333333%}.w-10{width:2.5rem}.w-12{width:3rem}.w-2{width:0.5rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-8{width:2rem}.w-96{width:24rem}.w-\[600px\]{width:600px}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-6xl{max-width:72rem}.max-w-7xl{max-width:80rem}.max-w-prose{max-width:65ch}.max-w-sm{max-width:24rem}.max-w-xl{max-width:36rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.flex-grow{flex-grow:1}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-3{--tw-translate-x:0.75rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-4{--tw-translate-x:1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-y-3{--tw-translate-y:0.75rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-y-4{--tw-translate-y:1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-rotate-3{--tw-rotate:-3deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-3{--tw-rotate:3deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-\[-3deg\]{--tw-rotate:-3deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.scale-105{--tw-scale-x:1.05;--tw-scale-y:1.05;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.transform{transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes fade-in{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}.animate-fade-in{animation:fade-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards}@keyframes marquee{0%{transform:translateX(0%)}100%{transform:translateX(-100%)}}.animate-marquee{animation:marquee 30s linear infinite}.resize-none{resize:none}.appearance-none{-webkit-appearance:none;appearance:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-12{gap:3rem}.gap-16{gap:4rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.space-x-10 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(2.5rem * var(--tw-space-x-reverse));margin-left:calc(2.5rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-0 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0px * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0px * var(--tw-space-y-reverse))}.space-y-12 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(3rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(3rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-24 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(6rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(6rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.space-y-8 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem * var(--tw-space-y-reverse))}.self-start{align-self:flex-start}.overflow-hidden{overflow:hidden}.scroll-smooth{scroll-behavior:smooth}.whitespace-nowrap{white-space:nowrap}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-\[2rem\]{border-radius:2rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-none{border-radius:0px}.rounded-sm{border-radius:0.125rem}.border{border-width:1px}.border-y{border-top-width:1px;border-bottom-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-none{border-style:none}.border-primary\/15{border-color:rgb(212 175 122 / 0.15)}.border-primary\/40{border-color:rgb(212 175 122 / 0.4)}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.border-white\/20{border-color:rgb(255 255 255 / 0.2)}.border-white\/5{border-color:rgb(255 255 255 / 0.05)}.bg-\[\#060504\]{--tw-bg-opacity:1;background-color:rgb(6 5 4 / var(--tw-bg-opacity, 1))}.bg-\[none\]{background-color:none}.bg-black\/20{background-color:rgb(0 0 0 / 0.2)}.bg-black\/40{background-color:rgb(0 0 0 / 0.4)}.bg-black\/80{background-color:rgb(0 0 0 / 0.8)}.bg-primary{--tw-bg-opacity:1;background-color:rgb(212 175 122 / var(--tw-bg-opacity, 1))}.bg-primary\/10{background-color:rgb(212 175 122 / 0.1)}.bg-primary\/5{background-color:rgb(212 175 122 / 0.05)}.bg-secondary\/10{background-color:rgb(139 69 19 / 0.1)}.bg-secondary\/20{background-color:rgb(139 69 19 / 0.2)}.bg-surface{--tw-bg-opacity:1;background-color:rgb(15 12 8 / var(--tw-bg-opacity, 1))}.bg-surface\/50{background-color:rgb(15 12 8 / 0.5)}.bg-surface\/80{background-color:rgb(15 12 8 / 0.8)}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-white\/30{background-color:rgb(255 255 255 / 0.3)}.bg-white\/5{background-color:rgb(255 255 255 / 0.05)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.bg-gradient-to-l{background-image:linear-gradient(to left, var(--tw-gradient-stops))}.bg-gradient-to-t{background-image:linear-gradient(to top, var(--tw-gradient-stops))}.from-secondary\/10{--tw-gradient-from:rgb(139 69 19 / 0.1) var(--tw-gradient-from-position);--tw-gradient-to:rgb(139 69 19 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-secondary\/20{--tw-gradient-from:rgb(139 69 19 / 0.2) var(--tw-gradient-from-position);--tw-gradient-to:rgb(139 69 19 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-surface{--tw-gradient-from:#0F0C08 var(--tw-gradient-from-position);--tw-gradient-to:rgb(15 12 8 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-surface\/80{--tw-gradient-from:rgb(15 12 8 / 0.8) var(--tw-gradient-from-position);--tw-gradient-to:rgb(15 12 8 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-surface\/55{--tw-gradient-to:rgb(15 12 8 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), rgb(15 12 8 / 0.55) var(--tw-gradient-via-position), var(--tw-gradient-to)}.via-transparent{--tw-gradient-to:rgb(0 0 0 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-surface{--tw-gradient-to:#0F0C08 var(--tw-gradient-to-position)}.to-surface\/20{--tw-gradient-to:rgb(15 12 8 / 0.2) var(--tw-gradient-to-position)}.to-transparent{--tw-gradient-to:transparent var(--tw-gradient-to-position)}.bg-cover{background-size:cover}.bg-center{background-position:center}.object-cover{object-fit:cover}.p-10{padding:2.5rem}.p-12{padding:3rem}.p-2{padding:0.5rem}.p-4{padding:1rem}.p-8{padding:2rem}.px-10{padding-left:2.5rem;padding-right:2.5rem}.px-12{padding-left:3rem;padding-right:3rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.px-8{padding-left:2rem;padding-right:2rem}.py-0{padding-top:0px;padding-bottom:0px}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-10{padding-top:2.5rem;padding-bottom:2.5rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-16{padding-top:4rem;padding-bottom:4rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-20{padding-top:5rem;padding-bottom:5rem}.py-24{padding-top:6rem;padding-bottom:6rem}.py-28{padding-top:7rem;padding-bottom:7rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-32{padding-top:8rem;padding-bottom:8rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.pb-16{padding-bottom:4rem}.pb-20{padding-bottom:5rem}.pb-24{padding-bottom:6rem}.pb-32{padding-bottom:8rem}.pb-4{padding-bottom:1rem}.pb-6{padding-bottom:1.5rem}.pt-16{padding-top:4rem}.pt-32{padding-top:8rem}.pt-40{padding-top:10rem}.pt-8{padding-top:2rem}.text-left{text-align:left}.text-center{text-align:center}.font-body{font-family:Switzer}.font-display{font-family:Zodiak}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-5xl{font-size:3rem;line-height:1}.text-9xl{font-size:8rem;line-height:1}.text-\[10px\]{font-size:10px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.font-light{font-weight:300}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-\[1\.05\]{line-height:1.05}.leading-\[1\.1\]{line-height:1.1}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-\[0\.15em\]{letter-spacing:0.15em}.tracking-\[0\.2em\]{letter-spacing:0.2em}.tracking-\[0\.3em\]{letter-spacing:0.3em}.tracking-\[0\.4em\]{letter-spacing:0.4em}.tracking-tight{letter-spacing:-0.025em}.tracking-tighter{letter-spacing:-0.05em}.tracking-wide{letter-spacing:0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-black{--tw-text-opacity:1;color:rgb(0 0 0 / var(--tw-text-opacity, 1))}.text-primary{--tw-text-opacity:1;color:rgb(212 175 122 / var(--tw-text-opacity, 1))}.text-surface{--tw-text-opacity:1;color:rgb(15 12 8 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-white\/30{color:rgb(255 255 255 / 0.3)}.text-white\/40{color:rgb(255 255 255 / 0.4)}.text-white\/50{color:rgb(255 255 255 / 0.5)}.text-white\/60{color:rgb(255 255 255 / 0.6)}.text-white\/70{color:rgb(255 255 255 / 0.7)}.text-white\/80{color:rgb(255 255 255 / 0.8)}.opacity-10{opacity:0.1}.opacity-30{opacity:0.3}.opacity-40{opacity:0.4}.opacity-50{opacity:0.5}.opacity-60{opacity:0.6}.mix-blend-overlay{mix-blend-mode:overlay}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.blur-3xl{--tw-blur:blur(64px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.blur-\[120px\]{--tw-blur:blur(120px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.grayscale-\[20\%\]{--tw-grayscale:grayscale(20%);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-1000{transition-duration:1000ms}.duration-300{transition-duration:300ms}.duration-500{transition-duration:500ms}.duration-700{transition-duration:700ms}.placeholder\:text-white\/20::placeholder{color:rgb(255 255 255 / 0.2)}.hover\:border-primary:hover{--tw-border-opacity:1;border-color:rgb(212 175 122 / var(--tw-border-opacity, 1))}.hover\:border-primary\/30:hover{border-color:rgb(212 175 122 / 0.3)}.hover\:border-primary\/40:hover{border-color:rgb(212 175 122 / 0.4)}.hover\:border-primary\/50:hover{border-color:rgb(212 175 122 / 0.5)}.hover\:bg-primary:hover{--tw-bg-opacity:1;background-color:rgb(212 175 122 / var(--tw-bg-opacity, 1))}.hover\:bg-primary\/10:hover{background-color:rgb(212 175 122 / 0.1)}.hover\:bg-primary\/90:hover{background-color:rgb(212 175 122 / 0.9)}.hover\:bg-white:hover{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.hover\:bg-white\/5:hover{background-color:rgb(255 255 255 / 0.05)}.hover\:text-black:hover{--tw-text-opacity:1;color:rgb(0 0 0 / var(--tw-text-opacity, 1))}.hover\:text-primary:hover{--tw-text-opacity:1;color:rgb(212 175 122 / var(--tw-text-opacity, 1))}.hover\:text-surface:hover{--tw-text-opacity:1;color:rgb(15 12 8 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:grayscale-0:hover{--tw-grayscale:grayscale(0);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.focus\:border-primary\/50:focus{border-color:rgb(212 175 122 / 0.5)}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.group:hover .group-hover\:translate-x-2{--tw-translate-x:0.5rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:translate-x-5{--tw-translate-x:1.25rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:translate-y-2{--tw-translate-y:0.5rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:translate-y-5{--tw-translate-y:1.25rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:scale-110{--tw-scale-x:1.1;--tw-scale-y:1.1;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:scale-150{--tw-scale-x:1.5;--tw-scale-y:1.5;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:text-primary{--tw-text-opacity:1;color:rgb(212 175 122 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:grayscale-0{--tw-grayscale:grayscale(0);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}@media (min-width: 640px){.sm\:w-auto{width:auto}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:p-10{padding:2.5rem}.sm\:p-20{padding:5rem}.sm\:px-10{padding-left:2.5rem;padding-right:2.5rem}.sm\:px-12{padding-left:3rem;padding-right:3rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-5xl{font-size:3rem;line-height:1}}@media (min-width: 768px){.md\:col-span-1{grid-column:span 1 / span 1}.md\:w-\[33\.333\%\]{width:33.333%}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}.md\:px-16{padding-left:4rem;padding-right:4rem}.md\:py-24{padding-top:6rem;padding-bottom:6rem}.md\:text-6xl{font-size:3.75rem;line-height:1}.md\:text-lg{font-size:1.125rem;line-height:1.75rem}.md\:text-xl{font-size:1.25rem;line-height:1.75rem}}@media (min-width: 1024px){.lg\:order-first{order:-9999}.lg\:col-span-3{grid-column:span 3 / span 3}.lg\:col-span-9{grid-column:span 9 / span 9}.lg\:flex{display:flex}.lg\:hidden{display:none}.lg\:h-auto{height:auto}.lg\:-translate-y-4{--tw-translate-y:-1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.lg\:grid-cols-\[45\%_55\%\]{grid-template-columns:45% 55%}.lg\:grid-cols-\[55\%_45\%\]{grid-template-columns:55% 45%}.lg\:p-20{padding:5rem}.lg\:px-20{padding-left:5rem;padding-right:5rem}.lg\:text-5xl{font-size:3rem;line-height:1}.lg\:text-6xl{font-size:3.75rem;line-height:1}}@media (min-width: 1280px){.xl\:px-24{padding-left:6rem;padding-right:6rem}}</style><style id="crawlcube-custom-scrollbar">
+      ::-webkit-scrollbar { width: 12px !important; height: 12px !important; background: #1a1a1a !important; }
+      ::-webkit-scrollbar-track { background: #1a1a1a !important; }
+      ::-webkit-scrollbar-corner { background: #1a1a1a !important; }
+      ::-webkit-scrollbar-thumb { background: #404040 !important; border-radius: 10px !important; border: 3px solid #1a1a1a !important; }
+      ::-webkit-scrollbar-thumb:hover { background: #525252 !important; }
+      html, body { scrollbar-width: thin !important; scrollbar-color: #404040 #1a1a1a !important; }
+    </style><style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:Geist Mono;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.-bottom-24{bottom:-6rem}.-left-24{left:-6rem}.-right-24{right:-6rem}.-top-24{top:-6rem}.bottom-6{bottom:1.5rem}.left-0{left:0px}.left-1\/2{left:50%}.left-6{left:1.5rem}.right-0{right:0px}.right-10{right:2.5rem}.right-6{right:1.5rem}.right-8{right:2rem}.top-0{top:0px}.top-1\/2{top:50%}.top-32{top:8rem}.top-6{top:1.5rem}.top-8{top:2rem}.-z-10{z-index:-10}.z-10{z-index:10}.z-50{z-index:50}.z-\[55\]{z-index:55}.z-\[60\]{z-index:60}.order-last{order:9999}.col-span-2{grid-column:span 2 / span 2}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:0.25rem}.mb-10{margin-bottom:2.5rem}.mb-12{margin-bottom:3rem}.mb-16{margin-bottom:4rem}.mb-2{margin-bottom:0.5rem}.mb-20{margin-bottom:5rem}.mb-32{margin-bottom:8rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-3{margin-left:0.75rem}.mr-3{margin-right:0.75rem}.mt-0\.5{margin-top:0.125rem}.mt-1{margin-top:0.25rem}.mt-16{margin-top:4rem}.mt-20{margin-top:5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.block{display:block}.inline-block{display:inline-block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.aspect-\[4\/5\]{aspect-ratio:4/5}.h-1{height:0.25rem}.h-10{height:2.5rem}.h-12{height:3rem}.h-14{height:3.5rem}.h-2{height:0.5rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-8{height:2rem}.h-96{height:24rem}.h-\[1px\]{height:1px}.h-\[50vh\]{height:50vh}.h-\[600px\]{height:600px}.h-auto{height:auto}.h-full{height:100%}.h-screen{height:100vh}.min-h-0{min-height:0px}.min-h-\[70vh\]{min-height:70vh}.min-h-screen{min-height:100vh}.w-1\/3{width:33.333333%}.w-10{width:2.5rem}.w-12{width:3rem}.w-2{width:0.5rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-6{width:1.5rem}.w-8{width:2rem}.w-96{width:24rem}.w-\[600px\]{width:600px}.w-full{width:100%}.max-w-2xl{max-width:42rem}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-5xl{max-width:64rem}.max-w-6xl{max-width:72rem}.max-w-7xl{max-width:80rem}.max-w-prose{max-width:65ch}.max-w-sm{max-width:24rem}.max-w-xl{max-width:36rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.flex-grow{flex-grow:1}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-translate-y-1\/2{--tw-translate-y:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-3{--tw-translate-x:0.75rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-4{--tw-translate-x:1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-y-3{--tw-translate-y:0.75rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-y-4{--tw-translate-y:1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-full{--tw-translate-x:100%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.translate-x-0{--tw-translate-x:0px;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.-rotate-3{--tw-rotate:-3deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-3{--tw-rotate:3deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.rotate-\[-3deg\]{--tw-rotate:-3deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.scale-105{--tw-scale-x:1.05;--tw-scale-y:1.05;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.transform{transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes fade-in{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}.animate-fade-in{animation:fade-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards}@keyframes marquee{0%{transform:translateX(0%)}100%{transform:translateX(-100%)}}.animate-marquee{animation:marquee 30s linear infinite}.resize-none{resize:none}.appearance-none{-webkit-appearance:none;appearance:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-12{gap:3rem}.gap-16{gap:4rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-8{gap:2rem}.space-x-10 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(2.5rem * var(--tw-space-x-reverse));margin-left:calc(2.5rem * calc(1 - var(--tw-space-x-reverse)))}.space-y-0 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0px * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0px * var(--tw-space-y-reverse))}.space-y-12 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(3rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(3rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-24 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(6rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(6rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.space-y-8 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(2rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(2rem * var(--tw-space-y-reverse))}.self-start{align-self:flex-start}.overflow-hidden{overflow:hidden}.scroll-smooth{scroll-behavior:smooth}.whitespace-nowrap{white-space:nowrap}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-\[2rem\]{border-radius:2rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-none{border-radius:0px}.rounded-sm{border-radius:0.125rem}.border{border-width:1px}.border-y{border-top-width:1px;border-bottom-width:1px}.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}.border-none{border-style:none}.border-primary\/15{border-color:rgb(212 175 122 / 0.15)}.border-primary\/40{border-color:rgb(212 175 122 / 0.4)}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.border-white\/20{border-color:rgb(255 255 255 / 0.2)}.border-white\/5{border-color:rgb(255 255 255 / 0.05)}.bg-\[\#060504\]{--tw-bg-opacity:1;background-color:rgb(6 5 4 / var(--tw-bg-opacity, 1))}.bg-\[none\]{background-color:none}.bg-black\/20{background-color:rgb(0 0 0 / 0.2)}.bg-black\/40{background-color:rgb(0 0 0 / 0.4)}.bg-black\/80{background-color:rgb(0 0 0 / 0.8)}.bg-primary{--tw-bg-opacity:1;background-color:rgb(212 175 122 / var(--tw-bg-opacity, 1))}.bg-primary\/10{background-color:rgb(212 175 122 / 0.1)}.bg-primary\/5{background-color:rgb(212 175 122 / 0.05)}.bg-secondary\/10{background-color:rgb(139 69 19 / 0.1)}.bg-secondary\/20{background-color:rgb(139 69 19 / 0.2)}.bg-surface{--tw-bg-opacity:1;background-color:rgb(15 12 8 / var(--tw-bg-opacity, 1))}.bg-surface\/50{background-color:rgb(15 12 8 / 0.5)}.bg-surface\/80{background-color:rgb(15 12 8 / 0.8)}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-white\/30{background-color:rgb(255 255 255 / 0.3)}.bg-white\/5{background-color:rgb(255 255 255 / 0.05)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.bg-gradient-to-l{background-image:linear-gradient(to left, var(--tw-gradient-stops))}.bg-gradient-to-t{background-image:linear-gradient(to top, var(--tw-gradient-stops))}.from-secondary\/10{--tw-gradient-from:rgb(139 69 19 / 0.1) var(--tw-gradient-from-position);--tw-gradient-to:rgb(139 69 19 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-secondary\/20{--tw-gradient-from:rgb(139 69 19 / 0.2) var(--tw-gradient-from-position);--tw-gradient-to:rgb(139 69 19 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-surface{--tw-gradient-from:#0F0C08 var(--tw-gradient-from-position);--tw-gradient-to:rgb(15 12 8 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-surface\/80{--tw-gradient-from:rgb(15 12 8 / 0.8) var(--tw-gradient-from-position);--tw-gradient-to:rgb(15 12 8 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-surface\/55{--tw-gradient-to:rgb(15 12 8 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), rgb(15 12 8 / 0.55) var(--tw-gradient-via-position), var(--tw-gradient-to)}.via-transparent{--tw-gradient-to:rgb(0 0 0 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-surface{--tw-gradient-to:#0F0C08 var(--tw-gradient-to-position)}.to-surface\/20{--tw-gradient-to:rgb(15 12 8 / 0.2) var(--tw-gradient-to-position)}.to-transparent{--tw-gradient-to:transparent var(--tw-gradient-to-position)}.bg-cover{background-size:cover}.bg-center{background-position:center}.object-cover{object-fit:cover}.p-10{padding:2.5rem}.p-12{padding:3rem}.p-2{padding:0.5rem}.p-4{padding:1rem}.p-8{padding:2rem}.px-10{padding-left:2.5rem;padding-right:2.5rem}.px-12{padding-left:3rem;padding-right:3rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.px-8{padding-left:2rem;padding-right:2rem}.py-0{padding-top:0px;padding-bottom:0px}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-10{padding-top:2.5rem;padding-bottom:2.5rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-16{padding-top:4rem;padding-bottom:4rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-20{padding-top:5rem;padding-bottom:5rem}.py-24{padding-top:6rem;padding-bottom:6rem}.py-28{padding-top:7rem;padding-bottom:7rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-32{padding-top:8rem;padding-bottom:8rem}.py-4{padding-top:1rem;padding-bottom:1rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.pb-16{padding-bottom:4rem}.pb-20{padding-bottom:5rem}.pb-24{padding-bottom:6rem}.pb-32{padding-bottom:8rem}.pb-4{padding-bottom:1rem}.pb-6{padding-bottom:1.5rem}.pt-16{padding-top:4rem}.pt-32{padding-top:8rem}.pt-40{padding-top:10rem}.pt-8{padding-top:2rem}.text-left{text-align:left}.text-center{text-align:center}.font-body{font-family:Switzer}.font-display{font-family:Zodiak}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-5xl{font-size:3rem;line-height:1}.text-9xl{font-size:8rem;line-height:1}.text-\[10px\]{font-size:10px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.font-light{font-weight:300}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-\[1\.05\]{line-height:1.05}.leading-\[1\.1\]{line-height:1.1}.leading-relaxed{line-height:1.625}.leading-tight{line-height:1.25}.tracking-\[0\.15em\]{letter-spacing:0.15em}.tracking-\[0\.2em\]{letter-spacing:0.2em}.tracking-\[0\.3em\]{letter-spacing:0.3em}.tracking-\[0\.4em\]{letter-spacing:0.4em}.tracking-tight{letter-spacing:-0.025em}.tracking-tighter{letter-spacing:-0.05em}.tracking-wide{letter-spacing:0.025em}.tracking-wider{letter-spacing:0.05em}.tracking-widest{letter-spacing:0.1em}.text-black{--tw-text-opacity:1;color:rgb(0 0 0 / var(--tw-text-opacity, 1))}.text-primary{--tw-text-opacity:1;color:rgb(212 175 122 / var(--tw-text-opacity, 1))}.text-surface{--tw-text-opacity:1;color:rgb(15 12 8 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-white\/30{color:rgb(255 255 255 / 0.3)}.text-white\/40{color:rgb(255 255 255 / 0.4)}.text-white\/50{color:rgb(255 255 255 / 0.5)}.text-white\/60{color:rgb(255 255 255 / 0.6)}.text-white\/70{color:rgb(255 255 255 / 0.7)}.text-white\/80{color:rgb(255 255 255 / 0.8)}.opacity-10{opacity:0.1}.opacity-30{opacity:0.3}.opacity-40{opacity:0.4}.opacity-50{opacity:0.5}.opacity-60{opacity:0.6}.mix-blend-overlay{mix-blend-mode:overlay}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.blur-3xl{--tw-blur:blur(64px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.blur-\[120px\]{--tw-blur:blur(120px);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.grayscale-\[20\%\]{--tw-grayscale:grayscale(20%);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-1000{transition-duration:1000ms}.duration-300{transition-duration:300ms}.duration-500{transition-duration:500ms}.duration-700{transition-duration:700ms}.duration-200{transition-duration:200ms}.ease-out{transition-timing-function:cubic-bezier(0, 0, 0.2, 1)}.ease-in{transition-timing-function:cubic-bezier(0.4, 0, 1, 1)}.placeholder\:text-white\/20::placeholder{color:rgb(255 255 255 / 0.2)}.hover\:border-primary:hover{--tw-border-opacity:1;border-color:rgb(212 175 122 / var(--tw-border-opacity, 1))}.hover\:border-primary\/30:hover{border-color:rgb(212 175 122 / 0.3)}.hover\:border-primary\/40:hover{border-color:rgb(212 175 122 / 0.4)}.hover\:border-primary\/50:hover{border-color:rgb(212 175 122 / 0.5)}.hover\:bg-primary:hover{--tw-bg-opacity:1;background-color:rgb(212 175 122 / var(--tw-bg-opacity, 1))}.hover\:bg-primary\/10:hover{background-color:rgb(212 175 122 / 0.1)}.hover\:bg-primary\/90:hover{background-color:rgb(212 175 122 / 0.9)}.hover\:bg-white:hover{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.hover\:bg-white\/5:hover{background-color:rgb(255 255 255 / 0.05)}.hover\:text-black:hover{--tw-text-opacity:1;color:rgb(0 0 0 / var(--tw-text-opacity, 1))}.hover\:text-primary:hover{--tw-text-opacity:1;color:rgb(212 175 122 / var(--tw-text-opacity, 1))}.hover\:text-surface:hover{--tw-text-opacity:1;color:rgb(15 12 8 / var(--tw-text-opacity, 1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.hover\:grayscale-0:hover{--tw-grayscale:grayscale(0);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.focus\:border-primary\/50:focus{border-color:rgb(212 175 122 / 0.5)}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.group:hover .group-hover\:translate-x-2{--tw-translate-x:0.5rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:translate-x-5{--tw-translate-x:1.25rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:translate-y-2{--tw-translate-y:0.5rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:translate-y-5{--tw-translate-y:1.25rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:scale-110{--tw-scale-x:1.1;--tw-scale-y:1.1;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:scale-150{--tw-scale-x:1.5;--tw-scale-y:1.5;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.group:hover .group-hover\:text-primary{--tw-text-opacity:1;color:rgb(212 175 122 / var(--tw-text-opacity, 1))}.group:hover .group-hover\:grayscale-0{--tw-grayscale:grayscale(0);filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}@media (min-width: 640px){.sm\:w-auto{width:auto}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:p-10{padding:2.5rem}.sm\:p-20{padding:5rem}.sm\:px-10{padding-left:2.5rem;padding-right:2.5rem}.sm\:px-12{padding-left:3rem;padding-right:3rem}.sm\:text-4xl{font-size:2.25rem;line-height:2.5rem}.sm\:text-5xl{font-size:3rem;line-height:1}}@media (min-width: 768px){.md\:col-span-1{grid-column:span 1 / span 1}.md\:w-\[33\.333\%\]{width:33.333%}.md\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}.md\:px-16{padding-left:4rem;padding-right:4rem}.md\:py-24{padding-top:6rem;padding-bottom:6rem}.md\:text-6xl{font-size:3.75rem;line-height:1}.md\:text-lg{font-size:1.125rem;line-height:1.75rem}.md\:text-xl{font-size:1.25rem;line-height:1.75rem}}@media (min-width: 1024px){.lg\:order-first{order:-9999}.lg\:col-span-3{grid-column:span 3 / span 3}.lg\:col-span-9{grid-column:span 9 / span 9}.lg\:flex{display:flex}.lg\:hidden{display:none}.lg\:h-auto{height:auto}.lg\:-translate-y-4{--tw-translate-y:-1rem;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}.lg\:grid-cols-\[45\%_55\%\]{grid-template-columns:45% 55%}.lg\:grid-cols-\[55\%_45\%\]{grid-template-columns:55% 45%}.lg\:p-20{padding:5rem}.lg\:px-20{padding-left:5rem;padding-right:5rem}.lg\:text-5xl{font-size:3rem;line-height:1}.lg\:text-6xl{font-size:3.75rem;line-height:1}}@media (min-width: 1280px){.xl\:px-24{padding-left:6rem;padding-right:6rem}}</style></head>
+
+<body x-data="{ open: false, scrolled: false }" @scroll.window="scrolled = (window.pageYOffset &gt; 50)">
+
+<script data-editor-id="r719spxbs">
+function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+    var el=document.getElementById('page-'+id);
+    if(el){
+        el.style.display='block';
+        window.scrollTo(0,0);
+        if(window.lucide) lucide.createIcons();
+    } else {
+        showPage('home');
+        return;
+    }
+}
+window.addEventListener('hashchange',function(){showPage(window.location.hash.slice(1)||'home');});
+window.addEventListener('load',function(){showPage(window.location.hash.slice(1)||'home');if(window.lucide)lucide.createIcons();});
+</script>
+
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50 w-full border-b border-white/5 transition-luxury" :style="scrolled ? 'background:rgba(6,5,4,0.98)' : 'background:rgba(6,5,4,0.85)'" style="background:rgba(6,5,4,0.98)" data-editor-id="o600c30mi">
+    <div class="max-w-7xl mx-auto px-6 sm:px-10 py-5 flex items-center justify-between" data-editor-id="8vo4bnd5q" style="background: rgba(6, 5, 4, 0.96);">
+        
+        <!-- Logo -->
+        <a href="#home" class="flex items-center group" data-editor-id="jxq446hay">
+            <div class="w-2 h-2 rounded-full bg-primary mr-3 group-hover:scale-150 transition-transform duration-500" data-editor-id="qx0miyms5"></div>
+            <span class="font-display font-medium text-xl tracking-tighter uppercase text-white" data-editor-id="r8mv3y8c5">La Bella Cucina</span>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <div class="hidden lg:flex items-center space-x-10" data-editor-id="6e623qo54">
+            <a href="#home" class="nav-link text-xs font-medium tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors" data-editor-id="t9at5t3ll">Home</a>
+            <a href="#menu" class="nav-link text-xs font-medium tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors" data-editor-id="nij673e5t">Menu</a>
+            <a href="#reservations" class="nav-link text-xs font-medium tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors" data-editor-id="3qr3esw6w">Reservations</a>
+            <a href="#catering" class="nav-link text-xs font-medium tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors" data-editor-id="57cywpk11">Catering</a>
+            <a href="#contact" class="nav-link text-xs font-medium tracking-[0.2em] uppercase text-white/70 hover:text-white transition-colors" data-editor-id="365roia5v">Contact</a>
+        </div>
+
+        <!-- CTA -->
+        <div class="hidden lg:flex items-center" data-editor-id="9i89lvnu8">
+            <a href="#reservations" class="btn btn-primary btn-sm rounded-none px-8 py-2 h-auto min-h-0 bg-primary border-none text-black font-medium tracking-widest hover:bg-white hover:text-black transition-luxury" data-editor-id="clevtpwby">
+                BOOK A TABLE
+            </a>
+        </div>
+
+        <!-- Mobile Toggle -->
+        <button @click="open = true" class="lg:hidden text-white p-2" data-editor-id="efj3717p5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="menu" aria-hidden="true" class="lucide lucide-menu w-6 h-6" data-editor-id="ny6w5m5bj"><path d="M4 5h16"></path><path d="M4 12h16"></path><path d="M4 19h16"></path></svg>
+        </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="fixed inset-0 z-[60] w-full h-screen flex flex-col items-center justify-center space-y-8" style="background: rgb(6, 5, 4); display: none;" data-editor-id="mfbhgbmfu">
+        
+        <button @click="open = false" class="absolute top-8 right-8 text-white/50 hover:text-white p-4" data-editor-id="jqqk2ovhz">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="x" aria-hidden="true" class="lucide lucide-x w-8 h-8" data-editor-id="mgxoa7jqi"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+
+        <a @click="open = false" href="#home" class="font-display text-3xl text-white" data-editor-id="8j4l5zmq2">Home</a>
+        <a @click="open = false" href="#menu" class="font-display text-3xl text-white" data-editor-id="kevzlllg5">Menu</a>
+        <a @click="open = false" href="#reservations" class="font-display text-3xl text-white" data-editor-id="5mg1ylrwx">Reservations</a>
+        <a @click="open = false" href="#catering" class="font-display text-3xl text-white" data-editor-id="veakqkzxh">Catering</a>
+        <a @click="open = false" href="#contact" class="font-display text-3xl text-white" data-editor-id="s8rt234c0">Contact</a>
+        
+        <div class="pt-8" data-editor-id="psgm3yhzz">
+            <a @click="open = false" href="#reservations" class="btn btn-primary rounded-none px-12 bg-primary border-none text-black" data-editor-id="5870chsrx">BOOK NOW</a>
+        </div>
+    </div>
+
+    <!-- Backdrop -->
+    <div x-show="open" @click="open = false" class="fixed inset-0 bg-black/80 z-[55]" data-editor-id="epmhrg40k" style="display: none;"></div>
+</nav>
+<main data-editor-id="eiztebodz">
+<section id="page-home" class="page" style="display: none;" data-editor-id="jpx60kcj2">
+
+<!-- CC:hero -->
+<section class="relative min-h-screen flex items-center justify-center text-center overflow-hidden" data-editor-id="k1k21th6i">
+  <!-- Full-bleed background image -->
+ <img src="https://images.unsplash.com/photo-1768726134880-b03c9d21bffb?crop=entropy&amp;amp;cs=tinysrgb&amp;amp;fit=max&amp;amp;fm=jpg&amp;amp;ixid=M3w4ODUwMTB8MHwxfHJhbmRvbXx8fHx8fHx8fDE3NzU5MTgxMTJ8&amp;amp;ixlib=rb-4.1.0&amp;amp;q=80&amp;amp;w=1080" alt="La Bella Cucina Kitchen" class="absolute inset-0 w-full h-full object-cover scale-105" style="filter:brightness(0.65);opacity:0.9" data-editor-id="rrr0m405f">
+  <!-- Cinematic dark overlay -->
+  <div class="absolute inset-0 bg-gradient-to-t from-surface via-surface/55 to-surface/20 pointer-events-none" data-editor-id="2ln0lxmrd"></div>
+  <!-- Content -->
+  <div class="relative z-10 px-8 sm:px-12 lg:px-20 xl:px-24 max-w-5xl mx-auto pt-32 pb-24 fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="rrvftp1cz">
+    <div class="flex items-center justify-center gap-4 mb-8" data-editor-id="rzopcivof">
+      <div class="w-8 h-[1px] bg-primary" data-editor-id="8u3y8nh5d"></div>
+      <span class="text-xs font-mono-ui tracking-[0.3em] uppercase text-primary" data-editor-id="x3thtnyh6">La Bella Cucina - Authentic Italian Dining</span>
+      <div class="w-8 h-[1px] bg-primary" data-editor-id="liz0f2en3"></div>
+    </div>
+    <h1 class="font-display font-medium text-4xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight mb-6 text-white" data-editor-id="jgwmi9qw8">
+      The Art of <span class="text-primary" data-editor-id="w0p4cblqh">Napolitano</span> Gastronomy
+    </h1>
+    <p class="text-white/60 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-light" data-editor-id="p3t97hp5j">Experience the soul of Italy in the heart of Mumbai. From wood-fired heritage to private cellar experiences.</p>
+    <div class="flex flex-wrap gap-4 justify-center" data-editor-id="xs5inlxwa">
+      <a href="#contact" class="inline-flex items-center justify-center gap-2 h-14 px-10 bg-primary text-surface text-sm font-medium tracking-[0.15em] uppercase hover:bg-white transition-luxury shadow-lg" data-editor-id="gtskuzbp7">Make a Reservation</a>
+    </div>
+  </div>
+</section>
+<!-- /CC:hero -->
+
+<!-- CC:social-proof -->
+<section class="py-12 border-y border-white/5 bg-surface/50" data-editor-id="crc8od5aa">
+  <p class="text-center text-xs font-mono-ui tracking-[0.4em] uppercase text-white/30 mb-8" data-editor-id="b6hyv79et">Preferred by Mumbai's Finest</p>
+  <div class="overflow-hidden" style="mask-image:linear-gradient(to right,transparent,black 15%,black 85%,transparent)" data-editor-id="dcxdh6c1z">
+    <div class="flex gap-12 animate-marquee whitespace-nowrap" style="animation:marquee 30s linear infinite" data-editor-id="bdo1dhy1y">
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="7pi6a8kap">The Oberoi Mumbai</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="xqwfnvddg">Taj Mahal Palace</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="sneo8xqj3">Four Seasons Residences</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="mn0k30mo2">Architectural Digest India</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="8r5iqgkuh">Reliance Corporate Events</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="2gm6uk7kn">Godrej Heritage Collections</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="e6u5dbhnq">Bandra Luxury Concierge</span>
+      <!-- Duplicate for marquee -->
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="iofeipoeg">The Oberoi Mumbai</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="7chz7sv7e">Taj Mahal Palace</span>
+      <span class="font-display font-medium tracking-wider text-xl text-white/40" data-editor-id="3fz03dmko">Four Seasons Residences</span>
+    </div>
+  </div>
+</section>
+<!-- /CC:social-proof -->
+
+<!-- CC:stats -->
+<section class="py-20 md:py-24 bg-surface" data-editor-id="pyaa56w4d">
+  <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 grid grid-cols-2 md:grid-cols-4 gap-12" data-editor-id="dztglvhss">
+    <div class="text-center fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="xlxgxxgl4">
+      <div class="font-display font-medium text-5xl md:text-6xl text-primary" data-editor-id="g4vnun1h0">900°</div>
+      <div class="text-xs font-mono-ui tracking-[0.3em] uppercase text-white/40 mt-4" data-editor-id="asu226l3a">Kiln Temperature</div>
+    </div>
+    <div class="text-center fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="r9rtowf7q">
+      <div class="font-display font-medium text-5xl md:text-6xl text-primary" data-editor-id="l3elx3p06">48h</div>
+      <div class="text-xs font-mono-ui tracking-[0.3em] uppercase text-white/40 mt-4" data-editor-id="i0bcsero0">Dough Fermentation</div>
+    </div>
+    <div class="text-center fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="ej77vnewl">
+      <div class="font-display font-medium text-5xl md:text-6xl text-primary" data-editor-id="vg1dbqp95">24</div>
+      <div class="text-xs font-mono-ui tracking-[0.3em] uppercase text-white/40 mt-4" data-editor-id="4d1bnxn49">Imported Reserves</div>
+    </div>
+    <div class="text-center fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="mrh2f8ghl">
+      <div class="font-display font-medium text-5xl md:text-6xl text-primary" data-editor-id="wvbk91x9b">0%</div>
+      <div class="text-xs font-mono-ui tracking-[0.3em] uppercase text-white/40 mt-4" data-editor-id="in1lqf6fu">Processed Sugars</div>
+    </div>
+  </div>
+</section>
+<!-- /CC:stats -->
+
+<!-- CC:features-preview -->
+<section class="py-0 overflow-hidden bg-surface" data-editor-id="nx3bp09kb">
+  <!-- Strip 1: Wood-fired Pizza -->
+  <div class="grid lg:grid-cols-[55%_45%] min-h-[70vh] group" data-editor-id="zxmpi9b22">
+    <div class="relative overflow-hidden h-[50vh] lg:h-auto" data-editor-id="tc95uyvfe">
+      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900&amp;q=80" alt="Wood-fired Pizza" class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-luxury" data-editor-id="oay6x356l">
+      <div class="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent pointer-events-none" data-editor-id="dy0cidexy"></div>
+      <div class="absolute bottom-6 right-6 font-mono-ui text-[10px] text-white/30 rotate-3 border border-white/10 px-2 py-1" data-editor-id="ksj51b0vr">LBC / NAPOLI</div>
+    </div>
+    <div class="flex flex-col justify-center px-10 md:px-16 lg:px-20 py-20 bg-surface fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="oweasf9qs">
+      <div class="flex items-center mb-6" data-editor-id="5v0ln2moe">
+        <div class="w-8 h-[1px] bg-primary mr-3" data-editor-id="qve8lo0pt"></div>
+        <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary" data-editor-id="fm2ycbkig">Our Specialty</span>
+      </div>
+      <h2 class="font-display font-medium text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6" data-editor-id="9xigp1gpy">Wood-Fired Neapolitan Pizza</h2>
+      <p class="text-white/60 text-base leading-relaxed mb-10 max-w-sm" data-editor-id="zjwq59rsj">Crafted with imported Caputo '00' flour and San Marzano tomatoes, our pizzas are scorched to perfection in a traditional stone oven for that signature leopard-spotted crust.</p>
+      <a href="#contact" class="inline-flex items-center justify-center h-12 px-8 border border-white/20 text-xs font-mono-ui tracking-[0.2em] uppercase hover:bg-primary hover:text-surface hover:border-primary transition-luxury self-start" data-editor-id="llh6vzo4r">View the Menu</a>
+    </div>
+  </div>
+
+  <!-- Strip 2: Private Dining -->
+  <div class="grid lg:grid-cols-[45%_55%] min-h-[70vh] group" data-editor-id="m4v2zwhm3">
+    <div class="flex flex-col justify-center px-10 md:px-16 lg:px-20 py-20 bg-black/20 fade-in order-last lg:order-first" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="0c8mos19x">
+      <div class="flex items-center mb-6" data-editor-id="8otwoxfby">
+        <div class="w-8 h-[1px] bg-primary mr-3" data-editor-id="vt93m4uq8"></div>
+        <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary" data-editor-id="999vvm3ei">The Experience</span>
+      </div>
+      <h2 class="font-display font-medium text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6" data-editor-id="mxol65bxn">Private Dining &amp; Cellar</h2>
+      <p class="text-white/60 text-base leading-relaxed mb-10 max-w-sm" data-editor-id="5jf5qp2oq">Host intimate gatherings in our bespoke private suites. Tailored multi-course menus paired with exceptional vintages from our temperature-controlled Italian cellar.</p>
+      <a href="#contact" class="inline-flex items-center justify-center h-12 px-8 border border-white/20 text-xs font-mono-ui tracking-[0.2em] uppercase hover:bg-primary hover:text-surface hover:border-primary transition-luxury self-start" data-editor-id="b405q7g8z">Inquire Now</a>
+    </div>
+    <div class="relative overflow-hidden h-[50vh] lg:h-auto group" data-editor-id="8en5cc894">
+      <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&amp;q=80" alt="Private Dining" class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-luxury" data-editor-id="c2w6ibfzb">
+      <div class="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent pointer-events-none" data-editor-id="6cvxr7rsv"></div>
+      <div class="absolute top-6 left-6 font-mono-ui text-[10px] text-white/30 -rotate-3 border border-white/10 px-2 py-1" data-editor-id="yhhdj7uw5">LBC / PRIVATO</div>
+    </div>
+  </div>
+
+  <!-- Strip 3: Catering -->
+  <div class="grid lg:grid-cols-[55%_45%] min-h-[70vh] group" data-editor-id="8pdrdduvx">
+    <div class="relative overflow-hidden h-[50vh] lg:h-auto" data-editor-id="a868daamq">
+      <img src="https://images.unsplash.com/photo-1555244162-803834f70033?w=900&amp;q=80" alt="Catering Services" class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-luxury" data-editor-id="jxkieffsw">
+      <div class="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent pointer-events-none" data-editor-id="yoicbjqv3"></div>
+    </div>
+    <div class="flex flex-col justify-center px-10 md:px-16 lg:px-20 py-20 bg-surface fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="f8mzrcg13">
+      <div class="flex items-center mb-6" data-editor-id="xwammxdb7">
+        <div class="w-8 h-[1px] bg-primary mr-3" data-editor-id="eed8vx9y9"></div>
+        <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary" data-editor-id="xik0jv0co">Beyond the Restaurant</span>
+      </div>
+      <h2 class="font-display font-medium text-3xl sm:text-4xl lg:text-5xl leading-tight mb-6" data-editor-id="n9iw990fo">Elite Catering Services</h2>
+      <p class="text-white/60 text-base leading-relaxed mb-10 max-w-sm" data-editor-id="8y86w096u">Bring the Bella Cucina kitchen to your home or corporate event. We provide on-site chefs, mobile wood-fired ovens, and professional service staff for a seamless experience.</p>
+      <a href="#contact" class="inline-flex items-center justify-center h-12 px-8 border border-white/20 text-xs font-mono-ui tracking-[0.2em] uppercase hover:bg-primary hover:text-surface hover:border-primary transition-luxury self-start" data-editor-id="qvg7x59uh">Catering Inquiries</a>
+    </div>
+  </div>
+</section>
+<!-- /CC:features-preview -->
+
+<!-- CC:testimonials -->
+<section class="py-32 px-8 sm:px-12 lg:px-20 xl:px-24 bg-surface overflow-hidden" x-data="{ active: 0, get isMobile() { return window.innerWidth &lt; 768 } }" @resize.window="active = 0" data-editor-id="y54irhpv0">
+  <div class="max-w-7xl mx-auto" data-editor-id="arn67n5qj">
+    <div class="mb-20 text-center fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="m2d5w96ts">
+      <div class="flex items-center justify-center mb-4" data-editor-id="cow8oq2hx">
+        <div class="w-8 h-[1px] bg-primary mr-3" data-editor-id="ammtcc7u1"></div>
+        <span class="text-xs font-mono-ui tracking-[0.4em] uppercase text-primary" data-editor-id="vouvet7zm">Guest Stories</span>
+        <div class="w-8 h-[1px] bg-primary ml-3" data-editor-id="dvw4ai6bi"></div>
+      </div>
+      <h2 class="font-display font-medium text-3xl sm:text-4xl lg:text-5xl" data-editor-id="hucc4pp3h">Voices of Our <span class="italic" data-editor-id="yve2gutoi">Patrons</span></h2>
+    </div>
+    <div class="overflow-hidden" data-editor-id="qpuqizp1p">
+      <div class="flex transition-luxury" :style="'transform:translateX(-' + active * (isMobile ? 100 : 33.333) + '%)'" style="transform:translateX(-0%)" data-editor-id="vs2sbc036">
+        
+        <div class="w-full md:w-[33.333%] px-6 shrink-0" data-editor-id="33lw5kneg">
+          <div class="border-b border-white/10 hover:border-primary/40 transition-luxury py-10 flex flex-col h-full" data-editor-id="a334c5d9d">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="star" aria-hidden="true" class="lucide lucide-star w-5 h-5 text-primary mb-6" data-editor-id="bhrtec8nw"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
+            <p class="text-white/70 text-lg leading-relaxed italic mb-8 flex-1" data-editor-id="9w22irrcu">"The wood-fired aroma hits you the moment you walk in. The Burrata is spectacular, but the private dining service is what truly sets them apart in Mumbai's dining scene."</p>
+            <div class="flex items-center gap-4" data-editor-id="d7czvqie3">
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono-ui text-xs" data-editor-id="bm7zcyrzs">AM</div>
+              <div data-editor-id="1i11il5m3">
+                <div class="text-sm font-medium" data-editor-id="z1t165d4g">Ananya Malhotra</div>
+                <div class="text-[10px] font-mono-ui text-white/30 uppercase tracking-widest" data-editor-id="my112akg9">Food Critic, Mumbai Times</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full md:w-[33.333%] px-6 shrink-0" data-editor-id="47lk1s0cu">
+          <div class="border-b border-white/10 hover:border-primary/40 transition-luxury py-10 flex flex-col h-full" data-editor-id="gq8b916k5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="star" aria-hidden="true" class="lucide lucide-star w-5 h-5 text-primary mb-6" data-editor-id="7dz3ci1dx"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
+            <p class="text-white/70 text-lg leading-relaxed italic mb-8 flex-1" data-editor-id="xc0sc1th0">"We used their catering for our gallery launch. Having a live pizza station with authentic Neapolitan crust was the highlight. Professional, punctual, and absolutely delicious."</p>
+            <div class="flex items-center gap-4" data-editor-id="0b06uj27y">
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono-ui text-xs" data-editor-id="4zskzu1na">VK</div>
+              <div data-editor-id="6nxb8t6aq">
+                <div class="text-sm font-medium" data-editor-id="6p5v34dqh">Vikram Khanna</div>
+                <div class="text-[10px] font-mono-ui text-white/30 uppercase tracking-widest" data-editor-id="s1s5kl5wl">Founder, Khanna Art House</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-full md:w-[33.333%] px-6 shrink-0" data-editor-id="7j0uqmrnl">
+          <div class="border-b border-white/10 hover:border-primary/40 transition-luxury py-10 flex flex-col h-full" data-editor-id="znl5d9bjj">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="star" aria-hidden="true" class="lucide lucide-star w-5 h-5 text-primary mb-6" data-editor-id="7pgiok6xo"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
+            <p class="text-white/70 text-lg leading-relaxed italic mb-8 flex-1" data-editor-id="vsqi2wkyp">"Authenticity is hard to find, but La Bella Cucina delivers. The wine list is curated with such precision—reminds me of my favorite trattoria in Florence."</p>
+            <div class="flex items-center gap-4" data-editor-id="zrwxbovil">
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-mono-ui text-xs" data-editor-id="498veigin">SR</div>
+              <div data-editor-id="dni4zr0dd">
+                <div class="text-sm font-medium" data-editor-id="eijm8hgds">Sanjay Rao</div>
+                <div class="text-[10px] font-mono-ui text-white/30 uppercase tracking-widest" data-editor-id="hlznexfwm">Private Collector</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-6 mt-16" data-editor-id="b1kh3d1bu">
+      <button @click="active=Math.max(0,active-1)" class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary/10 hover:border-primary transition-luxury" data-editor-id="gak6qeoxr">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-left" aria-hidden="true" class="lucide lucide-arrow-left w-5 h-5" data-editor-id="dru1pzxks"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+      </button>
+      <div class="flex gap-3" data-editor-id="6f58lxz1m">
+        <button @click="active=0" class="h-1 rounded-full transition-all w-8 bg-primary" :class="active===0?'w-8 bg-primary':'w-4 bg-white/10'" data-editor-id="l1utq9dzc"></button>
+        <button @click="active=1" x-show="isMobile" class="h-1 rounded-full transition-all w-4 bg-white/10" :class="active===1?'w-8 bg-primary':'w-4 bg-white/10'" data-editor-id="dhnkh5fip" style="display: none;"></button>
+        <button @click="active=2" x-show="isMobile" class="h-1 rounded-full transition-all w-4 bg-white/10" :class="active===2?'w-8 bg-primary':'w-4 bg-white/10'" data-editor-id="nfwfzcq4e" style="display: none;"></button>
+      </div>
+      <button @click="active=Math.min(isMobile ? 2 : 0, active+1)" class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-primary/10 hover:border-primary transition-luxury" data-editor-id="jeioal30a">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right w-5 h-5" data-editor-id="s154iy40g"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+      </button>
+    </div>
+  </div>
+</section>
+<!-- /CC:testimonials -->
+
+<!-- CC:cta-banner -->
+<section class="py-32 px-8 sm:px-12 lg:px-20 xl:px-24 bg-surface border-t border-white/5 relative overflow-hidden" data-editor-id="n2iv0synw">
+  <!-- Subtle background accent -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" data-editor-id="rwbb5azkg"></div>
+  
+  <div class="max-w-4xl mx-auto text-center relative z-10 fade-in" style="opacity: 1; transform: translateY(0px); transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);" data-editor-id="odr7qxf46">
+    <div class="flex items-center justify-center mb-8" data-editor-id="ce6qp260e">
+      <div class="w-12 h-[1px] bg-primary" data-editor-id="jkrfy1xu3"></div>
+    </div>
+    <h2 class="font-display font-medium text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-8" data-editor-id="1lg6t1u8a">Secure Your Table at the <span class="italic text-primary" data-editor-id="di5pgfrmn">Hearth</span></h2>
+    <p class="text-white/60 text-lg mb-12 max-w-xl mx-auto leading-relaxed font-light" data-editor-id="mosed3irg">Join us for an evening of authentic flavors and refined hospitality. Reservations for our dining room and private suites are highly recommended.</p>
+    
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-6" data-editor-id="4xbpvhyg9">
+      <a href="#contact" class="w-full sm:w-auto inline-flex items-center justify-center h-14 px-10 bg-primary text-surface text-sm font-medium tracking-[0.15em] uppercase hover:bg-white transition-luxury shadow-xl" data-editor-id="a93drqe8j">Book a Table</a>
+      <a href="#contact" class="w-full sm:w-auto inline-flex items-center justify-center h-14 px-10 border border-white/20 text-white text-sm font-medium tracking-[0.15em] uppercase hover:bg-white/5 transition-luxury" data-editor-id="4f5j8ew9o">Catering Enquiry</a>
+    </div>
+    
+    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 pt-16 border-t border-white/10" data-editor-id="pglil9mcs">
+      <div class="text-center" data-editor-id="7l6c30nt7">
+        <div class="text-[10px] font-mono-ui tracking-[0.2em] uppercase text-white/30 mb-2" data-editor-id="uhm3j5q0y">Location</div>
+        <div class="text-sm" data-editor-id="kjtxugkak">Worli Seaface, Mumbai</div>
+      </div>
+      <div class="text-center" data-editor-id="ysuhz2gfw">
+        <div class="text-[10px] font-mono-ui tracking-[0.2em] uppercase text-white/30 mb-2" data-editor-id="ybpod5ugf">Hours</div>
+        <div class="text-sm" data-editor-id="ljeqyjwv2">Mon–Sun, 11am–11pm</div>
+      </div>
+      <div class="text-center" data-editor-id="npb3whtj8">
+        <div class="text-[10px] font-mono-ui tracking-[0.2em] uppercase text-white/30 mb-2" data-editor-id="ppr1xeupe">Contact</div>
+        <div class="text-sm" data-editor-id="gfix6i2fj">+91 22 4567 8900</div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /CC:cta-banner -->
+
+</section><!-- end page-home -->
+<section id="page-menu" class="page" data-editor-id="4swrvczv4" style="display: none;">
+
+<!-- CC:page-hero -->
+<div class="relative pt-40 pb-20 overflow-hidden" data-editor-id="2aajcra9j">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24 relative z-10" data-editor-id="pv1erjpkd">
+        <div class="animate-fade-in" data-editor-id="onybr3s6x">
+            <span class="font-mono-ui text-xs tracking-[0.2em] text-primary mb-4 block" data-editor-id="1zssr9kbu">Il Menu di Oggi</span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-medium leading-[1.05] mb-6" data-editor-id="osbnp3llr">
+                A Symphony of <span class="text-primary" data-editor-id="vi7mdo5id">Italian</span> Flavors
+            </h1>
+            <p class="text-base md:text-lg text-white/60 max-w-2xl font-light leading-relaxed" data-editor-id="0qfe9hlw5">
+                From the rolling hills of Tuscany to the vibrant streets of Mumbai, our menu celebrates the heritage of Italian gastronomy using the finest seasonal imports and local organic produce.
+            </p>
+        </div>
+    </div>
+    <div class="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none" data-editor-id="5gro0qhxg">
+        <img src="https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&amp;fit=crop&amp;q=80" alt="Background Texture" class="w-full h-full object-cover" data-editor-id="horogdtyd">
+    </div>
+</div>
+<!-- /CC:page-hero -->
+
+<!-- CC:main-content-1 -->
+<div class="py-24 bg-surface" data-editor-id="fkbfm3541">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="g721kgqsu">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16" data-editor-id="zon4rztpt">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-3" data-editor-id="na2gefej8">
+                <div class="sticky top-32 space-y-6" data-editor-id="18h3acf14">
+                    <h2 class="text-2xl font-display font-medium mb-8" data-editor-id="ur8h65fyk">Categories</h2>
+                    <ul class="space-y-4 font-mono-ui text-xs tracking-widest uppercase" data-editor-id="zdndcg62g">
+                        <li data-editor-id="3ms56815l"><a href="#antipasti" class="text-primary hover:text-white transition-colors flex items-center" data-editor-id="agj71zasj"><span class="w-4 h-[1px] bg-primary mr-3" data-editor-id="93erli6cy"></span>Antipasti</a></li>
+                        <li data-editor-id="begfaz011"><a href="#primi" class="text-white/40 hover:text-primary transition-colors flex items-center" data-editor-id="5cjwxt1ms">Primi Piatti</a></li>
+                        <li data-editor-id="xibxcd0gr"><a href="#pizza" class="text-white/40 hover:text-primary transition-colors flex items-center" data-editor-id="0uk70q2bz">Wood-Fired Pizza</a></li>
+                        <li data-editor-id="kl3qzs42w"><a href="#dolci" class="text-white/40 hover:text-primary transition-colors flex items-center" data-editor-id="2ebxwca12">Dolci &amp; Coffee</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menu Items -->
+            <div class="lg:col-span-9 space-y-24" data-editor-id="mtjnpcr0q">
+                <!-- Antipasti Section -->
+                <div id="antipasti" class="animate-fade-in" data-editor-id="5e67kjnvt">
+                    <div class="flex items-center gap-4 mb-12" data-editor-id="0q9q3wvjz">
+                        <h2 class="text-3xl sm:text-4xl font-display font-medium" data-editor-id="vajtpkbth">Antipasti</h2>
+                        <div class="h-[1px] flex-grow bg-white/10" data-editor-id="k1z4l5pjp"></div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-8" data-editor-id="dcapstw4y">
+                        <div class="group py-6 border-b border-white/10 hover:border-primary/40 transition-luxury flex flex-col md:flex-row md:items-center justify-between gap-4" data-editor-id="qwni48aig">
+                            <div class="max-w-xl" data-editor-id="2m32hg9c8">
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="7m2c6nyjy">Burrata Con Pomodorini</h3>
+                                <p class="text-sm text-white/60 font-light" data-editor-id="7emb34z5k">Creamy Apulian burrata, heirloom cherry tomatoes, basil pesto, and aged balsamic reduction.</p>
+                            </div>
+                            <span class="font-mono-ui text-sm text-white/40" data-editor-id="yl9rtvehw">₹1,250</span>
+                        </div>
+                        <div class="group py-6 border-b border-white/10 hover:border-primary/40 transition-luxury flex flex-col md:flex-row md:items-center justify-between gap-4" data-editor-id="unk1nmo20">
+                            <div class="max-w-xl" data-editor-id="mbkunqg3y">
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="b8a61r2t9">Carpaccio Di Manzo</h3>
+                                <p class="text-sm text-white/60 font-light" data-editor-id="whahmaefp">Thinly sliced cured beef, wild arugula, Parmigiano-Reggiano shavings, and truffle oil.</p>
+                            </div>
+                            <span class="font-mono-ui text-sm text-white/40" data-editor-id="b3hwar23s">₹1,450</span>
+                        </div>
+                        <div class="group py-6 border-b border-white/10 hover:border-primary/40 transition-luxury flex flex-col md:flex-row md:items-center justify-between gap-4" data-editor-id="wts4c90f8">
+                            <div class="max-w-xl" data-editor-id="aafbwctdc">
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="yggg4ld6x">Calamari Fritti</h3>
+                                <p class="text-sm text-white/60 font-light" data-editor-id="598sb7i7v">Crispy golden squid rings served with spicy marinara and lemon aioli.</p>
+                            </div>
+                            <span class="font-mono-ui text-sm text-white/40" data-editor-id="4j5fgwlg3">₹1,100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primi Piatti Section -->
+                <div id="primi" class="animate-fade-in" data-editor-id="104remk9k">
+                    <div class="flex items-center gap-4 mb-12" data-editor-id="gu23do6pf">
+                        <h2 class="text-3xl sm:text-4xl font-display font-medium" data-editor-id="6qng51j29">Primi Piatti</h2>
+                        <div class="h-[1px] flex-grow bg-white/10" data-editor-id="22chxkxit"></div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-8" data-editor-id="4ya7qymus">
+                        <div class="group py-6 border-b border-white/10 hover:border-primary/40 transition-luxury flex flex-col md:flex-row md:items-center justify-between gap-4" data-editor-id="bgof6a578">
+                            <div class="max-w-xl" data-editor-id="ezf4bzku4">
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="oha4ul8s8">Tagliatelle Al Tartufo</h3>
+                                <p class="text-sm text-white/60 font-light" data-editor-id="ahehurqdq">Hand-rolled egg pasta, Umbrian black truffle cream, and mountain butter.</p>
+                            </div>
+                            <span class="font-mono-ui text-sm text-white/40" data-editor-id="ztp5alaev">₹1,850</span>
+                        </div>
+                        <div class="group py-6 border-b border-white/10 hover:border-primary/40 transition-luxury flex flex-col md:flex-row md:items-center justify-between gap-4" data-editor-id="w7vb6azcr">
+                            <div class="max-w-xl" data-editor-id="tn2vt6fet">
+                                <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="l7luf5e6l">Risotto Ai Funghi Porcini</h3>
+                                <p class="text-sm text-white/60 font-light" data-editor-id="fl3mpco81">Slow-cooked Carnaroli rice with wild porcini mushrooms and 24-month aged Grana Padano.</p>
+                            </div>
+                            <span class="font-mono-ui text-sm text-white/40" data-editor-id="hhhilza3r">₹1,650</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-1 -->
+
+<!-- CC:main-content-2 -->
+<div class="py-32 bg-[#060504]" data-editor-id="zejn1xlf1">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="bkhwug9pf">
+        <div class="relative rounded-3xl overflow-hidden glass p-12 lg:p-20" data-editor-id="9txlqmrhg">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center" data-editor-id="2n46emxlm">
+                <div class="relative" data-editor-id="rpqk0jjaf">
+                    <div class="absolute inset-0 border border-primary/15 translate-x-4 translate-y-4 rounded-2xl" data-editor-id="a90n3lsi9"></div>
+                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&amp;fit=crop&amp;q=80" alt="Wood-fired Pizza" class="relative rounded-2xl grayscale-[20%] hover:grayscale-0 transition-luxury object-cover aspect-[4/5] w-full" data-editor-id="k1jwi9yus">
+                    <div class="absolute bottom-6 right-6 font-mono-ui text-[10px] text-white/40 rotate-3 p-2 border border-white/10 bg-surface/80" data-editor-id="ybwkll60d">LBC | EST 2024</div>
+                </div>
+                <div data-editor-id="tm2uj04hi">
+                    <span class="font-mono-ui text-xs tracking-[0.2em] text-primary mb-4 block" data-editor-id="nseyoxkud">The Heart of the Kitchen</span>
+                    <h2 class="text-3xl sm:text-4xl font-display font-medium mb-8" data-editor-id="2b7yebh0a">Artisanal Wood-Fired Pizza</h2>
+                    <p class="text-base text-white/60 mb-10 leading-relaxed font-light" data-editor-id="e4iqpxko0">
+                        Our dough undergoes a 48-hour fermentation process using Italian '00' flour, baked in our custom-built stone oven at 450°C for that perfect leopard-spotted crust.
+                    </p>
+                    <div class="space-y-8" data-editor-id="b0i2dcb5l">
+                        <div class="flex justify-between border-b border-white/5 pb-4" data-editor-id="mdb8lndl6">
+                            <div data-editor-id="eax33mhpn">
+                                <h3 class="text-lg font-display" data-editor-id="p22qkoglk">Margherita D.O.P.</h3>
+                                <p class="text-sm text-white/40" data-editor-id="jq4j278b7">San Marzano tomatoes, buffalo mozzarella, fresh basil.</p>
+                            </div>
+                            <span class="text-primary font-mono-ui" data-editor-id="8n1iyebhv">₹950</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-4" data-editor-id="dsehd3qr8">
+                            <div data-editor-id="gtmqmvdfi">
+                                <h3 class="text-lg font-display" data-editor-id="bjv112xvv">Diavola</h3>
+                                <p class="text-sm text-white/40" data-editor-id="6smlgijf1">Spicy Calabrese salami, chili flakes, red onion.</p>
+                            </div>
+                            <span class="text-primary font-mono-ui" data-editor-id="g5dqa4zpt">₹1,200</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-4" data-editor-id="2b9fptvj4">
+                            <div data-editor-id="m1nl3x88m">
+                                <h3 class="text-lg font-display" data-editor-id="yr2dw3dmb">Quattro Formaggi</h3>
+                                <p class="text-sm text-white/40" data-editor-id="gssk9sxw3">Mozzarella, gorgonzola, fontina, parmigiano.</p>
+                            </div>
+                            <span class="text-primary font-mono-ui" data-editor-id="t85tu6uqm">₹1,350</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-2 -->
+
+<!-- CC:page-cta -->
+<div class="py-32" data-editor-id="fw4ew6eaa">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="14jk8c28h">
+        <div class="bg-gradient-to-br from-secondary/20 to-surface border border-white/10 rounded-3xl p-12 lg:p-20 text-center relative overflow-hidden" data-editor-id="6og6qnln0">
+            <div class="absolute inset-0 opacity-10 pointer-events-none" data-editor-id="9pnodpdwx">
+                <div class="absolute top-0 left-0 w-full h-full bg-[none]" data-editor-id="c7u2vc89a"></div>
+            </div>
+            <div class="relative z-10" data-editor-id="xfarh16sy">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-medium mb-8" data-editor-id="cfavoojel">Experience True Italian Luxury</h2>
+                <p class="text-base md:text-lg text-white/60 max-w-xl mx-auto mb-10 font-light" data-editor-id="m847frv5x">
+                    Whether it's an intimate dinner or a grand celebration, our team is dedicated to creating an unforgettable culinary journey for you.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center" data-editor-id="i52fr6d7d">
+                    <a href="#contact" class="px-8 py-4 bg-primary text-surface font-mono-ui text-sm font-bold uppercase tracking-widest hover:bg-white transition-luxury" data-editor-id="o2cb77k6x">
+                        Book Your Table
+                    </a>
+                    <a href="#contact" class="px-8 py-4 border border-white/20 text-white font-mono-ui text-sm font-bold uppercase tracking-widest hover:border-primary transition-luxury" data-editor-id="igpcgxmai">
+                        Catering Inquiry
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-cta -->
+
+</section><!-- end page-menu -->
+<section id="page-reservations" class="page" data-editor-id="m4g5tfr6s" style="display: none;">
+    <!-- CC:page-hero -->
+    <div class="relative pt-40 pb-16 overflow-hidden" data-editor-id="h4hwfciyc">
+        <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24 relative z-10" data-editor-id="hnvvkgy2j">
+            <div class="animate-fade-in" data-editor-id="tpp3n7d8z">
+                <span class="font-mono-ui text-xs tracking-[0.2em] text-primary mb-4 block" data-editor-id="h0l226hh7">Secure Your Table</span>
+                <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.05] mb-6" data-editor-id="9vub0q6zq">
+                    Savor the Art of <span class="text-primary" data-editor-id="a4vlgtee1">Italian</span> Hospitality
+                </h1>
+                <p class="text-base leading-relaxed text-white/60 max-w-prose" data-editor-id="7n193bkq2">
+                    From intimate candlelit dinners to grand family celebrations, we invite you to experience the warmth of Mumbai's most authentic wood-fired kitchen.
+                </p>
+            </div>
+        </div>
+        <div class="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-secondary/10 to-transparent -z-10 opacity-50" data-editor-id="xkfizub8s"></div>
+    </div>
+    <!-- /CC:page-hero -->
+
+    <!-- CC:main-content-1 -->
+    <div class="py-28 bg-surface" data-editor-id="agvsrbshm">
+        <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="6k38riv8i">
+            <div class="grid lg:grid-cols-2 gap-16 items-center" data-editor-id="jnodkqjku">
+                <div class="relative group" data-editor-id="kx5p9ot99">
+                    <div class="absolute inset-0 border border-primary/15 translate-x-3 translate-y-3 transition-transform duration-700 group-hover:translate-x-5 group-hover:translate-y-5" data-editor-id="020g5qjw6"></div>
+                    <div class="relative overflow-hidden aspect-[4/5]" data-editor-id="cpd7cy09u">
+                        <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&amp;fit=crop&amp;q=80&amp;w=1000" alt="Private Dining Room" class="object-cover w-full h-full grayscale-[20%] group-hover:grayscale-0 transition-luxury duration-700" data-editor-id="jy7ndebl4">
+                        <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" data-editor-id="ich03ee1k"></div>
+                        <div class="absolute bottom-6 left-6 font-mono-ui text-[10px] text-white/50 bg-black/40 backdrop-blur-md px-3 py-1 rotate-3" data-editor-id="ke5nuzpld">
+                            EST. 2024 • MUMBAI
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-12" data-editor-id="7ejn9c36o">
+                    <div data-editor-id="tlfsmbip8">
+                        <div class="flex items-center mb-4" data-editor-id="tjbhq2qj4">
+                            <span class="w-8 h-[1px] bg-primary inline-block mr-3" data-editor-id="yvlfjmna1"></span>
+                            <span class="font-mono-ui text-xs tracking-[0.2em] text-primary" data-editor-id="znwuz4ns5">The Experience</span>
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-medium leading-[1.1] mb-6" data-editor-id="wvazhy4ni">Dining Environments</h2>
+                        <p class="text-base text-white/60" data-editor-id="vd1tk753j">Choose the perfect setting for your culinary journey. Each space is designed with Italian elegance and Mumbai's vibrant spirit in mind.</p>
+                    </div>
+
+                    <div class="space-y-0 text-left" data-editor-id="yyscln6vq">
+                        <div class="py-6 border-b border-white/10 hover:border-primary/40 transition-luxury" data-editor-id="4a3s2aaoi">
+                            <div class="flex justify-between items-start mb-2" data-editor-id="jkc0gq9rd">
+                                <h3 class="text-lg md:text-xl font-display font-semibold" data-editor-id="khmt1x9xv">The Main Trattoria</h3>
+                                <span class="font-mono-ui text-xs text-white/40" data-editor-id="omdidwtpa">2-6 Guests</span>
+                            </div>
+                            <p class="text-sm text-white/50" data-editor-id="gnu6j4e6k">Heart of the restaurant featuring views of our open wood-fired oven.</p>
+                        </div>
+                        <div class="py-6 border-b border-white/10 hover:border-primary/40 transition-luxury" data-editor-id="u1hl15ii1">
+                            <div class="flex justify-between items-start mb-2" data-editor-id="xpj2e2qap">
+                                <h3 class="text-lg md:text-xl font-display font-semibold" data-editor-id="r40bg5knb">The Terrazza</h3>
+                                <span class="font-mono-ui text-xs text-white/40" data-editor-id="f3hqtes3g">2-4 Guests</span>
+                            </div>
+                            <p class="text-sm text-white/50" data-editor-id="amxr85vw2">Al fresco dining with curated greenery and ambient lighting.</p>
+                        </div>
+                        <div class="py-6 border-b border-white/10 hover:border-primary/40 transition-luxury" data-editor-id="houg0u64l">
+                            <div class="flex justify-between items-start mb-2" data-editor-id="cr6vs8ha5">
+                                <h3 class="text-lg md:text-xl font-display font-semibold" data-editor-id="cgtfy2nb6">The Chef's Table</h3>
+                                <span class="font-mono-ui text-xs text-white/40" data-editor-id="l25wqyai3">Up to 10 Guests</span>
+                            </div>
+                            <p class="text-sm text-white/50" data-editor-id="96v08gkmj">A private gastronomic journey curated by our Executive Chef.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /CC:main-content-1 -->
+
+    <!-- CC:main-content-2 -->
+    <div class="py-32 relative" data-editor-id="a58z69ej5">
+        <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="q1qd2jeu4">
+            <div class="text-center mb-20" data-editor-id="t3kwjiovk">
+                <span class="font-mono-ui text-xs tracking-[0.2em] text-primary mb-4 block" data-editor-id="nfwt99w1s">Policy &amp; Details</span>
+                <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-medium mb-6" data-editor-id="7eh4stpix">Reservation Guidelines</h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8" data-editor-id="p6syohpj9">
+                <div class="glass p-10 flex flex-col items-center text-center group transition-luxury hover:border-primary/30" data-editor-id="2zwge2b5f">
+                    <div class="mb-6 p-4 rounded-full bg-white/5 text-primary group-hover:scale-110 transition-luxury" data-editor-id="21ivhtl7g">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clock" aria-hidden="true" class="lucide lucide-clock w-6 h-6" data-editor-id="k14cdfdye"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-display font-semibold mb-4" data-editor-id="k80o2zl57">Grace Period</h3>
+                    <p class="text-sm text-white/50 leading-relaxed" data-editor-id="3i5wi48er">
+                        We hold tables for 15 minutes past the reservation time. Please call if you are running late.
+                    </p>
+                </div>
+
+                <div class="glass p-10 flex flex-col items-center text-center group transition-luxury hover:border-primary/30" data-editor-id="gqjsrwtpy">
+                    <div class="mb-6 p-4 rounded-full bg-white/5 text-primary group-hover:scale-110 transition-luxury" data-editor-id="7zfx6g2vf">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="users" aria-hidden="true" class="lucide lucide-users w-6 h-6" data-editor-id="iurtbba90"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-display font-semibold mb-4" data-editor-id="z8d59js00">Large Groups</h3>
+                    <p class="text-sm text-white/50 leading-relaxed" data-editor-id="yd37vnms7">
+                        Parties of 8 or more require a fixed menu selection and a booking deposit to secure the space.
+                    </p>
+                </div>
+
+                <div class="glass p-10 flex flex-col items-center text-center group transition-luxury hover:border-primary/30" data-editor-id="gz90dl7en">
+                    <div class="mb-6 p-4 rounded-full bg-white/5 text-primary group-hover:scale-110 transition-luxury" data-editor-id="k2q7t9308">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="award" aria-hidden="true" class="lucide lucide-award w-6 h-6" data-editor-id="j0fncgl9g"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path><circle cx="12" cy="8" r="6"></circle></svg>
+                    </div>
+                    <h3 class="text-lg md:text-xl font-display font-semibold mb-4" data-editor-id="liokh9dyv">Dress Code</h3>
+                    <p class="text-sm text-white/50 leading-relaxed" data-editor-id="sktil5l7u">
+                        To maintain our upscale atmosphere, we request a smart-casual attire for all our guests.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-20 flex flex-wrap justify-center gap-12 opacity-40" data-editor-id="m8hyn1m34">
+                <div class="flex items-center gap-3" data-editor-id="q3ux1pzc5">
+                    <span class="font-mono-ui text-xs" data-editor-id="n0vr3umts">MON–SUN</span>
+                    <span class="w-4 h-[1px] bg-white/30" data-editor-id="iqhtmjxkt"></span>
+                    <span class="font-mono-ui text-xs" data-editor-id="afwpt4pk6">11AM – 11PM</span>
+                </div>
+                <div class="flex items-center gap-3" data-editor-id="kzq23mhoi">
+                    <span class="font-mono-ui text-xs" data-editor-id="f6mlumc2k">VALET PARKING</span>
+                    <span class="w-4 h-[1px] bg-white/30" data-editor-id="5v8mhoqff"></span>
+                    <span class="font-mono-ui text-xs" data-editor-id="adlnnvup4">AVAILABLE</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /CC:main-content-2 -->
+
+    <!-- CC:page-cta -->
+    <div class="py-32" data-editor-id="n6kt8cgs4">
+        <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="s2tpfgmd8">
+            <div class="relative overflow-hidden rounded-3xl bg-secondary/20 border border-white/10 py-20 px-8 text-center" data-editor-id="wuuukk8o5">
+                <div class="relative z-10 max-w-2xl mx-auto" data-editor-id="hfy90r3ld">
+                    <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-medium mb-8" data-editor-id="zv7lbk2li">Ready for an Unforgettable Evening?</h2>
+                    <p class="text-white/60 mb-10 text-base" data-editor-id="yps2qxr05">
+                        Our concierge team is standing by to assist with special requests or private event planning.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center" data-editor-id="zija2yv67">
+                        <a href="#contact" class="px-8 py-4 bg-primary text-surface font-semibold tracking-wide hover:bg-white transition-luxury duration-500 rounded-sm inline-flex items-center gap-2" data-editor-id="s00b33quu">
+                            Request a Table
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right w-4 h-4" data-editor-id="r19gmzb8a"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                        </a>
+                        <a href="#contact" class="px-8 py-4 border border-white/20 hover:border-primary transition-luxury duration-500 rounded-sm font-medium" data-editor-id="uchuk4fdw">
+                            Catering Inquiries
+                        </a>
+                    </div>
+                </div>
+                <!-- Decorative element -->
+                <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" data-editor-id="czt5miax9"></div>
+                <div class="absolute -top-24 -left-24 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" data-editor-id="fvcx8rcmw"></div>
+            </div>
+        </div>
+    </div>
+    <!-- /CC:page-cta -->
+</section><!-- end page-reservations -->
+<section id="page-catering" class="page" data-editor-id="uebvnps7b" style="display: block;">
+
+<!-- CC:page-hero -->
+<div class="relative pt-40 pb-20 overflow-hidden" data-editor-id="p7iqewpef">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24 relative z-10" data-editor-id="ldz6ufxzo">
+        <div class="animate-fade-in" data-editor-id="eic6tstax">
+            <span class="flex items-center text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-6" data-editor-id="mcwtzwgcc">
+                <span class="w-8 h-[1px] bg-primary mr-3" data-editor-id="umvvs6f2e"></span> Bespoke Events
+            </span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-display font-medium leading-[1.05] mb-8" data-editor-id="003s7j5gs">
+                Elevate Your Occasion with <span class="text-primary italic" data-editor-id="2g39dpfp9">Signature Italian</span> Excellence
+            </h1>
+            <p class="text-lg text-white/60 max-w-2xl leading-relaxed" data-editor-id="w9x88c58d">
+                From intimate villa gatherings to grand corporate galas across Mumbai, La Bella Cucina brings the soul of Italy to your chosen venue with unparalleled culinary artistry.
+            </p>
+        </div>
+    </div>
+    <div class="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none" data-editor-id="4u2fkqk8j">
+        <div class="w-full h-full bg-[none] bg-cover bg-center" data-editor-id="59hhjnd9t"></div>
+    </div>
+</div>
+<!-- /CC:page-hero -->
+
+<!-- CC:main-content-1 -->
+<div class="py-24 border-t border-white/5" data-editor-id="jso20wl6w">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="o9w5jot4w">
+        <div class="grid lg:grid-cols-2 gap-16 items-center mb-32" data-editor-id="g9wuxou75">
+            <div class="relative group" data-editor-id="z9d2960ey">
+                <div class="absolute inset-0 border border-primary/15 translate-x-4 translate-y-4 transition-luxury group-hover:translate-x-2 group-hover:translate-y-2" data-editor-id="c40cdwb4i"></div>
+                <div class="relative overflow-hidden aspect-[4/5]" data-editor-id="6kz2eoj4b">
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&amp;q=80" alt="Catering Setup" class="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-luxury duration-1000" data-editor-id="4mdatgm4f">
+                    <div class="absolute inset-0 bg-gradient-to-t from-surface/80 via-transparent to-transparent" data-editor-id="6z6kernex"></div>
+                    <div class="absolute bottom-6 left-6 font-mono-ui text-[10px] text-white/40 tracking-widest border border-white/20 px-3 py-1 rotate-[-3deg]" data-editor-id="oldm6iasv">LBC / MUMBAI</div>
+                </div>
+            </div>
+            <div class="animate-fade-in" data-editor-id="w8jur6hqp">
+                <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4 block" data-editor-id="5k6ft4dpr">The Experience</span>
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-medium leading-[1.1] mb-8" data-editor-id="q2y3s3e2t">Crafting Memories, One Plate at a Time</h2>
+                <div class="space-y-8" data-editor-id="ttw0sb0h9">
+                    <div class="border-b border-white/10 pb-6 hover:border-primary/40 transition-colors group" data-editor-id="4f1mhed4f">
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="vrio8s3oc">Corporate Excellence</h3>
+                        <p class="text-base text-white/60" data-editor-id="4zfjjyxh0">Impress clients and partners with sophisticated lunch spreads or elegant evening cocktail hours featuring our signature antipasti.</p>
+                    </div>
+                    <div class="border-b border-white/10 pb-6 hover:border-primary/40 transition-colors group" data-editor-id="5wwd2i884">
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="3mdhdzocc">Private Celebrations</h3>
+                        <p class="text-base text-white/60" data-editor-id="5qmwl9t76">Weddings, anniversaries, and milestones. We curate a personalized menu that reflects your unique story and taste.</p>
+                    </div>
+                    <div class="border-b border-white/10 pb-6 hover:border-primary/40 transition-colors group" data-editor-id="dibkxjttn">
+                        <h3 class="text-lg md:text-xl font-display font-semibold mb-2 group-hover:text-primary transition-colors" data-editor-id="lb3m2f1h4">Live Stations</h3>
+                        <p class="text-base text-white/60" data-editor-id="1w6up22kh">Interactive wood-fired pizza ovens and fresh pasta tossing stations that bring the theater of the Italian kitchen to your event.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 py-16 border-y border-white/5" data-editor-id="nbi4pp7hc">
+            <div class="text-center" data-editor-id="d6ggvs9r8">
+                <span class="block text-3xl font-display text-primary mb-1" data-editor-id="oz0tqggwp">500+</span>
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase" data-editor-id="bkhwlyuto">Events Hosted</span>
+            </div>
+            <div class="text-center" data-editor-id="8iq0h1f4o">
+                <span class="block text-3xl font-display text-primary mb-1" data-editor-id="plnukf54u">12</span>
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase" data-editor-id="njz1z2woy">Expert Chefs</span>
+            </div>
+            <div class="text-center" data-editor-id="lrs7gjnbq">
+                <span class="block text-3xl font-display text-primary mb-1" data-editor-id="5myx4ms67">100%</span>
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase" data-editor-id="rdnfsrp68">Artisanal</span>
+            </div>
+            <div class="text-center" data-editor-id="ggareal1h">
+                <span class="block text-3xl font-display text-primary mb-1" data-editor-id="c10nt2edr">24h</span>
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase" data-editor-id="zf4035rid">Response Time</span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-1 -->
+
+<!-- CC:main-content-2 -->
+<div class="py-32 bg-surface" data-editor-id="xpgti3cbv">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="8fpaweaba">
+        <div class="mb-16 text-center" data-editor-id="6v3jx1xft">
+            <span class="text-xs font-mono-ui tracking-[0.2em] uppercase text-primary mb-4 block" data-editor-id="qu0w8e706">Catering Tiers</span>
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-medium leading-[1.1]" data-editor-id="2c93uvptk">Tailored Packages</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8" data-editor-id="bwuf1y7cj">
+            <!-- Tier 1 -->
+            <div class="glass p-10 flex flex-col hover:border-primary/30 transition-luxury group" data-editor-id="tpywm2tib">
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase mb-4" data-editor-id="cj935ryz1">The Aperitivo</span>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-6" data-editor-id="05nnd0d4s">Social Soirée</h3>
+                <ul class="space-y-4 mb-10 flex-grow" data-editor-id="59ly27ftq">
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="gt2v4o7r8">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="lypljcmrt"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Selection of 6 Gourmet Crostinis
+                    </li>
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="2rwcf04lw">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="kffxqq2cx"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Artisanal Cheese &amp; Salumi Board
+                    </li>
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="mg9hdsglp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="zwsflmv1t"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Two Signature Mocktails/Cocktails
+                    </li>
+                </ul>
+                <a href="#contact" class="block text-center py-4 border border-white/20 text-xs font-mono-ui tracking-widest uppercase hover:bg-white hover:text-black transition-luxury" data-editor-id="d6ihz6ppi">Inquire Now</a>
+            </div>
+
+            <!-- Tier 2 -->
+            <div class="glass p-10 flex flex-col border-primary/40 relative transform lg:-translate-y-4" data-editor-id="w8tuhw2rd">
+                <div class="absolute top-0 right-10 -translate-y-1/2 bg-primary text-black text-[10px] font-mono-ui font-bold px-4 py-1 tracking-tighter uppercase" data-editor-id="l5riayct9">Most Popular</div>
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase mb-4" data-editor-id="000dy8j8d">The Trattoria</span>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-6" data-editor-id="o6vgj1qtj">Italian Feast</h3>
+                <ul class="space-y-4 mb-10 flex-grow" data-editor-id="ay3u008mf">
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="ycbx0oacu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="phv3h8pzm"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        3-Course Seated Dinner
+                    </li>
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="s54klxt4m">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="ygj6a1vrc"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Live Pasta or Risotto Station
+                    </li>
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="w04zgj4i9">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="utc74fej1"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Professional Server Staff
+                    </li>
+                </ul>
+                <a href="#contact" class="block text-center py-4 bg-primary text-black text-xs font-mono-ui font-bold tracking-widest uppercase hover:bg-white transition-luxury" data-editor-id="fp7gbagca">Inquire Now</a>
+            </div>
+
+            <!-- Tier 3 -->
+            <div class="glass p-10 flex flex-col hover:border-primary/30 transition-luxury group" data-editor-id="q0bn7asbu">
+                <span class="text-xs font-mono-ui tracking-widest text-white/40 uppercase mb-4" data-editor-id="eq2qefitm">The Grand Ducale</span>
+                <h3 class="text-lg md:text-xl font-display font-semibold mb-6" data-editor-id="8zsblkr6w">Ultimate Luxury</h3>
+                <ul class="space-y-4 mb-10 flex-grow" data-editor-id="12nys42m0">
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="41qvdihkl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="op3fu5osa"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        7-Course Degustation Menu
+                    </li>
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="3jwmnpn6h">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="ghipva2ed"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Personal Sommelier Service
+                    </li>
+                    <li class="flex items-start text-sm text-white/60" data-editor-id="wg2x740v4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="check-circle" aria-hidden="true" class="lucide lucide-check-circle w-4 h-4 text-primary mr-3 mt-0.5" data-editor-id="r3jn9ti2f"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+                        Bespoke Decor &amp; Floral Design
+                    </li>
+                </ul>
+                <a href="#contact" class="block text-center py-4 border border-white/20 text-xs font-mono-ui tracking-widest uppercase hover:bg-white hover:text-black transition-luxury" data-editor-id="d1uiffcc5">Inquire Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:main-content-2 -->
+
+<!-- CC:page-cta -->
+<div class="py-32" data-editor-id="fvj5flwhz">
+    <div class="max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="jzi20unif">
+        <div class="relative rounded-[2rem] overflow-hidden p-12 lg:p-20 text-center" data-editor-id="likrx28xp">
+            <div class="absolute inset-0 bg-secondary/20" data-editor-id="oaooryfer"></div>
+            <div class="absolute inset-0 bg-[none] bg-cover bg-center mix-blend-overlay opacity-30" data-editor-id="qpnh5zhvl"></div>
+            
+            <div class="relative z-10 max-w-2xl mx-auto" data-editor-id="qlzbgtwum">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-display font-medium mb-8" data-editor-id="19qiulx97">Ready to Host Your Next Masterpiece?</h2>
+                <p class="text-white/80 mb-10 text-lg" data-editor-id="n30kmyyd0">Our dedicated events team is ready to bring your vision to life. Let’s discuss your menu, venue, and guest list.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center" data-editor-id="j7qp59xzi">
+                    <a href="#contact" class="px-10 py-5 bg-primary text-black font-mono-ui font-bold text-xs tracking-widest uppercase hover:bg-white transition-luxury" data-editor-id="y17hx81mp">
+                        Request Proposal
+                    </a>
+                    <a href="#contact" class="px-10 py-5 border border-white/20 backdrop-blur-md font-mono-ui font-bold text-xs tracking-widest uppercase hover:bg-primary hover:text-black hover:border-primary transition-luxury" data-editor-id="ni6amnxff">
+                        View Sample Menus
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /CC:page-cta -->
+
+</section><!-- end page-catering -->
+<section id="page-contact" class="page" data-editor-id="s5hko6bi8" style="display: none;">
+
+<!-- CC:contact-hero -->
+<div class="pt-40 pb-20 max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="1v75959in">
+    <div class="animate-fade-in" data-editor-id="h8aqw53qo">
+        <span class="font-mono-ui text-xs tracking-[0.2em] text-primary block mb-6" data-editor-id="spugz87c7">Reservations &amp; Inquiries</span>
+        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.05] mb-8" data-editor-id="jvm03oe5e">
+            Begin Your <span class="text-primary" data-editor-id="3xm45bb21">Culinary Journey</span> With Us
+        </h1>
+        <p class="text-white/60 text-lg max-w-2xl font-light" data-editor-id="hmlfslz1n">
+            Whether it is an intimate dinner for two or a grand celebration, our team is dedicated to crafting an unforgettable Italian experience tailored to your needs.
+        </p>
+    </div>
+</div>
+<!-- /CC:contact-hero -->
+
+<!-- CC:contact-form -->
+<div class="pb-32 max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="vcdzawv9h">
+    <div class="grid lg:grid-cols-2 gap-16 items-start" data-editor-id="iaz4gw934">
+        
+        <div class="space-y-12 animate-fade-in" data-editor-id="5k1xptuaf">
+            <div data-editor-id="sp1jaqnd6">
+                <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-medium leading-[1.1] mb-6" data-editor-id="sfqbjkhgi">Get in Touch</h2>
+                <p class="text-white/60 mb-10" data-editor-id="4dxed9pa2">Visit us in the heart of Mumbai or reach out through our concierge services for private dining and catering arrangements.</p>
+            </div>
+
+            <div class="space-y-8" data-editor-id="pqve3wtyn">
+                <div class="flex items-start gap-6 group" data-editor-id="65qnuh51b">
+                    <div class="mt-1 text-white/40 group-hover:text-primary transition-colors duration-500" data-editor-id="8ahx9ns3a">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map-pin" aria-hidden="true" class="lucide lucide-map-pin w-6 h-6" data-editor-id="ykpk1npdg"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    </div>
+                    <div data-editor-id="dibck9034">
+                        <h3 class="font-display text-lg md:text-xl font-semibold mb-2" data-editor-id="foe319bdg">Location</h3>
+                        <p class="text-white/60 font-light" data-editor-id="uygr0fq2j">Ground Floor, Luxury Estates,<br data-editor-id="f9p8b9ym3">Bandra Kurla Complex, Mumbai 400051</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-6 group" data-editor-id="fpkexgkqa">
+                    <div class="mt-1 text-white/40 group-hover:text-primary transition-colors duration-500" data-editor-id="hozw7xmkw">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="clock" aria-hidden="true" class="lucide lucide-clock w-6 h-6" data-editor-id="9gwhv6gkj"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                    </div>
+                    <div data-editor-id="azzpzp051">
+                        <h3 class="font-display text-lg md:text-xl font-semibold mb-2" data-editor-id="7w1rfx8rz">Opening Hours</h3>
+                        <p class="text-white/60 font-light" data-editor-id="b45bl9w87">Monday – Sunday<br data-editor-id="97g6kwzef">11:00 AM – 11:00 PM</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-6 group" data-editor-id="4gl2f1cjy">
+                    <div class="mt-1 text-white/40 group-hover:text-primary transition-colors duration-500" data-editor-id="d0vh9ns5u">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="phone" aria-hidden="true" class="lucide lucide-phone w-6 h-6" data-editor-id="ljsko5s6u"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"></path></svg>
+                    </div>
+                    <div data-editor-id="26ov0e9eo">
+                        <h3 class="font-display text-lg md:text-xl font-semibold mb-2" data-editor-id="n5b2c12d1">Contact Details</h3>
+                        <p class="text-white/60 font-light" data-editor-id="kqj5mjept">+91 22 4900 8800<br data-editor-id="ri2cyysib">concierge@labellacucina.in</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="animate-fade-in" style="animation-delay: 0.2s;" data-editor-id="xw23qr9ye">
+            <form action="#" class="glass p-8 sm:p-10 rounded-3xl border-b border-white/10 hover:border-primary/40 transition-luxury" data-editor-id="qzyww17lr">
+                <div class="grid sm:grid-cols-2 gap-6 mb-6" data-editor-id="to3za8m2v">
+                    <div class="space-y-2" data-editor-id="mzr1fn073">
+                        <label class="font-mono-ui text-[10px] tracking-widest text-white/40 uppercase" data-editor-id="0d5kgy0yk">Full Name</label>
+                        <input type="text" placeholder="Enzo Ferrari" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-primary/50 transition-colors text-white placeholder:text-white/20" data-editor-id="vqeme0u01">
+                    </div>
+                    <div class="space-y-2" data-editor-id="n1l0z2eln">
+                        <label class="font-mono-ui text-[10px] tracking-widest text-white/40 uppercase" data-editor-id="jtkionxew">Email Address</label>
+                        <input type="email" placeholder="enzo@example.com" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-primary/50 transition-colors text-white placeholder:text-white/20" data-editor-id="ifld8xm6g">
+                    </div>
+                </div>
+                <div class="space-y-2 mb-6" data-editor-id="pqq5ve91d">
+                    <label class="font-mono-ui text-[10px] tracking-widest text-white/40 uppercase" data-editor-id="cqhr2ot56">Inquiry Type</label>
+                    <select class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-primary/50 transition-colors text-white/60 appearance-none" data-editor-id="j7efx5xmq">
+                        <option data-editor-id="gxuwehhv0">Table Reservation</option>
+                        <option data-editor-id="malfij9fc">Private Dining Event</option>
+                        <option data-editor-id="j4mp60vws">Catering Services</option>
+                        <option data-editor-id="19j4dqz77">General Inquiry</option>
+                    </select>
+                </div>
+                <div class="space-y-2 mb-8" data-editor-id="d44u0eyip">
+                    <label class="font-mono-ui text-[10px] tracking-widest text-white/40 uppercase" data-editor-id="iyi2w7dca">Your Message</label>
+                    <textarea rows="5" placeholder="Tell us about your requirements..." class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-primary/50 transition-colors text-white placeholder:text-white/20 resize-none" data-editor-id="17iq8lp5f"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-surface font-mono-ui text-xs font-bold tracking-[0.2em] py-5 rounded-lg transition-luxury uppercase" data-editor-id="yzug2n5a1">
+                    Send Message
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+<!-- /CC:contact-form -->
+
+<!-- CC:contact-cta -->
+<div class="pb-32 max-w-6xl mx-auto px-8 sm:px-12 lg:px-20 xl:px-24" data-editor-id="76a0s5tz3">
+    <div class="relative overflow-hidden glass rounded-3xl p-12 sm:p-20 text-center border-white/10" data-editor-id="d5cebn1ms">
+        <div class="relative z-10 max-w-3xl mx-auto" data-editor-id="o68jy845h">
+            <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-medium mb-6" data-editor-id="h6wknlf5o">Experience the Art of <span class="text-primary text-primary" data-editor-id="b118nnbz3">Authenticity</span></h2>
+            <p class="text-white/60 text-lg mb-10 font-light" data-editor-id="sabbhdqlp">Join us for an evening of exquisite flavors and timeless Italian hospitality. We recommend booking in advance for weekend dining.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center" data-editor-id="84kht0uvr">
+                <a href="#contact" class="bg-primary hover:bg-primary/90 text-surface px-10 py-4 rounded-full font-mono-ui text-xs font-bold tracking-widest transition-luxury uppercase" data-editor-id="vqf6g374c">
+                    Book a Table
+                </a>
+                <a href="#contact" class="border border-white/20 hover:border-primary/50 text-white px-10 py-4 rounded-full font-mono-ui text-xs font-bold tracking-widest transition-luxury uppercase" data-editor-id="0x8ornazw">
+                    Explore Menu
+                </a>
+            </div>
+        </div>
+        <!-- Decorative subtle element -->
+        <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none" data-editor-id="aknwlecm6">
+            <span class="font-display text-9xl italic" data-editor-id="8jjqquxw1">LBC</span>
+        </div>
+    </div>
+</div>
+<!-- /CC:contact-cta -->
+
+</section><!-- end page-contact -->
+</main>
+<footer class="bg-black/40 border-t border-white/5 py-20 px-6" data-editor-id="brqc7cr5c">
+    <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20" data-editor-id="i946t0idr">
+        <div class="col-span-2 md:col-span-1" data-editor-id="v0g101djv">
+            <span class="font-display font-black text-2xl text-primary tracking-tight" data-editor-id="bos427vx3">LA BELLA CUCINA</span>
+            <p class="mt-6 text-white/60 leading-relaxed font-body" data-editor-id="9y3tezkxc">Bringing the soul of Italy to the heart of Mumbai. Experience authentic wood-fired traditions and premium hospitality.</p>
+            <div class="flex gap-4 mt-8" data-editor-id="99a2mhz3n">
+                <a href="#" class="glass w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-surface transition-all duration-300" data-editor-id="qrlrs14w6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-editor-id="bim32xmci"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" data-editor-id="8588k97jn"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" data-editor-id="til6qy4u6"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" data-editor-id="wx6p92m29"></line></svg>
+                </a>
+                <a href="#" class="glass w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-surface transition-all duration-300" data-editor-id="6zvk9medb">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-editor-id="1qj3ralkk"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" data-editor-id="fymd7jt89"></path></svg>
+                </a>
+                <a href="#" class="glass w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-surface transition-all duration-300" data-editor-id="8wxpo9nio">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-editor-id="r54ztiwuv"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" data-editor-id="wp91fti0w"></path></svg>
+                </a>
+            </div>
+        </div>
+        <div data-editor-id="uratih0ob">
+            <h4 class="font-display text-white font-bold mb-6 uppercase tracking-widest text-sm" data-editor-id="87gx4m9xd">Quick Links</h4>
+            <ul class="space-y-4 text-white/50 font-body" data-editor-id="wlwpm1xsb">
+                <li data-editor-id="wbx7hcbgw"><a href="#" class="hover:text-primary transition-colors" data-editor-id="z2nt28fvr">The Menu</a></li>
+                <li data-editor-id="fhseunj2d"><a href="#" class="hover:text-primary transition-colors" data-editor-id="yid73pqpi">Reservations</a></li>
+                <li data-editor-id="xz6118izm"><a href="#" class="hover:text-primary transition-colors" data-editor-id="raoi26cg5">Private Dining</a></li>
+                <li data-editor-id="57emyz2rq"><a href="#" class="hover:text-primary transition-colors" data-editor-id="x3vr91li7">Catering</a></li>
+            </ul>
+        </div>
+        <div data-editor-id="z69mbu9zb">
+            <h4 class="font-display text-white font-bold mb-6 uppercase tracking-widest text-sm" data-editor-id="mz2c8fdpl">Company</h4>
+            <ul class="space-y-4 text-white/50 font-body" data-editor-id="6z0bcmicz">
+                <li data-editor-id="linok0ylz"><a href="#" class="hover:text-primary transition-colors" data-editor-id="m4fs8jvds">About Us</a></li>
+                <li data-editor-id="apbnbhwub"><a href="#" class="hover:text-primary transition-colors" data-editor-id="bg3rewurc">Journal</a></li>
+                <li data-editor-id="lwjk95107"><a href="#" class="hover:text-primary transition-colors" data-editor-id="lhqdnf28w">Careers</a></li>
+                <li data-editor-id="6hgqwbgv7"><a href="#" class="hover:text-primary transition-colors" data-editor-id="54djlkekc">Contact</a></li>
+            </ul>
+        </div>
+        <div data-editor-id="kkfrjhc8l" class="">
+            <h4 class="font-display text-white font-bold mb-6 uppercase tracking-widest text-sm" data-editor-id="81tluwmn1">Legal</h4>
+            <ul class="space-y-4 text-white/50 font-body" data-editor-id="8xzrrf5bt">
+                <li data-editor-id="0odmfombb" class=""><a href="#" class="hover:text-primary transition-colors" data-editor-id="y5i8k8vn2">Privacy Policy</a></li>
+                <li data-editor-id="6yhratita"><a href="#" class="hover:text-primary transition-colors" data-editor-id="02pci5v09">Terms of Service</a></li>
+                <li data-editor-id="i8xlbmfrk"><a href="#" class="hover:text-primary transition-colors" data-editor-id="8bu2xp29d">Cookie Policy</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="max-w-7xl mx-auto border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-white/40 font-mono-ui text-xs" data-editor-id="wjhtoqvyr">
+        <p data-editor-id="b2043l42y">© 2024 LA BELLA CUCINA. ALL RIGHTS RESERVED.</p>
+        <p data-editor-id="vxg2viu0p">BUILT WITH CRAWLCUBE</p>
+        <p data-editor-id="lrzcdax20">MUMBAI, INDIA</p>
+    </div>
+</footer>
+<!-- /CC:footer -->
+
+<script data-editor-id="mktilphhy">
+window.addEventListener('scroll',function(){var n=document.getElementById('navbar');if(n){var c=n.querySelector('div');if(c)c.style.background=window.scrollY>50?'#060504F5':'#060504DD';}});
+
+var co=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){var el=e.target,raw=el.dataset.target,t=parseFloat(raw);if(isNaN(t)){co.unobserve(el);return;}var suffix=el.dataset.suffix||'',c=0,i=t/60,tm=setInterval(function(){c+=i;if(c>=t){var display=t>=1000?Math.round(t).toLocaleString():Number.isInteger(t)?t:t;el.textContent=display+(t>=100?'+':'')+suffix;clearInterval(tm);}else{el.textContent=Math.floor(c)>=1000?Math.floor(c).toLocaleString():Math.floor(c);}},16);co.unobserve(el);}});});document.querySelectorAll('.counter').forEach(function(el){co.observe(el);});
+
+var fo=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)';}});},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){el.style.opacity='0';el.style.transform='translateY(24px)';el.style.transition='opacity 0.75s cubic-bezier(0.25,0.46,0.45,0.94),transform 0.75s cubic-bezier(0.25,0.46,0.45,0.94)';fo.observe(el);});
+
+document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var menu=document.querySelector('[x-show="open"].fixed.right-0');if(!menu)return;var bg=window.getComputedStyle(menu).backgroundColor;var isTransparent=!bg||bg==='rgba(0, 0, 0, 0)'||bg==='transparent';if(isTransparent)menu.style.background='#060504';},500);});
+
+lucide.createIcons();
+</script>
+
+<script data-editor-id="hus1h0po2">
+(function(){
+  var fb=["https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=900&q=80","https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&q=80","https://images.unsplash.com/photo-1559339352-11d035aa65de?w=900&q=80","https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900&q=80","https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&q=80"];
+  var idx=0;
+  document.querySelectorAll('img').forEach(function(img){
+    function h(){
+      img.onerror=null;
+      img.src=fb[idx%fb.length];
+      idx++;
+    }
+    img.onerror=h;
+    if(img.complete && img.naturalHeight===0) h();
+  });
+})();
+</script>
+
+<div id="cc-hover-badge" style="display: none; border-radius: 4px 4px 0px 0px; top: 394.8px; left: 0px;" data-editor-id="t5q3zrwc6">section</div><div id="cc-hover-badge" style="display: block; border-radius: 4px 4px 0px 0px; top: 276.15px; left: 48px;">div</div></body></html>

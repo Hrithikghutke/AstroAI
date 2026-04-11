@@ -15,8 +15,8 @@ const SHOWCASE_TABS = [
   { id: "all", label: "All", icon: LayoutGrid },
   { id: "landing", label: "Landing Pages", icon: FileText },
   { id: "apps", label: "Advanced Apps", icon: Layout },
-  { id: "business", label: "Business Tools", icon: Briefcase },
-  { id: "personal", label: "Personal Tools", icon: User },
+  { id: "business", label: "Business Websites", icon: Briefcase },
+  { id: "personal", label: "Personal Websites", icon: User },
   { id: "mobile", label: "Mobile Apps", icon: Smartphone },
 ];
 
@@ -33,20 +33,29 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
   {
     id: 2,
     title: "MCE Dashboard",
-    category: "Advanced Apps",
+    category: "Business Websites",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-    categoryId: "apps",
+    categoryId: "business",
     description: "A highly complex, data-centric web app layout tailored for management.",
     iframeUrl: "showcase_html/mce.html"
   },
    {
     id: 3,
     title: "ARVC Capitals",
-    category: "Business Tools",
+    category: "Business Websites",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
     categoryId: "business",
     description: "A highly complex, data-centric web app layout tailored for management.",
     iframeUrl: "showcase_html/ARVC.html"
+  },
+  {
+    id: 4,
+    title: "La Bella Cuisine",
+    category: "Business Websites",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+    categoryId: "business",
+    description: "Asian Restaurant Website.",
+    iframeUrl: "showcase_html/la-bella-cucina.html"
   },
  
  
