@@ -48,7 +48,9 @@ export default function PricingPage({
   const { refreshCredits } = useCredits();
   const currency = useCurrency();
   const [period, setPeriod] = useState<BillingPeriod>(
-    (currentPeriod as BillingPeriod) ?? "monthly",
+    currentPeriod === "monthly" || currentPeriod === "annual"
+      ? currentPeriod
+      : "monthly",
   );
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
