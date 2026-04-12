@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Grid, FileText, Layout, Briefcase, User, Smartphone, LayoutGrid, X, Monitor, Tablet, Smartphone as MobileIcon } from "lucide-react";
 
 type ShowcaseItem = {
@@ -9,6 +9,7 @@ type ShowcaseItem = {
   image: string;
   description: string;
   iframeUrl?: string;
+  model?: string;
 };
 
 const SHOWCASE_TABS = [
@@ -64,6 +65,28 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
 export default function ShowcaseSection() {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedPreview, setSelectedPreview] = useState<ShowcaseItem | null>(null);
+  const [deviceView, setDeviceView] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (selectedPreview) setSelectedPreview(null);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [selectedPreview]);
+
+  const openPreview = (item: ShowcaseItem) => {
+    window.history.pushState({ showcaseOpen: true }, "");
+    setSelectedPreview(item);
+  };
+
+  const closePreview = () => {
+    if (window.history.state?.showcaseOpen) {
+      window.history.back();
+    } else {
+      setSelectedPreview(null);
+    }
+  };
 
   const filteredItems = activeTab === "all" 
     ? SHOWCASE_ITEMS 
@@ -115,7 +138,7 @@ export default function ShowcaseSection() {
               {/* Image Card */}
               <div 
                 className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-900 mb-4 ring-1 ring-inset ring-white/5 transition-all duration-300 group-hover:border-neutral-600 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.05)]"
-                onClick={() => setSelectedPreview(item)}
+                onClick={() => openPreview(item)}
               >
                 <div className="absolute inset-0 bg-neutral-800 animate-pulse" /> {/* Loading state */}
                 
@@ -166,48 +189,54 @@ export default function ShowcaseSection() {
 
       {/* Full-Screen Preview Modal */}
       {selectedPreview && (
-        <div className="fixed inset-0 z-[100] bg-black flex h-screen overflow-hidden animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col md:flex-row h-screen overflow-hidden animate-in fade-in duration-200">
           
-          {/* Left Sidebar */}
-          <div className="w-[320px] shrink-0 bg-[#0f0f0f] border-r border-white/5 flex flex-col h-full relative z-20">
+          {/* Left Sidebar (Top bar on mobile) */}
+          <div className="w-full md:w-[320px] shrink-0 bg-[#0f0f0f] border-b md:border-b-0 md:border-r border-white/5 flex flex-col h-auto md:h-full relative z-20">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-white/5">
-              <h2 className="text-white font-bold text-lg truncate pr-4">{selectedPreview.title}</h2>
+            <div className="flex items-center justify-between p-4 md:p-5 border-b border-white/5">
+              <h2 className="text-white font-bold text-base md:text-lg truncate pr-4">{selectedPreview.title}</h2>
               <button 
-                onClick={() => setSelectedPreview(null)}
+                onClick={closePreview}
                 className="text-neutral-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-1.5 rounded-md"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            {/* Description */}
-            <div className="p-5 flex-1 overflow-y-auto">
-              <p className="text-sm leading-relaxed text-neutral-400">
+            {/* Description - Expandable or hidden on mobile to prioritize preview */}
+            <div className="hidden md:flex flex-col p-5 flex-1 overflow-y-auto">
+              <p className="text-sm leading-relaxed text-neutral-400 mb-4">
                 {selectedPreview.description}
               </p>
+              <div className="bg-white/5 border border-white/10 p-3 rounded-lg flex flex-col gap-1 mt-auto">
+                <span className="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold">Generated Using</span>
+                <span className="text-sm text-neutral-300 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]"></span> {selectedPreview.model || "Gemini 3.1 Pro"}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Right Main Content */}
-          <div className="flex-1 flex flex-col relative h-full bg-[#050505] overflow-hidden">
-            {/* Navbar */}
-            <div className="h-14 border-b border-white/5 flex items-center justify-center px-4 bg-[#0a0a0a] relative z-10">
+          <div className="flex-1 flex flex-col relative h-[calc(100vh-65px)] md:h-full bg-[#050505] overflow-hidden">
+            {/* Navbar (Hidden on mobile) */}
+            <div className="hidden md:flex h-14 border-b border-white/5 items-center justify-center px-4 bg-[#0a0a0a] relative z-10">
               <div className="flex items-center gap-1 bg-white/5 border border-white/5 rounded-lg p-1">
-                <button className="p-1.5 rounded-md bg-white/10 text-white">
+                <button onClick={() => setDeviceView("desktop")} className={`p-1.5 rounded-md transition-colors ${deviceView === "desktop" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-neutral-300"}`}>
                   <Monitor className="w-4 h-4" />
                 </button>
-                <button className="p-1.5 rounded-md text-neutral-500 hover:text-neutral-300 transition-colors">
+                <button onClick={() => setDeviceView("tablet")} className={`p-1.5 rounded-md transition-colors ${deviceView === "tablet" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-neutral-300"}`}>
                   <Tablet className="w-4 h-4" />
                 </button>
-                <button className="p-1.5 rounded-md text-neutral-500 hover:text-neutral-300 transition-colors">
+                <button onClick={() => setDeviceView("mobile")} className={`p-1.5 rounded-md transition-colors ${deviceView === "mobile" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-neutral-300"}`}>
                   <MobileIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Preview Frame */}
-            <div className={`flex-1 w-full h-full pb-0 sm:pb-8 md:pb-12 px-0 pt-0 sm:px-8 md:px-12 sm:pt-8 md:pt-12 overflow-y-auto flex items-start justify-center ${selectedPreview.iframeUrl ? "p-0 sm:p-0 md:p-0 overflow-hidden" : ""}`}>
-              <div className={`w-full max-w-[1200px] bg-black rounded-lg sm:rounded-xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 h-full ${selectedPreview.iframeUrl ? "max-w-none rounded-none border-0" : "min-h-full sm:min-h-0"}`}>
+            <div className={`flex-1 w-full h-full pb-0 sm:pb-8 md:pb-12 px-0 pt-0 sm:px-8 md:px-12 sm:pt-8 md:pt-12 overflow-y-auto flex items-start justify-center ${selectedPreview.iframeUrl && deviceView === "desktop" ? "p-0 sm:p-0 md:p-0 overflow-hidden" : ""}`}>
+              <div className={`${deviceView === "mobile" ? "w-full md:w-[390px]" : deviceView === "tablet" ? "w-full md:w-[768px]" : "w-full max-w-[1200px]"} bg-black md:rounded-xl overflow-hidden md:shadow-[0_0_50px_rgba(0,0,0,0.5)] md:border border-white/10 h-full transition-all duration-300 ${selectedPreview.iframeUrl && deviceView === "desktop" ? "max-w-none md:rounded-none border-0" : "min-h-full sm:min-h-0"}`}>
                 {selectedPreview.iframeUrl ? (
                   <iframe src={selectedPreview.iframeUrl} className="w-full h-full border-0 bg-white" title={selectedPreview.title} />
                 ) : (

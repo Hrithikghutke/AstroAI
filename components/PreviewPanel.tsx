@@ -179,6 +179,8 @@ export default function PreviewPanel({
     // Modern targeted removal
     clone.querySelector('#crawlcube-editor-script')?.remove();
     clone.querySelector('#crawlcube-editor-style')?.remove();
+    clone.querySelectorAll('#cc-hover-badge').forEach(el => el.remove());
+    clone.querySelectorAll('#crawlcube-custom-scrollbar').forEach(el => el.remove());
     
     // Legacy targeted removal (for instances already contaminated before the fix)
     const styles = clone.querySelectorAll('style');
@@ -264,7 +266,6 @@ export default function PreviewPanel({
           rebuildResponsiveStylesheet(idoc);
           localHtmlRef.current = getCleanHtmlSnapshot(idoc);
           setPendingChanges(true);
-          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
         }
       }
     } catch (e) {
@@ -281,7 +282,6 @@ export default function PreviewPanel({
           target.innerHTML = content;
           localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
           setPendingChanges(true);
-          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
           return;
         }
       }
@@ -301,7 +301,6 @@ export default function PreviewPanel({
           }
           localHtmlRef.current = getCleanHtmlSnapshot(iframe.contentDocument);
           setPendingChanges(true);
-          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
           return;
         }
       }
@@ -324,7 +323,6 @@ export default function PreviewPanel({
           
           localHtmlRef.current = getCleanHtmlSnapshot(idoc);
           setPendingChanges(true);
-          if (onDeepHtmlChange) onDeepHtmlChange(localHtmlRef.current);
         }
       }
     } catch (e) {
