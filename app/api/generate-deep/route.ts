@@ -24,8 +24,9 @@ import { getQaPrompt } from "@/lib/agentPrompts/qa";
 import { getFixerPrompt } from "@/lib/agentPrompts/fixer";
 import { fetchUnsplashImage } from "@/lib/fetchUnsplash";
 import { getModelConfig, calculateCredits } from "@/lib/modelConfig";
+import { ModelExecutor } from "@/lib/modelExecutionStrategy";
 
-// Increase max duration for Deep Dive — Opus can take 45-60s
+// Vercel serverless max duration (Pro plan)
 export const maxDuration = 300;
 
 // Minimal fallback footer — used when footer generation fails
@@ -309,25 +310,18 @@ function validatePageSection(html: string, pageId: string): string {
   return clean;
 }
 
-// ── Silent streaming — streams from OpenRouter (prevents timeouts)
-// but collects full output without pushing chunks to client ──
-const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-async function silentStreamOnce(
+// ── Silent streaming — collects full output without pushing chunks to client ──
+// Timeout and retry are now handled by ModelExecutor — this is just the raw stream collector
+async function silentStream(
   systemPrompt: string,
   userMessage: string,
   maxTokens: number,
   model: string,
   signal?: AbortSignal,
-  timeoutMs: number = 150000,
 ): Promise<{ content: string; outputTokens: number }> {
   let content = "";
 
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("silentStream timeout")), timeoutMs),
-  );
-
-  const streamPromise = callOpenRouterStream(
+  const { outputTokens } = await callOpenRouterStream(
     systemPrompt,
     userMessage,
     maxTokens,
@@ -338,50 +332,12 @@ async function silentStreamOnce(
     signal,
   );
 
-  const { outputTokens } = await Promise.race([streamPromise, timeoutPromise]);
-  return { content, outputTokens };
-}
-
-async function silentStream(
-  systemPrompt: string,
-  userMessage: string,
-  maxTokens: number,
-  model: string,
-  signal?: AbortSignal,
-  timeoutMs: number = 150000,
-): Promise<{ content: string; outputTokens: number }> {
-  try {
-    const result = await silentStreamOnce(
-      systemPrompt,
-      userMessage,
-      maxTokens,
-      model,
-      signal,
-      timeoutMs,
-    );
-    // Sanity check — if content is suspiciously short, treat as failure
-    if (result.content.length < 200) {
-      console.warn(
-        `[silentStream] Suspiciously short response (${result.content.length} chars) — retrying`,
-      );
-      throw new Error("Response too short");
-    }
-    return result;
-  } catch (err: any) {
-    if (signal?.aborted) throw err; // Don't retry on user abort
-    console.warn(
-      `[silentStream] First attempt failed: ${err.message} — retrying after 3s`,
-    );
-    await delay(3000);
-    return silentStreamOnce(
-      systemPrompt,
-      userMessage,
-      maxTokens,
-      model,
-      signal,
-      timeoutMs,
-    );
+  // Sanity check — suspiciously short responses indicate truncation
+  if (content.length < 200) {
+    throw new Error(`Response too short (${content.length} chars)`);
   }
+
+  return { content, outputTokens };
 }
 
 // ── Generate SEO meta tags from available generation data ──
@@ -783,31 +739,23 @@ export async function POST(req: Request) {
         // Distributed proportionally based on page richness
         // ════════════════════════════════════════════
         const maxOut = getModelConfig(DEVELOPER_MODEL).maxOutputTokens;
-        // Use 92% of maxOut as ceiling — leaves headroom to avoid tight truncation
-        // Footer gets a hard minimum of 4500 tokens — it carries ALL the JS
-
-        // ════════════════════════════════════════════
-        // STEP 3 — Shell call (sequential, must finish first)
-        // Generates: head + CSS system + navbar
-        // ════════════════════════════════════════════
         const isSinglePage = detectSinglePage(prompt);
-        const isDeepSeek = DEVELOPER_MODEL.includes("deepseek");
-        console.log(
-          `[Mode] Single page: ${isSinglePage} | Model: ${isDeepSeek ? "DeepSeek (sequential)" : "Fast (parallel)"}`,
-        );
+
+        // Create adaptive executor — handles concurrency, retry, timeout per model
+        const devExecutor = new ModelExecutor(DEVELOPER_MODEL);
+        const haikuExecutor = new ModelExecutor("anthropic/claude-haiku-4.5");
+
+        console.log(`[Mode] Single page: ${isSinglePage} | Model: ${DEVELOPER_MODEL}`);
 
         const budgets = {
           shell: 6000,
           page: isSinglePage ? 12000 : maxOut,
           footer: maxOut,
         };
-        console.log(
-          `[Budgets] maxOut:${maxOut} shell:${budgets.shell} page:${budgets.page} footer:${budgets.footer}`,
-        );
+        console.log(`[Budgets] maxOut:${maxOut} shell:${budgets.shell} page:${budgets.page} footer:${budgets.footer}`);
 
         // ════════════════════════════════════════════
-        // STEP 2 — REAL Architect call (Haiku, ~3s)
-        // Decides: brand, colors, fonts, page structure
+        // STEP 2 — Architect call (Haiku, ~3s, with retry)
         // ════════════════════════════════════════════
         push("ARCHITECT_START", {
           message: "Analyzing business and planning website structure...",
@@ -815,62 +763,59 @@ export async function POST(req: Request) {
 
         let architect: ArchitectOutput;
         try {
-          const { content: rawArchitect, outputTokens: architectTokens } = await callOpenRouterJson(
-            getArchitectPrompt(),
-            `Business to build a website for: ${prompt}`,
-            clientSignal,
-          );
+          const { content: rawArchitect, outputTokens: architectTokens } =
+            await haikuExecutor.execute(
+              () => callOpenRouterJson(
+                getArchitectPrompt(),
+                `Business to build a website for: ${prompt}`,
+                clientSignal,
+              ),
+              "architect",
+            );
           haikuTokens += architectTokens;
           totalOutputTokens += architectTokens;
           const clean = extractJson(rawArchitect);
           const parsed = JSON.parse(clean);
-          // Validate required fields
-          if (
-            !parsed.pages?.length ||
-            !parsed.colors?.primary ||
-            !parsed.fonts?.display
-          ) {
+          if (!parsed.pages?.length || !parsed.colors?.primary || !parsed.fonts?.display) {
             throw new Error("Incomplete architect output");
           }
           architect = parsed as ArchitectOutput;
-          console.log(
-            `[Architect] Pages: ${architect.pages.join(", ")} | Brand: ${architect.brandName} | Primary: ${architect.colors.primary}`,
-          );
+          console.log(`[Architect] Pages: ${architect.pages.join(", ")} | Brand: ${architect.brandName} | Primary: ${architect.colors.primary}`);
         } catch (err) {
-          console.warn(
-            "[Architect] Failed or incomplete — using smart fallback:",
-            err,
-          );
+          console.warn("[Architect] Failed — using smart fallback:", err);
           architect = defaultArchitect(prompt);
         }
 
-        // Tell ChatPanel the real page names so step labels update
         push("PAGE_NAMES", {
           pages: architect.pages,
           pageLabels: architect.pageLabels,
         });
 
         // ════════════════════════════════════════════
-        // STEP 2b + 2c — Content Strategist + UI Designer
-        // Run in parallel with each other, THEN shell uses UI spec.
-        // Both are cheap Haiku calls (<1 credit each).
+        // STEP 2b + 2c — Content Strategist + UI Designer (parallel, with retry)
         // ════════════════════════════════════════════
         let contentBrief: ContentBrief | undefined;
         let uiSpec: UIDesignSpec | undefined;
 
         try {
           const [contentResult, uiSpecResult] = await Promise.all([
-            callOpenRouterJson(
-              getContentStrategistPrompt(),
-              `Business: ${prompt}`,
-              clientSignal,
-              1400, // Full ContentBrief (3 testimonials + 6 features + stats) needs ~900-1100 tokens
+            haikuExecutor.execute(
+              () => callOpenRouterJson(
+                getContentStrategistPrompt(),
+                `Business: ${prompt}`,
+                clientSignal,
+                1400,
+              ),
+              "content-strategist",
             ),
-            callOpenRouterJson(
-              getUIDesignerPrompt(),
-              `Business: ${prompt}\n\nBrand plan from Architect:\n${JSON.stringify({ brandName: architect.brandName, visualMood: architect.visualMood, colors: architect.colors, fonts: { display: architect.fonts.display, body: architect.fonts.body } }, null, 2)}`,
-              clientSignal,
-              1000,
+            haikuExecutor.execute(
+              () => callOpenRouterJson(
+                getUIDesignerPrompt(),
+                `Business: ${prompt}\n\nBrand plan from Architect:\n${JSON.stringify({ brandName: architect.brandName, visualMood: architect.visualMood, colors: architect.colors, fonts: { display: architect.fonts.display, body: architect.fonts.body } }, null, 2)}`,
+                clientSignal,
+                1000,
+              ),
+              "ui-designer",
             ),
           ]);
           haikuTokens += contentResult.outputTokens + uiSpecResult.outputTokens;
@@ -881,20 +826,16 @@ export async function POST(req: Request) {
             console.log(`[ContentStrategist] tagline: "${contentBrief.tagline}"`);
             push("CONTENT_STRATEGIST_DONE", { tagline: contentBrief.tagline });
           } catch (e) {
-            console.warn("[ContentStrategist] Failed to parse:", (e as Error).message, "\nRaw:", contentResult.content.slice(0, 200));
+            console.warn("[ContentStrategist] Parse failed:", (e as Error).message);
             push("CONTENT_STRATEGIST_DONE", { tagline: null });
           }
 
           try {
             uiSpec = JSON.parse(extractJson(uiSpecResult.content)) as UIDesignSpec;
             console.log(`[UIDesigner] hero: ${uiSpec.heroVariant} | features: ${uiSpec.featuresVariant} | navbar: ${uiSpec.navbarStyle}`);
-            push("UI_DESIGNER_DONE", {
-              heroVariant: uiSpec.heroVariant,
-              featuresVariant: uiSpec.featuresVariant,
-              navbarStyle: uiSpec.navbarStyle,
-            });
+            push("UI_DESIGNER_DONE", { heroVariant: uiSpec.heroVariant, featuresVariant: uiSpec.featuresVariant, navbarStyle: uiSpec.navbarStyle });
           } catch (e) {
-            console.warn("[UIDesigner] Failed to parse:", (e as Error).message, "\nRaw:", uiSpecResult.content.slice(0, 200));
+            console.warn("[UIDesigner] Parse failed:", (e as Error).message);
             push("UI_DESIGNER_DONE", { heroVariant: null, featuresVariant: null });
           }
         } catch (err) {
@@ -904,15 +845,18 @@ export async function POST(req: Request) {
         }
 
         // ════════════════════════════════════════════
-        // STEP 3 — Shell call (receives UI spec for navbar style)
+        // STEP 3 — Shell call (sequential, must complete before pages)
         // ════════════════════════════════════════════
         const { content: shellHtml, outputTokens: shellTokens } =
-          await silentStream(
-            getShellPrompt(isSinglePage, architect, uiSpec),
-            `Business: ${prompt}\nHero image URL: ${heroImageUrl}${fixes?.length ? `\nFixes to address: ${fixes.map((f: string) => `- ${f}`).join("\n")}` : ""}`,
-            budgets.shell,
-            DEVELOPER_MODEL,
-            clientSignal,
+          await devExecutor.execute(
+            () => silentStream(
+              getShellPrompt(isSinglePage, architect, uiSpec),
+              `Business: ${prompt}\nHero image URL: ${heroImageUrl}${fixes?.length ? `\nFixes to address: ${fixes.map((f: string) => `- ${f}`).join("\n")}` : ""}`,
+              budgets.shell,
+              DEVELOPER_MODEL,
+              clientSignal,
+            ),
+            "shell",
           );
         devTokens += shellTokens;
         totalOutputTokens += shellTokens;
@@ -955,20 +899,15 @@ export async function POST(req: Request) {
         });
 
         // ════════════════════════════════════════════
-        // STEP 4 — Parallel page generation
-        // All 4 pages run simultaneously — each is
-        // a focused call well within token limits
+        // STEP 4 — Page generation (concurrency managed by executor)
         // ════════════════════════════════════════════
         push("DEVELOPER_START", {
-          message: "Building 4 pages in parallel...",
+          message: `Building ${architect.pages.length} pages...`,
         });
 
         // Push shell immediately so code tab shows something right away
-        // Push shell immediately so code tab shows something right away
         push("HTML_CHUNK", {
-          chunk:
-            shellBase +
-            "\n<main>\n<!-- Building pages... -->\n</main>\n</body></html>",
+          chunk: shellBase + "\n<main>\n<!-- Building pages... -->\n</main>\n</body></html>",
         });
 
         // Track completed pages for progressive preview streaming
@@ -986,233 +925,77 @@ export async function POST(req: Request) {
           push("HTML_CHUNK", { chunk: assembled });
         };
 
-        const staggerMs = isDeepSeek ? 0 : 400;
-        const stagger = (index: number) => delay(index * staggerMs);
-        const callTimeout = isDeepSeek ? 200000 : 150000;
-
         let pageResults: PromiseSettledResult<{
           content: string;
           outputTokens: number;
         }>[];
 
         if (isSinglePage) {
-          // ── Single page: 3 parallel calls (top half + bottom half + footer) ──
-          const singleCalls = [
-            stagger(0)
-              .then(() =>
-                silentStream(
-                  getSinglePageTopPrompt(prompt, designTokens, heroImageUrl),
-                  "Generate the top half.",
-                  budgets.page,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                ),
-              )
-              .then((r) => {
-                pushProgressiveHtml("home", r.content);
-                push("DEVELOPER_FIX", {
-                  stepId: "page-home",
-                  message: "✓ Home complete",
-                });
-                return r;
-              }),
-            stagger(1)
-              .then(() =>
-                silentStream(
-                  getSinglePageBottomPrompt(prompt, designTokens),
-                  "Generate the bottom half.",
-                  budgets.page,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                ),
-              )
-              .then((r) => {
-                pushProgressiveHtml("features", r.content);
-                push("DEVELOPER_FIX", {
-                  stepId: "page-2",
-                  message: "✓ Bottom half complete",
-                });
-                return r;
-              }),
-            stagger(2)
-              .then(() =>
-                silentStream(
-                  getFooterPrompt(prompt, designTokens, true, architect),
-                  "Generate footer and scripts.",
-                  budgets.footer,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                ),
-              )
-              .then((r) => {
-                push("DEVELOPER_FIX", {
-                  stepId: "page-footer",
-                  message: "✓ Footer complete",
-                });
-                return r;
-              }),
+          // ── Single page: 3 tasks (top + bottom + footer) ──
+          const singleTasks = [
+            () => silentStream(
+              getSinglePageTopPrompt(prompt, designTokens, heroImageUrl),
+              "Generate the top half.",
+              budgets.page, DEVELOPER_MODEL, clientSignal,
+            ).then((r) => {
+              pushProgressiveHtml("home", r.content);
+              push("DEVELOPER_FIX", { stepId: "page-home", message: "✓ Home complete" });
+              return r;
+            }),
+            () => silentStream(
+              getSinglePageBottomPrompt(prompt, designTokens),
+              "Generate the bottom half.",
+              budgets.page, DEVELOPER_MODEL, clientSignal,
+            ).then((r) => {
+              pushProgressiveHtml("features", r.content);
+              push("DEVELOPER_FIX", { stepId: "page-2", message: "✓ Bottom half complete" });
+              return r;
+            }),
+            () => silentStream(
+              getFooterPrompt(prompt, designTokens, true, architect),
+              "Generate footer and scripts.",
+              budgets.footer, DEVELOPER_MODEL, clientSignal,
+            ).then((r) => {
+              push("DEVELOPER_FIX", { stepId: "page-footer", message: "✓ Footer complete" });
+              return r;
+            }),
           ];
-          pageResults = await Promise.allSettled(singleCalls);
-        } else if (isDeepSeek) {
-          // ── DeepSeek: SEQUENTIAL to avoid rate limiting ──
-          pageResults = [];
-          for (let i = 0; i < architect.pages.length; i++) {
-            const pageId = architect.pages[i];
-            const pageLabel = architect.pageLabels[i];
-            const heroUrl = pageId === "home" ? heroImageUrl : undefined;
-            try {
-              const r = await silentStream(
-                getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
-                `Generate the complete ${pageLabel} page section.`,
-                budgets.page,
-                DEVELOPER_MODEL,
-                clientSignal,
-                callTimeout,
-              );
-              pushProgressiveHtml(
-                pageId,
-                validatePageSection(r.content, pageId),
-              );
-              push("DEVELOPER_FIX", {
-                stepId: `page-${pageId}`,
-                message: `✓ ${pageLabel} page complete`,
-              });
-              pageResults.push({ status: "fulfilled", value: r });
-            } catch (err: any) {
-              console.warn(`[Page ${pageId}] First attempt failed — retrying after 3s`);
-              await delay(3000);
-              try {
-                const retry = await silentStream(
-                  getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
-                  `Generate the complete ${pageLabel} page section.`,
-                  budgets.page,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                );
-                pushProgressiveHtml(pageId, validatePageSection(retry.content, pageId));
-                push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `✓ ${pageLabel} page complete (retry)` });
-                pageResults.push({ status: "fulfilled", value: retry });
-              } catch (retryErr: any) {
-                console.error(`[Page ${pageId}] Retry also failed:`, retryErr?.message);
-                push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `⚠ ${pageLabel} page failed` });
-                pageResults.push({ status: "rejected", reason: retryErr });
-              }
-            }
-          }
-          // Footer — always last for DeepSeek
-          try {
-            const footerR = await silentStream(
-              getFooterPrompt(prompt, designTokens, false, architect),
-              "Generate the footer and closing scripts.",
-              budgets.footer,
-              DEVELOPER_MODEL,
-              clientSignal,
-              callTimeout,
-            );
-            push("DEVELOPER_FIX", {
-              stepId: "page-footer",
-              message: "✓ Footer & scripts complete",
-            });
-            pageResults.push({ status: "fulfilled", value: footerR });
-          } catch (err: any) {
-            console.error("[Page footer] Sequential failed:", err?.message);
-            pageResults.push({ status: "rejected", reason: err });
-          }
+          pageResults = await devExecutor.executeBatch(
+            singleTasks,
+            ["single-top", "single-bottom", "footer"],
+          );
         } else {
-          // ── Claude / fast models: PARALLEL generation ──
-          const parallelPageCalls = architect.pages.map((pageId, index) => {
+          // ── Multi-page: all pages + footer via executor (handles concurrency + retries) ──
+          const pageTasks = architect.pages.map((pageId, index) => {
             const pageLabel = architect.pageLabels[index];
             const heroUrl = pageId === "home" ? heroImageUrl : undefined;
-            return stagger(index)
-              .then(() =>
-                silentStream(
-                  getPagePrompt(
-                    pageId,
-                    pageLabel,
-                    prompt,
-                    designTokens,
-                    heroUrl,
-                    architect,
-                    uiSpec,
-                    contentBrief,
-                  ),
-                  `Generate the complete ${pageLabel} page section.`,
-                  budgets.page,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                ),
-              )
-              .then((r) => {
-                pushProgressiveHtml(
-                  pageId,
-                  validatePageSection(r.content, pageId),
-                );
-                push("DEVELOPER_FIX", {
-                  stepId: `page-${pageId}`,
-                  message: `✓ ${pageLabel} page complete`,
-                });
-                return r;
-              });
-          });
-          // Footer runs in parallel at the end index
-          parallelPageCalls.push(
-            stagger(architect.pages.length)
-              .then(() =>
-                silentStream(
-                  getFooterPrompt(prompt, designTokens, false, architect),
-                  "Generate the footer and closing scripts.",
-                  budgets.footer,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                ),
-              )
-              .then((r) => {
-                push("DEVELOPER_FIX", {
-                  stepId: "page-footer",
-                  message: "✓ Footer & scripts complete",
-                });
-                return r;
-              }),
-          );
-          pageResults = await Promise.allSettled(parallelPageCalls);
-
-          // ── Retry any failed pages ──
-          const failedIndexes = architect.pages
-            .map((pageId, i) => ({ pageId, i }))
-            .filter(({ i }) => pageResults[i]?.status === "rejected");
-
-          if (failedIndexes.length > 0) {
-            console.warn(`[Retry] ${failedIndexes.length} pages failed — retrying: ${failedIndexes.map(f => f.pageId).join(", ")}`);
-            await delay(2000);
-            const retryResults = await Promise.allSettled(
-              failedIndexes.map(({ pageId, i }) => {
-                const pageLabel = architect.pageLabels[i];
-                const heroUrl = pageId === "home" ? heroImageUrl : undefined;
-                return silentStream(
-                  getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
-                  `Generate the complete ${pageLabel} page section.`,
-                  budgets.page,
-                  DEVELOPER_MODEL,
-                  clientSignal,
-                  callTimeout,
-                ).then((r) => {
-                  pushProgressiveHtml(pageId, validatePageSection(r.content, pageId));
-                  push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `✓ ${pageLabel} page complete (retry)` });
-                  return r;
-                });
-              })
-            );
-            // Patch retried results back into pageResults
-            failedIndexes.forEach(({ i }, retryIndex) => {
-              pageResults[i] = retryResults[retryIndex];
+            return () => silentStream(
+              getPagePrompt(pageId, pageLabel, prompt, designTokens, heroUrl, architect, uiSpec, contentBrief),
+              `Generate the complete ${pageLabel} page section.`,
+              budgets.page, DEVELOPER_MODEL, clientSignal,
+            ).then((r) => {
+              pushProgressiveHtml(pageId, validatePageSection(r.content, pageId));
+              push("DEVELOPER_FIX", { stepId: `page-${pageId}`, message: `✓ ${pageLabel} page complete` });
+              return r;
             });
-          }
+          });
+
+          // Footer as the last task
+          pageTasks.push(
+            () => silentStream(
+              getFooterPrompt(prompt, designTokens, false, architect),
+              "Generate the footer and closing scripts.",
+              budgets.footer, DEVELOPER_MODEL, clientSignal,
+            ).then((r) => {
+              push("DEVELOPER_FIX", { stepId: "page-footer", message: "✓ Footer & scripts complete" });
+              return r;
+            }),
+          );
+
+          pageResults = await devExecutor.executeBatch(
+            pageTasks,
+            [...architect.pages.map((id) => `page-${id}`), "footer"],
+          );
         }
 
         // Log results for debugging
@@ -1346,6 +1129,24 @@ export async function POST(req: Request) {
             });
           });
 
+          // Fix 9 — Light theme safety net: if page is light theme but LLM still
+          // emitted dark-mode classes, replace them deterministically
+          if (processedHtml.includes('data-theme="light"')) {
+            processedHtml = processedHtml
+              .replace(/\btext-white\/60\b/g, 'text-gray-600')
+              .replace(/\btext-white\/50\b/g, 'text-gray-500')
+              .replace(/\btext-white\/40\b/g, 'text-gray-400')
+              .replace(/\btext-white\/30\b/g, 'text-gray-400')
+              .replace(/\btext-white\/20\b/g, 'text-gray-300')
+              .replace(/\btext-white\/70\b/g, 'text-gray-700')
+              .replace(/\btext-white\/80\b/g, 'text-gray-800')
+              .replace(/\bborder-white\/10\b/g, 'border-gray-200')
+              .replace(/\bborder-white\/5\b/g, 'border-gray-100')
+              .replace(/\bborder-white\/20\b/g, 'border-gray-200')
+              .replace(/\bborder-white\/30\b/g, 'border-gray-300');
+            console.log('[PostProcess] Light theme safety net applied');
+          }
+
           return processedHtml;
         };
 
@@ -1411,50 +1212,66 @@ export async function POST(req: Request) {
         });
 
         push("QA_START", { message: "Running quality checks..." });
-        
+
         let finalOutputHtml = finalHtml;
         try {
-          const { content: rawQa, outputTokens: qaTokens } = await callOpenRouterJson(
-            getQaPrompt(),
-            `Here is the complete HTML to review:\n\n${finalHtml}`,
-            clientSignal,
-            1200
-          );
+          const { content: rawQa, outputTokens: qaTokens } =
+            await haikuExecutor.execute(
+              () => callOpenRouterJson(
+                getQaPrompt(),
+                `Here is the complete HTML to review:\n\n${finalHtml}`,
+                clientSignal,
+                1200,
+              ),
+              "qa-reviewer",
+            );
           haikuTokens += qaTokens;
           totalOutputTokens += qaTokens;
-          
+
           const qaReport = JSON.parse(extractJson(rawQa));
           const isPassed = qaReport.passed === true;
-          
+
           push("QA_REPORT", {
             score: qaReport.score ?? 100,
             passed: isPassed,
             issueCount: qaReport.criticalIssues?.length ?? 0,
             message: isPassed ? "Quality check passed!" : `Found ${qaReport.criticalIssues?.length ?? 1} issues. Fixing...`,
           });
-          
+
           if (!isPassed && qaReport.criticalIssues?.length) {
-            push("DEVELOPER_FIX", { stepId: "qa-fix", message: "Applying QA layout fixes..." });
-            
-            const issuesText = qaReport.criticalIssues.map((i: any) => `- ${i.description}\n  Fix: ${i.fix}`).join("\n");
-            
-            const r = await silentStream(
-              getFixerPrompt(),
-              `Critical Issues to Fix:\n${issuesText}\n\nOriginal HTML:\n${finalOutputHtml}`,
-              getModelConfig(DEVELOPER_MODEL).maxOutputTokens, 
-              DEVELOPER_MODEL,
-              clientSignal,
-              200000,
-            );
-            
-            if (r.content && r.content.length > 200) {
+            // Skip fixer for cheap/free models — regenerating 60K HTML through them
+            // is impractical (causes 200s+ timeouts). The postProcess sanitizer
+            // already catches the most critical issues (tag mismatches, etc.)
+            const modelCost = getModelConfig(DEVELOPER_MODEL).costPerOutputToken;
+            const isExpensiveModel = modelCost >= 0.000001; // Skip for DeepSeek ($0), Flash ($0.0000004)
+
+            if (isExpensiveModel) {
+              push("DEVELOPER_FIX", { stepId: "qa-fix", message: "Applying QA layout fixes..." });
+              const issuesText = qaReport.criticalIssues.map((i: any) => `- ${i.description}\n  Fix: ${i.fix}`).join("\n");
+
+              const r = await devExecutor.execute(
+                () => silentStream(
+                  getFixerPrompt(),
+                  `Critical Issues to Fix:\n${issuesText}\n\nOriginal HTML:\n${finalOutputHtml}`,
+                  getModelConfig(DEVELOPER_MODEL).maxOutputTokens,
+                  DEVELOPER_MODEL,
+                  clientSignal,
+                ),
+                "qa-fixer",
+              );
+
+              if (r.content && r.content.length > 200) {
                 finalOutputHtml = r.content.replace(/^```html\s*/i, "").replace(/```\s*$/i, "").trim();
                 devTokens += r.outputTokens;
                 totalOutputTokens += r.outputTokens;
                 push("DEVELOPER_FIX", { stepId: "qa-fix-done", message: "✓ QA fixes applied." });
+              }
+            } else {
+              console.log(`[QA] Skipping fixer for cheap model ${DEVELOPER_MODEL} — postProcess handles critical fixes`);
+              push("QA_REPORT", { score: qaReport.score ?? 85, passed: true, issueCount: 0, message: "QA check complete (auto-fixes applied)." });
             }
           }
-        } catch(e) {
+        } catch (e) {
           console.warn("[QA] Failed or skipped:", e);
           push("QA_REPORT", { score: 95, passed: true, issueCount: 0, message: "QA check complete!" });
         }

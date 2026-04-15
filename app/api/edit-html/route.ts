@@ -267,10 +267,17 @@ RULES:
 
     const { content: fixedSection, tokens } = await callModel(
       `You are surgically fixing one HTML section.
-Return ONLY the fixed inner HTML content — do NOT include the <!-- CC:${targetSection} --> marker comments themselves.
-Do NOT add any wrapping divs or sections that weren't there before.
-Match the existing design system exactly — same classes, same color variables, same structure.
-Fix ONLY what the instruction asks. Change nothing else.
+Return ONLY the fixed HTML content. Do NOT include the <!-- CC:${targetSection} --> marker comments themselves, but MUST include the root container (e.g. <section> or <div>) that wraps the section.
+CRITICAL INSTRUCTIONS for returning the HTML:
+1. ALWAYS KEEP the outermost original wrapper tags of the section. Do NOT strip the root <section> or root <div>.
+2. Match the existing design system exactly — same classes, same color variables, same structure.
+3. Fix ONLY what the instruction asks. Change nothing else unless required by the fix.
+
+CRITICAL INSTRUCTIONS FOR BACKGROUND IMAGES:
+- If asked to add or change a background image, you MUST ensure it is visible. 
+- Replace any existing opaque or solid background gradients/colors that would obscure the new image, or lower their opacity (e.g., bg-black/40 instead of opacity-85).
+- If adding an 'absolute inset-0' background, verify the container has 'relative'. Add 'relative' and 'isolate' to the parent if missing.
+- Do not use negative z-indexes like '-z-10' without 'isolate' on the parent, otherwise the image will disappear behind the body background. Use 'absolute inset-0 z-0' and make the inner content 'relative z-10' to be safe.
 
 DESIGN SYSTEM (for reference — use these classes/colors):
 ${designTokens}`,

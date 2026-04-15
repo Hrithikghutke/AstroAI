@@ -255,7 +255,7 @@ STACK (exact CDN links, in this order):
 
 GENERATE IN THIS EXACT ORDER:
 
-1. <!DOCTYPE html><html lang="en" data-theme="dark" class="scroll-smooth">
+1. <!DOCTYPE html><html lang="en" data-theme="${architect?.theme ?? "dark"}" class="scroll-smooth">
 
 2. <head> containing:
    - meta charset + viewport + descriptive <title>
@@ -271,10 +271,10 @@ GENERATE IN THIS EXACT ORDER:
      fontFamily: { display: ['${resolvedFonts.display}'], body: ['${resolvedFonts.body}'], mono: ['${resolvedFonts.mono}'] },
      Plus custom keyframes needed (marquee, gradient-shift, fade-in, counter, orb-float). No other custom CSS outside keyframes.
    - <style> block with ALL shared CSS classes pages will reference:
-     * body { font-family: '${resolvedFonts.body}', sans-serif; background-color: ${architect?.colors.background ?? "#0a0a0a"}; }
+     * body { font-family: '${resolvedFonts.body}', sans-serif; background-color: ${architect?.colors.background ?? "#0a0a0a"}; color: ${architect?.theme === "light" ? "#1a1a2e" : "#e5e5f0"}; }
      * .font-display { font-family: '${resolvedFonts.display}', sans-serif; }
      * .font-mono-ui { font-family: '${resolvedFonts.mono}', monospace; letter-spacing: 0.06em; }
-     * .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+     * .glass { ${architect?.theme === "light" ? "background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.08);" : "background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"} }
      * .page { display: none; }
      * .fade-in { } (JS will set opacity/transform via IntersectionObserver)
      * .counter { }
@@ -305,7 +305,7 @@ GLOBAL DESIGN PHILOSOPHY:
   Card h3: text-lg md:text-xl — always subtle.
   Body copy: text-base leading-relaxed, max-w-prose (65ch) for readability.
 - Accent color (text-primary) SPARINGLY: stats numbers, overline labels, active nav, CTA buttons ONLY.
-- Borders over backgrounds: border border-white/10 preferred over glass cards for premium minimal look.
+- Borders over backgrounds: ${architect?.theme === "light" ? "border border-gray-200" : "border border-white/10"} preferred over glass cards for premium minimal look.
 - Letter spacing: uppercase labels always tracking-[0.25em] or wider.
 - Cubic-bezier transitions always: transition: X 0.7s cubic-bezier(0.25,0.46,0.45,0.94) — NEVER linear.
 - ICONS: Use Lucide icons via <i data-lucide="icon-name" class="w-5 h-5"></i>. Common icons: shield-check, target, flame, gem, rocket, settings, mail, phone, map-pin, star, users, trending-up, zap, award, clock, check-circle, arrow-right. ⚠️ CRITICAL: Lucide REMOVED all brand icons! NEVER use facebook, twitter, instagram, linkedin, youtube, or tiktok. Use raw SVGs instead for these. Do NOT use emoji for UI elements — always use Lucide.
@@ -313,10 +313,10 @@ GLOBAL DESIGN PHILOSOPHY:
 5. Complete <nav id="navbar"> — implement EXACTLY this style: ${uiSpec?.navbarStyle ?? "full-minimal"}
    
    Outer nav class="${navCls}"
-   Inner div class="${navInnerCls}"${isPill ? ` style="background:rgba(${architect ? "10,10,10" : "15,15,15"},0.85);"` : ""}
+   Inner div class="${navInnerCls}"${isPill ? ` style="background:${architect?.theme === "light" ? "rgba(255,255,255,0.95)" : "rgba(10,10,10,0.85)"};"` : ""}
 
    ${isPill
-     ? `Pill navbar inner div: backdrop is SOLID dark opacity (style="background:rgba(10,10,10,0.85)") — NOT backdrop-blur`
+     ? `Pill navbar inner div: SOLID background matching the page theme — NOT backdrop-blur`
      : `Full-width navbar background: style="background:rgba(${architect?.colors.background ? architect.colors.background.replace("#", "").match(/.{2}/g)?.map(h => parseInt(h, 16)).join(",") : "6,6,6"},0.93)" on scroll this changes to 0.98 via JS`
    }
 
@@ -324,14 +324,15 @@ GLOBAL DESIGN PHILOSOPHY:
    - Logo: font-display ${uiSpec?.typographyWeight === "medium" ? "font-medium text-xl" : uiSpec?.typographyWeight === "black" ? "font-black text-2xl" : "font-bold text-2xl"} ${uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : "tracking-normal"} text-primary with nav-link class, href="#home"
      ${(architect?.visualMood === "luxury-minimal") ? "Luxury logo style: small dot (w-2 h-2 rounded-full bg-secondary mr-2) + brand name in font-medium text-lg tracking-tighter uppercase" : ""}
    - Desktop nav: hidden lg:flex centered links. ${isSinglePage ? "Single page — anchor links #hero #features #pricing #contact" : `Multi-page — use EXACTLY: ${navLinkDetails}. Each gets class="nav-link". Active gets text-primary.`}
-  Nav link style: text-sm font-medium tracking-wide${isBold ? " uppercase tracking-[0.15em]" : ""} text-white/70 hover:text-white transition-colors — do NOT add uppercase unless bold-energy mood
+  Nav link style: text-sm font-medium tracking-wide${isBold ? " uppercase tracking-[0.15em]" : ""} ${architect?.theme === "light" ? "text-gray-600 hover:text-gray-900" : "text-white/70 hover:text-white"} transition-colors — do NOT add uppercase unless bold-energy mood
    - CTA button: hidden lg:flex btn btn-primary btn-sm rounded-full with subtle box-shadow glow
    - Hamburger: lg:hidden
    - Mobile slide-out menu — x-show="open":
      ⚠️ MOBILE MENU — rules required:
-     1. ALWAYS solid opaque background: style="background:${architect?.colors.background ?? "#0a0a0a"}"
+     1. ALWAYS solid opaque background: style="background:${architect?.theme === "light" ? "#ffffff" : (architect?.colors.background ?? "#0a0a0a")}"
      2. NEVER put display:none in style attribute — Alpine x-show manages display.
-     3. ALWAYS include a completely visible close button at the top right of the menu (e.g., <button @click="open=false" class="absolute top-6 right-6 p-4">...</button>).
+     3. ${architect?.theme === "light" ? "Light theme: use text-gray-700 for menu links, bg-white for background" : "Dark theme: use text-white/80 for menu links"}
+      4. ALWAYS include a completely visible close button at the top right of the menu (e.g., <button @click="open=false" class="absolute top-6 right-6 p-4">...</button>).
    - Backdrop overlay: x-show="open" @click="open=false" fixed inset-0 bg-black/60
 
 6. After </nav>, write this EXACT comment and STOP:
@@ -349,7 +350,9 @@ export function getPagePrompt(
   contentBrief?: ContentBrief,
 ): string {
   const heroNote = heroImageUrl
-    ? `\nHERO IMAGE URL (use exactly as src): ${heroImageUrl}`
+    ? `\nTHEME: ${architect?.theme ?? "dark"} mode. ${architect?.theme === "light" ? "LIGHT THEME: All text must be dark/visible on light backgrounds. NEVER use text-white/ or border-white/ classes. Use text-gray-600 for body, text-gray-500 for labels, border-gray-200 for borders, text-gray-900 for headings." : "Dark theme: use the provided color variables."}
+
+HERO IMAGE URL (use exactly as src): ${heroImageUrl}`
     : "";
 
   const isHome = pageId === "home";
@@ -397,6 +400,9 @@ export function getPagePrompt(
   const cardStyle = uiSpec?.cardStyle ?? "glass-elevated";
   const typographyScale = uiSpec?.typographyScale ?? "balanced";
   const heroOverlay = uiSpec?.heroOverlayStyle ?? "cinematic-dark";
+  // ── THEME DETECTION — drives ALL color tokens ──
+  const isLight = architect?.theme === "light";
+
     // ── Font weight based on visual mood ──
   const mood = architect?.visualMood ?? "cinematic-dark";
   const isLuxury = mood === "luxury-minimal" || mood === "editorial-clean";
@@ -427,12 +433,22 @@ export function getPagePrompt(
 
   const headingWeight = uiSpec?.typographyWeight === "black" ? "font-black" : uiSpec?.typographyWeight === "bold" ? "font-bold" : uiSpec?.typographyWeight === "medium" ? "font-medium" : (isLuxury ? "font-medium" : isBold ? "font-black" : "font-semibold");
   const headingTracking = uiSpec?.typographyTracking === "relaxed" ? "tracking-wide" : uiSpec?.typographyTracking === "normal" ? "tracking-normal" : uiSpec?.typographyTracking === "tight" ? "tracking-tight" : (isLuxury ? "tracking-tighter" : isBold ? "tracking-tight" : "tracking-tight");
-  const bodyTextColor = isLuxury ? "text-zinc-400" : "text-white/60";
+  const bodyTextColor = isLight
+    ? (isLuxury ? "text-gray-500" : "text-gray-600")
+    : (isLuxury ? "text-zinc-400" : "text-white/60");
   const bodyFontWeight = isLuxury ? "font-light" : "font-normal";
-  const accentOnHeadline = isLuxury ? "text-white/50" : "text-primary";
+  const accentOnHeadline = isLight
+    ? (isLuxury ? "text-gray-400" : "text-primary")
+    : (isLuxury ? "text-white/50" : "text-primary");
+  const headingColor = isLight ? "text-gray-900" : "text-white";
+  const subtleBorder = isLight ? "border-gray-200" : "border-white/10";
+  const subtleBorderHover = isLight ? "hover:border-primary/60" : "hover:border-primary/40";
+  const statLabelColor = isLight ? "text-gray-500" : "text-white/40";
+  const marqueeTextColor = isLight ? "text-gray-300" : "text-white/40";
+  const sectionBorder = isLight ? "border-gray-100" : "border-white/5";
   const ctaClass = isLuxury
-    ? `inline-flex items-center justify-center gap-2 h-14 px-8 bg-primary text-background text-sm ${headingWeight} tracking-[0.15em] uppercase leading-none hover:bg-white transition-all duration-500 shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.3)]`
-    : `inline-flex items-center justify-center gap-2 h-14 px-8 bg-primary text-background text-sm font-bold tracking-widest uppercase leading-none hover:opacity-90 transition-all duration-300 rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.4)]`;
+    ? `inline-flex items-center justify-center gap-2 h-14 px-8 bg-primary text-white text-sm ${headingWeight} tracking-[0.15em] uppercase leading-none hover:bg-white transition-all duration-500 shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.3)]`
+    : `inline-flex items-center justify-center gap-2 h-14 px-8 bg-primary text-white text-sm font-bold tracking-widest uppercase leading-none hover:opacity-90 transition-all duration-300 rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb,201,168,76),0.4)]`;
   const outlineCta = isLuxury
     ? `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/20 text-white text-sm ${bodyFontWeight} tracking-[0.15em] uppercase leading-none hover:border-primary hover:text-primary transition-all duration-500`
     : `inline-flex items-center justify-center gap-2 h-14 px-8 border border-white/30 text-white text-sm font-medium tracking-widest uppercase leading-none hover:border-primary hover:text-primary transition-all duration-300 rounded-full`;
@@ -446,13 +462,21 @@ export function getPagePrompt(
     ? `<div class="absolute -inset-3 border border-primary/15 pointer-events-none translate-x-3 translate-y-3 group-hover:translate-x-1 group-hover:translate-y-1 transition-transform duration-700"></div>`
     : ``;
 
-  const cardCss = cardStyle === "glass-elevated"
-    ? "glass border border-white/10 rounded-2xl hover:-translate-y-2 transition-transform duration-300"
-    : cardStyle === "solid-dark"
-      ? "bg-surface border-l-2 border-primary"
-      : cardStyle === "outlined"
-        ? "border border-white/20 rounded-xl hover:border-primary/60 transition-colors"
-        : "border-b border-white/10 hover:border-primary/40 transition-colors"; // borderless-hover
+  const cardCss = isLight
+    ? (cardStyle === "glass-elevated"
+      ? "bg-white border border-gray-200 rounded-2xl shadow-sm hover:-translate-y-2 transition-transform duration-300"
+      : cardStyle === "solid-dark"
+        ? "bg-gray-50 border-l-2 border-primary"
+        : cardStyle === "outlined"
+          ? "border border-gray-200 rounded-xl hover:border-primary/60 transition-colors"
+          : "border-b border-gray-200 hover:border-primary/60 transition-colors")
+    : (cardStyle === "glass-elevated"
+      ? "glass border ${subtleBorder} rounded-2xl hover:-translate-y-2 transition-transform duration-300"
+      : cardStyle === "solid-dark"
+        ? "bg-surface border-l-2 border-primary"
+        : cardStyle === "outlined"
+          ? "border border-white/20 rounded-xl hover:border-primary/60 transition-colors"
+          : "border-b ${subtleBorder} ${subtleBorderHover} transition-colors");
 
   // ── IMAGE TREATMENT ──
   const imgGrayscaleStyle = imageStyle === "grayscale-hover-color"
@@ -493,9 +517,9 @@ export function getPagePrompt(
     <div class="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/40 pointer-events-none"></div>
     ${heroOverlay === "cinematic-dark" ? `<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>` : ""}
     <!-- Floating stat card -->
-    <div class="absolute bottom-8 left-8 glass border border-white/10 rounded-2xl px-6 py-4">
+    <div class="absolute bottom-8 left-8 glass ${subtleBorder} rounded-2xl px-6 py-4">
       <div class="font-display \ text-4xl text-primary">${stats[0]?.value ?? "500+"}</div>
-      <div class="text-xs tracking-[0.2em] uppercase text-white/50 mt-1">${stats[0]?.label ?? "Projects"}</div>
+      <div class="text-xs tracking-[0.2em] uppercase ${statLabelColor} mt-1">${stats[0]?.label ?? "Projects"}</div>
     </div>
   </div>
 </section><!-- /CC:hero -->`,
@@ -508,9 +532,9 @@ export function getPagePrompt(
     ${heroOverlay === "cinematic-dark" ? `<div class="absolute inset-0 bg-gradient-to-r from-transparent to-black/40 pointer-events-none"></div>` : ""}
     ${heroOverlay === "tinted-primary" ? `<div class="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none"></div>` : ""}
     <!-- Floating stat -->
-    <div class="absolute top-8 right-8 glass border border-white/10 rounded-2xl px-6 py-4 text-center">
+    <div class="absolute top-8 right-8 glass ${subtleBorder} rounded-2xl px-6 py-4 text-center">
       <div class="font-display \ text-5xl text-primary">${stats[0]?.value ?? "500+"}</div>
-      <div class="text-xs tracking-[0.25em] uppercase text-white/50">${stats[0]?.label ?? "Projects"}</div>
+      <div class="text-xs tracking-[0.25em] uppercase ${statLabelColor}">${stats[0]?.label ?? "Projects"}</div>
     </div>
   </div>
   <!-- Right: Text panel -->
@@ -682,7 +706,7 @@ export function getPagePrompt(
       ${featureOverlay}
       <div class="absolute bottom-0 left-0 right-0 p-6">
         <h3 class="font-display \ text-xl text-white">${featureNames[i]}</h3>
-        <p class="text-white/50 mt-1 text-sm">${featureDescriptions[i]}</p>
+        <p class="${statLabelColor} mt-1 text-sm">${featureDescriptions[i]}</p>
       </div>
     </div>`).join("")}
   </div>
@@ -694,11 +718,11 @@ export function getPagePrompt(
   <div class="mb-16 text-center fade-in">
     <span class="text-xs tracking-[0.4em] uppercase text-primary mb-4 block">What We Offer</span>
     <h2 class="font-display \ ${h2Size}">Built for <span class="text-primary">${featureNames[0]}</span></h2>
-    <p class="text-white/50 max-w-xl mx-auto mt-4">${subtagline}</p>
+    <p class="${bodyTextColor} max-w-xl mx-auto mt-4">${subtagline}</p>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-white/10">
     ${featureNames.slice(0, 6).map((name, i) => `
-    <div class="${cardCss} ${i % 3 !== 2 ? "border-r border-white/10" : ""} p-10 fade-in">
+    <div class="${cardCss} ${i % 3 !== 2 ? "border-r ${subtleBorder}" : ""} p-10 fade-in">
       <i data-lucide="${["zap","target","flame","gem","rocket","settings"][i]}" class="w-8 h-8 text-primary mb-4"></i>
       <h3 class="font-display \ text-xl mb-3">${name}</h3>
       <p class="text-white/50 text-sm leading-relaxed">${featureDescriptions[i]}</p>
@@ -750,11 +774,11 @@ export function getPagePrompt(
   // ── SOCIAL PROOF STRIP ──
   const socialProofStrip = `
 <!-- CC:social-proof -->
-<section class="py-12 border-y border-white/5">
-  <p class="text-center text-xs tracking-[0.4em] uppercase text-white/30 mb-8">Trusted by Industry Leaders</p>
+<section class="py-12 border-y ${sectionBorder}">
+  <p class="text-center text-xs tracking-[0.4em] uppercase ${statLabelColor} mb-8">Trusted by Industry Leaders</p>
   <div class="overflow-hidden" style="mask-image:linear-gradient(to right,transparent,black 15%,black 85%,transparent)">
     <div class="flex gap-12 animate-marquee whitespace-nowrap" style="animation:marquee 30s linear infinite">
-      ${[...socialProofNames, ...socialProofNames].map(name => `<span class="font-display ${headingWeight} tracking-wider text-xl text-white/40">${name}</span>`).join("")}
+      ${[...socialProofNames, ...socialProofNames].map(name => `<span class="font-display ${headingWeight} tracking-wider text-xl ${marqueeTextColor}">${name}</span>`).join("")}
     </div>
   </div>
 </section><!-- /CC:social-proof -->`;
@@ -767,7 +791,7 @@ const statsRow = `
     ${stats.map(s => `
     <div class="text-center px-4 md:px-8 fade-in min-w-0">
       <div class="${statNumberClass.replace("text-7xl md:text-8xl lg:text-9xl", "text-5xl md:text-6xl lg:text-7xl")}" data-target="${s.value.replace(/[^0-9.]/g, "")}">${s.value}</div>
-      <div class="text-[10px] md:text-xs tracking-[0.3em] uppercase text-white/40 mt-3 md:mt-4 ${bodyFontWeight}">${s.label}</div>
+      <div class="text-[10px] md:text-xs tracking-[0.3em] uppercase ${statLabelColor} mt-3 md:mt-4 ${bodyFontWeight}">${s.label}</div>
     </div>`).join("")}
   </div>
 </section><!-- /CC:stats -->`;
@@ -931,7 +955,7 @@ STYLE RULES:
   * Section h2: ${h2Size} leading-[1.1] — NEVER bigger than this
   * Card/item h3: text-lg md:text-xl font-display — NOT text-3xl or text-4xl
   * Overline (above h2): text-xs font-mono-ui tracking-[0.2em] uppercase text-primary
-  * Body copy: text-base leading-relaxed text-white/60 max-w-prose
+  * Body copy: text-base leading-relaxed ${bodyTextColor} max-w-prose
   * Mobile: always start from text-2xl minimum for h2, text-base for body
 - ${bodyFontWeight} for body text and captions
 - Section padding: py-28 minimum. ${isLuxury ? "py-32 for key sections" : ""}
@@ -958,7 +982,7 @@ HEADING SIZE DISCIPLINE — follow this scale exactly:
   Card/item h3: text-lg md:text-xl, font-display font-semibold (NOT font-bold, NOT uppercase, NOT text-3xl or bigger)
   Overline (above h2): text-xs font-mono-ui tracking-[0.2em] uppercase text-primary (NOT font-display)
   Body copy: text-base leading-relaxed text-white/60
-  Captions/meta: text-xs font-mono-ui text-white/30
+  Captions/meta: text-xs font-mono-ui ${statLabelColor}
 
 UPPERCASE DISCIPLINE:
   Only use uppercase for: overline labels, navbar links in bold-energy mood, gym/construction contexts.
@@ -989,6 +1013,8 @@ export function getFooterPrompt(
 ): string {
   const bgColor = architect?.colors.background ?? "#0a0a0a";
   const bgOpaque = bgColor;
+  const sectionBorder = architect?.theme === "light" ? "border-gray-100" : "border-white/5";
+  const footerBg = architect?.theme === "light" ? "bg-gray-50" : "bg-black/40";
 
   return `You are generating the footer and all JavaScript for a multi-page website.
 
@@ -1005,13 +1031,13 @@ ${designTokens}
 GENERATE IN ORDER:
 
 1. Wrap the entire footer in exact comments: <!-- CC:footer --> and <!-- /CC:footer -->
-   <footer class="bg-black/40 border-t border-white/5 py-20 px-6">
+   <footer class="${footerBg} border-t ${sectionBorder} py-20 px-6">
    Inside: max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 mb-20
    Col 1 (span 2 on mobile): Logo font-display font-black text-primary + brand tagline + 3 social buttons circular glass w-10 h-10 (⚠️ Lucide removed brand icons. Use these exact SVGs inside the buttons: Instagram: '${SOCIAL_SVGS.instagram}', Facebook: '${SOCIAL_SVGS.facebook}', Twitter: '${SOCIAL_SVGS.twitter}')
    Col 2: "Quick Links" heading + 4 relevant page links for this business type
    Col 3: "Company" heading + 4 links (About, Blog, Careers, Contact)
    Col 4: "Legal" heading + 3 links (Privacy Policy, Terms of Service, Cookie Policy)
-   Bottom bar: border-t border-white/5 pt-8 flex justify-between — copyright + "Built with CrawlCube" + region
+   Bottom bar: border-t ${sectionBorder} pt-8 flex justify-between — copyright + "Built with CrawlCube" + region
    </footer>
 
 ${isSinglePage
@@ -1068,7 +1094,7 @@ ${designTokens}
 
 GENERATE IN ORDER:
 1. HERO — id="hero", pt-32 min. Split layout: image right, text left for physical businesses. Centered for SaaS/tech. Include: badge pill, h1 (text-4xl sm:text-5xl lg:text-6xl font-display) with primary accent span, subtext max-w-prose, 2 CTAs. Use hero image URL. Container: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20.
-2. SOCIAL PROOF STRIP — py-8 border-y border-white/5, marquee animation, 8 industry names, text-white/20.
+2. SOCIAL PROOF STRIP — py-8 border-y border-white/5, marquee animation, 8 industry names.
 3. STATS ROW — id="stats", grid 4-col desktop, max-w-6xl mx-auto. Each: counter div data-target="NUMBER" class="counter font-display font-bold text-4xl md:text-5xl text-primary", label below in text-xs tracking-[0.3em] uppercase text-white/40.
 4. FEATURES — id="features", py-28. 6 feature cards grid-cols-3, each .glass, Lucide icon (<i data-lucide="icon-name" class="w-7 h-7 text-primary mb-4"></i>), h3 (text-lg font-display), description. hover:-translate-y-2. Container: max-w-6xl mx-auto px-8 sm:px-12 lg:px-20.
 

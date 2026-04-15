@@ -45,6 +45,16 @@ export const DEEP_DIVE_MODELS: ModelOption[] = [
     minCreditsToStart: 5,
     maxOutputTokens: 32000,
   },
+  {
+    model: "deepseek/deepseek-v3.2",
+    label: "DeepSeek v3.2",
+    sublabel: "Cheap · Great for experimentation",
+    credits: "5 credits",
+    logo: DEEPSEEK_LOGO_SVG,
+    costPerOutputToken: 0,
+    minCreditsToStart: 5,
+    maxOutputTokens: 16000,
+  },
 ];
 
 // ── Model lookup helpers — import these in route files ──
