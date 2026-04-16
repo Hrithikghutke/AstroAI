@@ -17,7 +17,7 @@ CRITICAL RULES:
 2. NO conversational text.
 3. DEFAULT EXPORTS ONLY: Every JS/JSX file must end with \`export default ComponentName;\`. Do NOT use named exports for the primary component. This prevents "Element type is invalid... got undefined" import errors.
 4. UI FRAMEWORK: You MUST use DaisyUI semantic classes (e.g. \`btn btn-primary\`, \`card\`, \`navbar\`, \`drawer\`, \`badge\`, \`join\`) instead of raw redundant Tailwind utility combinations wherever possible. This is mandatory for token reduction. 
-5. ICONS: Do NOT use inline raw SVGs. You MUST import icons from \`lucide-react\` (e.g. \`import { Home, ChevronRight } from "lucide-react";\`). CRITICAL: 'lucide-react' recently removed all brand icons. Do NOT import 'Facebook', 'Twitter', 'Instagram', 'Youtube', etc. Use generic icons like 'Globe', 'MessageCircle', 'Mail', or 'Video' instead.
+5. ICONS: Do NOT use inline raw SVGs. You MUST import icons from \`lucide-react\` (e.g. \`import { Home, ChevronRight, Facebook, Twitter } from "lucide-react";\`).
 6. Images must use https://source.unsplash.com/800x600/?{keyword} URLs.
 7. NEVER use href="#" for empty links. Use href="/" or <button> instead to prevent query selector errors.
 8. NAVBAR & ROUTING: If writing a Navbar, the links inside it MUST correspond exactly to the routing pages provided in the PROJECT ARCHITECTURE FILES map. Do not invent links to pages (e.g. /testimonials) that don't exist.
