@@ -48,6 +48,8 @@ export default function ReactSandpack({ files, onFilesChange, viewMode = "code" 
             "react-dom": "^18",
             "react-router-dom": "^6",
             "lucide-react": "latest",
+            "recharts": "2.12.0",
+            "framer-motion": "^11.0.0",
           },
         }}
       >
