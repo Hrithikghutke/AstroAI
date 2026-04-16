@@ -11,6 +11,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  Atom,
+  Code2,
 } from "lucide-react";
 import Header from "@/components/Header";
 import LiveThumbnail from "@/components/LiveThumbnail";
@@ -22,6 +24,7 @@ interface Generation {
   prompt: string;
   themeStyle: string;
   createdAt: string | null;
+  mode: string;
 }
 
 const THEME_COLORS: Record<string, string> = {
@@ -164,6 +167,22 @@ export default function Dashboard({ data }: any) {
                   <div className="absolute inset-0 z-0 overflow-hidden mix-blend-luminosity opacity-40 group-hover:opacity-70 transition-opacity duration-500">
                     <LiveThumbnail gen={gen} scale={0.3} width={1280} height={896} />
                   </div>
+
+                  {/* Framework Badge */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-neutral-900/80 text-white text-[10px] font-bold shadow-lg backdrop-blur-md border border-white/10 transition-transform group-hover:scale-110 origin-left">
+                    {gen.mode === "react" ? (
+                      <>
+                        <Atom className="w-3 h-3 text-blue-400" />
+                        React
+                      </>
+                    ) : (
+                      <>
+                        <Code2 className="w-3 h-3 text-orange-400" />
+                        HTML/JS
+                      </>
+                    )}
+                  </div>
+
                   {/* Heavy dark gradient overlay to ensure text legibility */}
                   <div className="absolute inset-0 z-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-neutral-950/40 pointer-events-none" />
 
@@ -261,7 +280,7 @@ export default function Dashboard({ data }: any) {
                       <div className="flex flex-col gap-2 relative">
                       {/* Continue editing — full width primary action */}
                       <Link
-                        href={`/build?continue=${gen.id}`}
+                        href={gen.mode === "react" ? `/react-builder?continue=${gen.id}` : `/build?continue=${gen.id}`}
                         className="w-full text-center text-xs font-semibold py-2 rounded-lg transition-all"
                         style={{
                           background:

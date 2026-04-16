@@ -9,9 +9,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { prompt, layout, deepHtml, thumbnail } = await req.json();
+    const { prompt, layout, deepHtml, thumbnail, reactFiles } = await req.json();
 
-    if (!layout && !deepHtml) {
+    if (!layout && !deepHtml && !reactFiles) {
       return NextResponse.json(
         { error: "No content provided" },
         { status: 400 },
@@ -23,7 +23,8 @@ export async function POST(req: Request) {
       prompt ?? "",
       layout ?? null,
       deepHtml ?? null,
-      thumbnail ?? null
+      thumbnail ?? null,
+      reactFiles ?? null
     );
     return NextResponse.json({ id, shareId });
   } catch (error) {
@@ -39,9 +40,9 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id, prompt, layout, deepHtml, thumbnail } = await req.json();
+    const { id, prompt, layout, deepHtml, thumbnail, reactFiles } = await req.json();
 
-    if (!id || (!layout && !deepHtml)) {
+    if (!id || (!layout && !deepHtml && !reactFiles)) {
       return NextResponse.json(
         { error: "Missing id or content" },
         { status: 400 },
@@ -54,7 +55,8 @@ export async function PATCH(req: Request) {
       layout ?? null,
       prompt ?? "",
       deepHtml ?? null,
-      thumbnail ?? null
+      thumbnail ?? null,
+      reactFiles ?? null
     );
     return NextResponse.json({ success: true });
   } catch (error: any) {

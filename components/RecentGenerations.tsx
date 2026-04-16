@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Layers, Globe, Lock } from "lucide-react";
+import { Search, Layers, Globe, Lock, Atom, Code2 } from "lucide-react";
 import PreviewFrame from "@/components/PreviewFrame";
 
 interface Generation {
@@ -12,7 +12,7 @@ interface Generation {
   prompt: string;
   themeStyle: string;
   createdAt: string | null;
-  mode?: "fast" | "deep";
+  mode?: "fast" | "deep" | "react";
   layout?: any;
   deepHtml?: string | null;
   thumbnail?: string | null;
@@ -108,12 +108,21 @@ export default function RecentGenerations() {
           filtered.map((gen) => (
             <Link
               key={gen.id}
-              href={`/build?continue=${gen.id}`}
+              href={gen.mode === "react" ? `/react-builder?continue=${gen.id}` : `/build?continue=${gen.id}`}
               className="flex items-center gap-3 p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800/80 bg-neutral-50 dark:bg-neutral-900/40 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 transition-all cursor-pointer group"
             >
               {/* Live thumbnail — CSS scaled component tree or fallback */}
               <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0 border border-neutral-300/60 dark:border-neutral-700/40 shadow-sm ring-1 ring-inset ring-black/5 group-hover:ring-black/10 transition-all bg-neutral-900">
                 <LiveThumbnail gen={gen} scale={0.0625} />
+                
+                {/* Micro Badge */}
+                <div className="absolute top-1 left-1 z-10 p-0.5 rounded-sm bg-neutral-950/80 backdrop-blur-sm border border-white/5">
+                  {gen.mode === "react" ? (
+                    <Atom className="w-2.5 h-2.5 text-blue-400" />
+                  ) : (
+                    <Code2 className="w-2.5 h-2.5 text-orange-400" />
+                  )}
+                </div>
               </div>
 
               {/* Details */}

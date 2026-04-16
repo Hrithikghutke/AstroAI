@@ -93,6 +93,7 @@ export async function saveGeneration(
   layout: any,
   deepHtml: string | null = null,
   thumbnail: string | null = null,
+  reactFiles: Record<string, string> | null = null,
 ): Promise<{ id: string; shareId: string }> {
   const shareId = generateShareId();
 
@@ -101,12 +102,15 @@ export async function saveGeneration(
     prompt,
     layout: layout ?? null,
     deepHtml: deepHtml ?? null,
-    mode: deepHtml ? "deep" : "fast",
+    reactFiles: reactFiles ?? null,
+    mode: reactFiles ? "react" : (deepHtml ? "deep" : "fast"),
     shareId,
     siteName: deepHtml
       ? extractTitleFromHtml(deepHtml)
-      : (layout?.branding?.logoText ?? "Untitled"),
-    themeStyle: deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate"),
+      : (reactFiles ? 
+          (extractTitleFromHtml(reactFiles['index.html'] || reactFiles['/index.html'] || '').replace("Untitled", "") || "React App")
+          : (layout?.branding?.logoText ?? "Untitled")),
+    themeStyle: reactFiles ? "react-vite" : (deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate")),
     thumbnail: thumbnail ?? null,
     createdAt: serverTimestamp(),
   });
@@ -189,6 +193,7 @@ export async function updateGeneration(
   prompt: string,
   deepHtml: string | null = null,
   thumbnail: string | null = null,
+  reactFiles: Record<string, string> | null = null,
 ): Promise<void> {
   const ref = doc(db, "generations", docId);
   const snap = await getDoc(ref);
@@ -199,12 +204,15 @@ export async function updateGeneration(
   await updateDoc(ref, {
     layout: layout ?? null,
     deepHtml: deepHtml ?? null,
-    mode: deepHtml ? "deep" : "fast",
+    reactFiles: reactFiles ?? null,
+    mode: reactFiles ? "react" : (deepHtml ? "deep" : "fast"),
     prompt,
     siteName: deepHtml
       ? extractTitleFromHtml(deepHtml)
-      : (layout?.branding?.logoText ?? "Untitled"),
-    themeStyle: deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate"),
+      : (reactFiles ? 
+          (extractTitleFromHtml(reactFiles['index.html'] || reactFiles['/index.html'] || '').replace("Untitled", "") || "React App")
+          : (layout?.branding?.logoText ?? "Untitled")),
+    themeStyle: reactFiles ? "react-vite" : (deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate")),
     thumbnail: thumbnail ?? null,
     updatedAt: serverTimestamp(),
   });
