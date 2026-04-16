@@ -24,7 +24,7 @@ Each section must be a visually distinct block with generous spacing (py-20 md:p
 CRITICAL RULES:
 1. Return ONLY the raw file string. NO markdown formatting like \`\`\`jsx or \`\`\`. 
 2. NO conversational text.
-3. DEFAULT EXPORTS ONLY: Every JS/JSX file must end with \`export default ComponentName;\`. Do NOT use named exports for the primary component. This prevents "Element type is invalid... got undefined" import errors.
+3. DEFAULT EXPORTS ONLY: Every JS/JSX file must end with \`export default ComponentName;\`. Do NOT use named exports for the primary component. This prevents "Element type is invalid... got undefined" import errors. DO NOT add \`export\` statements to .css files!
 4. UI FRAMEWORK: You MUST use DaisyUI semantic classes (e.g. \`btn btn-primary\`, \`card\`, \`navbar\`, \`drawer\`, \`badge\`, \`join\`) instead of raw redundant Tailwind utility combinations wherever possible. This is mandatory for token reduction. 
 5. ICONS: Do NOT use inline raw SVGs. You MUST import icons from \`lucide-react\` (e.g. \`import { Home, ChevronRight, Facebook, Twitter } from "lucide-react";\`).
 6. IMAGES — USE THESE EXACT URLS (verified, contextually relevant, always load):
