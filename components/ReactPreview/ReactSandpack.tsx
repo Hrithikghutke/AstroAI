@@ -18,10 +18,12 @@ interface ReactSandpackProps {
   files: GeneratedReactFiles;
   onFilesChange?: (files: GeneratedReactFiles) => void;
   viewMode?: "code" | "preview" | "design";
+  previewWidth?: "desktop" | "mobile";
 }
 
-export default function ReactSandpack({ files, onFilesChange, viewMode = "code" }: ReactSandpackProps) {
+export default function ReactSandpack({ files, onFilesChange, viewMode = "code", previewWidth = "desktop" }: ReactSandpackProps) {
   const showCode = viewMode === "code";
+  const isMobile = previewWidth === "mobile";
 
   // Compute a stable snapshot key to force a clean Nodebox remount when a main file like App.jsx changes significantly
   // This prevents the "Zombified" worker state
@@ -50,6 +52,8 @@ export default function ReactSandpack({ files, onFilesChange, viewMode = "code" 
             "lucide-react": "0.292.0",
             "recharts": "2.12.0",
             "framer-motion": "^11.0.0",
+            "clsx": "^2.1.1",
+            "tailwind-merge": "^2.3.0",
           },
         }}
       >
@@ -89,11 +93,15 @@ export default function ReactSandpack({ files, onFilesChange, viewMode = "code" 
           )}
 
           <Panel defaultSize={showCode ? 40 : 100} minSize={20} className="min-w-0 flex flex-col bg-white h-full relative">
-            <SandpackPreview
-              showOpenInCodeSandbox={false}
-              showRefreshButton
-              style={{ height: "100%", flex: 1 }}
-            />
+            <div className={`flex-1 flex items-start justify-center h-full ${isMobile ? "bg-neutral-900 pt-4" : ""}`}>
+              <div className={`h-full ${isMobile ? "w-[375px] border-x border-neutral-700 shadow-2xl rounded-xl overflow-hidden" : "w-full"}`} style={isMobile ? { maxHeight: "calc(100% - 2rem)" } : {}}>
+                <SandpackPreview
+                  showOpenInCodeSandbox={false}
+                  showRefreshButton
+                  style={{ height: "100%", flex: 1 }}
+                />
+              </div>
+            </div>
           </Panel>
         </Group>
       </SandpackLayout>

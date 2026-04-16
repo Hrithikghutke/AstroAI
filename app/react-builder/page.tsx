@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Monitor, Smartphone, Maximize2, Minimize2 } from "lucide-react";
 import type { GeneratedReactFiles } from "@/types/react-generation";
 import ReactChatPanel from "@/components/ReactChatPanel";
 import Logo from "@/assets/logo.svg"
@@ -27,6 +27,8 @@ function ReactBuilderContent() {
   const [viewMode, setViewMode] = useState<"code" | "preview" | "design">("code");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     // If continuing from DB
@@ -34,9 +36,9 @@ function ReactBuilderContent() {
       fetch(`/api/generations/${continueId}`)
         .then(res => res.json())
         .then(data => {
-            if (data?.reactFiles) {
-               setFiles(data.reactFiles);
-               setPrompt(data.prompt);
+            if (data?.generation?.reactFiles) {
+               setFiles(data.generation.reactFiles);
+               setPrompt(data.generation.prompt);
             }
         })
         .finally(() => setInitLoading(false));
@@ -65,9 +67,13 @@ function ReactBuilderContent() {
     setSaving(true);
     try {
       const res = await fetch("/api/generations/save", {
-        method: "POST",
+        method: continueId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(continueId ? {
+          id: continueId,
+          prompt: prompt,
+          reactFiles: files,
+        } : {
           prompt: prompt,
           reactFiles: files,
         }),
@@ -115,6 +121,24 @@ function ReactBuilderContent() {
             {files && (
               <div className="h-14 bg-[#111] border-b border-white/10 flex items-center justify-center relative px-4 shrink-0">
                 
+                {/* Left: Device Toggles */}
+                <div className="absolute left-4 flex items-center gap-1 bg-[#1a1a1a] border border-white/10 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setPreviewWidth("desktop")}
+                    className={`p-1.5 rounded-md transition-all ${previewWidth === "desktop" ? "bg-[#252525] text-white" : "text-neutral-500 hover:text-white"}`}
+                    title="Desktop view"
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPreviewWidth("mobile")}
+                    className={`p-1.5 rounded-md transition-all ${previewWidth === "mobile" ? "bg-[#252525] text-white" : "text-neutral-500 hover:text-white"}`}
+                    title="Mobile view"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 {/* Center Toggles */}
                 <div className="flex items-center p-1 bg-[#1a1a1a] border border-white/10 rounded-full">
                   <button onClick={() => setViewMode("preview")} className={`px-4 py-1.5 text-xs font-medium rounded-full transition-all ${viewMode === "preview" ? "bg-[#252525] text-white shadow-sm" : "text-neutral-500 hover:text-white"}`}>Preview</button>
@@ -124,7 +148,13 @@ function ReactBuilderContent() {
 
                 {/* Right Actions */}
                 <div className="absolute right-4 flex items-center gap-2">
-                  <button disabled className="px-3 py-1.5 text-xs text-white/50 border border-white/10 hover:bg-white/5 rounded-lg transition-colors cursor-not-allowed">Invite</button>
+                  <button
+                    onClick={() => setFullscreen(true)}
+                    className="p-1.5 text-neutral-400 hover:text-white border border-white/10 hover:bg-white/5 rounded-lg transition-colors"
+                    title="Fullscreen preview"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
                   <button disabled className="px-3 py-1.5 text-xs text-white/50 border border-white/10 hover:bg-white/5 rounded-lg transition-colors cursor-not-allowed">Export</button>
                   <button onClick={handleSave} disabled={saving || saved} className="px-4 py-1.5 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors rounded-lg flex items-center gap-1.5">
                     {saving ? "Saving..." : saved ? "Saved ✓" : "Save"}
@@ -135,7 +165,7 @@ function ReactBuilderContent() {
 
             {files ? (
                 <div className="flex-1 min-h-0 relative">
-                  <ReactSandpack files={files} viewMode={viewMode} />
+                  <ReactSandpack files={files} viewMode={viewMode} previewWidth={previewWidth} />
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-white/40">
@@ -145,6 +175,40 @@ function ReactBuilderContent() {
                    <p className="font-semibold text-white/70">Your React workspace is ready.</p>
                    <p className="text-sm mt-1">Enter a prompt to generate your first website build.</p>
                 </div>
+            )}
+
+            {/* Fullscreen Preview Overlay */}
+            {fullscreen && files && (
+              <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+                <div className="h-12 bg-neutral-900 border-b border-white/10 flex items-center justify-between px-4 shrink-0">
+                  <span className="text-white/60 text-sm font-medium">Full-Screen Preview</span>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-[#1a1a1a] border border-white/10 rounded-lg p-0.5">
+                      <button
+                        onClick={() => setPreviewWidth("desktop")}
+                        className={`p-1.5 rounded-md transition-all ${previewWidth === "desktop" ? "bg-[#252525] text-white" : "text-neutral-500 hover:text-white"}`}
+                      >
+                        <Monitor className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setPreviewWidth("mobile")}
+                        className={`p-1.5 rounded-md transition-all ${previewWidth === "mobile" ? "bg-[#252525] text-white" : "text-neutral-500 hover:text-white"}`}
+                      >
+                        <Smartphone className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => setFullscreen(false)}
+                      className="p-1.5 text-neutral-400 hover:text-white border border-white/10 hover:bg-white/5 rounded-lg transition-colors"
+                    >
+                      <Minimize2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <ReactSandpack files={files} viewMode="preview" previewWidth={previewWidth} />
+                </div>
+              </div>
             )}
          </div>
       </div>

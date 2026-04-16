@@ -108,7 +108,7 @@ export async function saveGeneration(
     siteName: deepHtml
       ? extractTitleFromHtml(deepHtml)
       : (reactFiles ? 
-          (extractTitleFromHtml(reactFiles['index.html'] || reactFiles['/index.html'] || '').replace("Untitled", "") || "React App")
+          (extractTitleFromHtml(reactFiles['/public/index.html'] || reactFiles['public/index.html'] || reactFiles['/index.html'] || reactFiles['index.html'] || '').replace("Untitled", "") || "React App")
           : (layout?.branding?.logoText ?? "Untitled")),
     themeStyle: reactFiles ? "react-vite" : (deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate")),
     thumbnail: thumbnail ?? null,
@@ -210,7 +210,7 @@ export async function updateGeneration(
     siteName: deepHtml
       ? extractTitleFromHtml(deepHtml)
       : (reactFiles ? 
-          (extractTitleFromHtml(reactFiles['index.html'] || reactFiles['/index.html'] || '').replace("Untitled", "") || "React App")
+          (extractTitleFromHtml(reactFiles['/public/index.html'] || reactFiles['public/index.html'] || reactFiles['/index.html'] || reactFiles['index.html'] || '').replace("Untitled", "") || "React App")
           : (layout?.branding?.logoText ?? "Untitled")),
     themeStyle: reactFiles ? "react-vite" : (deepHtml ? "deep-dive" : (layout?.themeStyle ?? "corporate")),
     thumbnail: thumbnail ?? null,

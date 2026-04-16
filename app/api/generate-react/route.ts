@@ -185,9 +185,10 @@ export async function POST(req: Request) {
 
         const developerPrompt = getReactDeveloperPrompt({
           theme: archResult.theme,
+          visualMood: archResult.visualMood,
           colors: archResult.colors,
           fonts: archResult.fonts
-        }, JSON.stringify(filesNeeded), JSON.stringify(archResult.manifest || {}));
+        }, JSON.stringify(filesNeeded), JSON.stringify(archResult.manifest || {}), archResult.homeSections || []);
 
         // --- PHASE 2: PARALLEL FILE WRITERS ---
         const filePromises = filesNeeded.map(async (filePath: string) => {
@@ -329,6 +330,25 @@ import App from './App';
 
 const root = createRoot(document.getElementById('root'));
 root.render(<App />);`;
+
+        // Inject font CDN links into index.html so custom fonts load in preview
+        const fontLinks: string[] = [];
+        if (archResult.fonts?.displayUrl) fontLinks.push(archResult.fonts.displayUrl);
+        if (archResult.fonts?.bodyUrl && archResult.fonts.bodyUrl !== archResult.fonts.displayUrl) fontLinks.push(archResult.fonts.bodyUrl);
+        if (fontLinks.length > 0) {
+          finalFilesPayload["/public/index.html"] = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${generatedSiteName}</title>
+  ${fontLinks.join("\n  ")}
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>`;
+        }
 
         // --- CLOSURE ---
         send({
