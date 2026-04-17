@@ -1,5 +1,10 @@
-export function getReactDeveloperPrompt(themeConfig: any, filesListText: string, manifestText: string = "{}", homeSections: string[] = []): string {
-  const themeContext = themeConfig 
+export function getReactDeveloperPrompt(
+  themeConfig: any,
+  filesListText: string,
+  manifestText: string = "{}",
+  homeSections: string[] = [],
+): string {
+  const themeContext = themeConfig
     ? `\nDESIGN SYSTEM (Enforce strictly across all files!):
 - Theme: ${themeConfig.theme}
 - Visual Mood: ${themeConfig.visualMood || "cinematic-dark"}
@@ -11,14 +16,15 @@ export function getReactDeveloperPrompt(themeConfig: any, filesListText: string,
 - Body Font: ${themeConfig.fonts?.body}
 
 Use arbitrary Tailwind values (e.g. \`bg-[${themeConfig.colors?.primary}]\`) or style objects where necessary to ensure these exact colors and fonts are applied.
-Apply font-family via style={{ fontFamily: "'${themeConfig.fonts?.display}', sans-serif" }} for headings and style={{ fontFamily: "'${themeConfig.fonts?.body}', sans-serif" }} for body text.` 
+Apply font-family via style={{ fontFamily: "'${themeConfig.fonts?.display}', sans-serif" }} for headings and style={{ fontFamily: "'${themeConfig.fonts?.body}', sans-serif" }} for body text.`
     : "";
 
-  const sectionsContext = homeSections.length > 0
-    ? `\nHOME PAGE SECTIONS (If writing the Home page, you MUST include ALL of these sections in order):
+  const sectionsContext =
+    homeSections.length > 0
+      ? `\nHOME PAGE SECTIONS (If writing the Home page, you MUST include ALL of these sections in order):
 ${homeSections.map((s, i) => `${i + 1}. ${s}`).join("\n")}
 Each section must be a visually distinct block with generous spacing (py-20 md:py-28).`
-    : "";
+      : "";
 
   return `You are an expert root-level React developer building a premium, production-grade website.
 CRITICAL RULES:
@@ -118,6 +124,7 @@ PREMIUM LAYOUT RULES (MANDATORY — these prevent the broken UIs):
   * Overlines (above section titles): \`text-xs md:text-sm font-semibold uppercase tracking-widest\` in the primary color
 - IMAGE HANDLING: All \`<img>\` tags MUST include: \`className="w-full h-full object-cover"\`, a meaningful \`alt\` attribute, and \`loading="lazy"\`. Wrap images in a container with fixed aspect ratio (\`aspect-video\`, \`aspect-square\`, or explicit height).
 - CONTENT DENSITY: Sections must feel substantial. Features sections need 3-6 items. Stats need 3-4 numbers. Testimonials need 2-3 quotes. NEVER render a section with only 1 item.
+- DO not add \`border-b\` class to Navbar is using scroll down animation.
 
 PREMIUM AESTHETICS & INTERACTIVITY:
 - Combine DaisyUI primitives with modern design trends: glassmorphism (\`glass\` class), subtle gradients.

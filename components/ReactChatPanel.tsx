@@ -20,30 +20,104 @@ export interface ReactMessage {
   tokens?: { input: number; output: number; total: number; credits: number };
   model?: string;
   isGenerating?: boolean;
+  questions?: { id: string; text: string; options: string[] }[];
   agentSteps?: AgentStep[];
   architectData?: any;
   createdAt: Date;
+}
+
+
+function QuestionCards({ intro, questions, onSubmit }: { intro: string; questions: { id: string; text: string; options: string[] }[]; onSubmit: (answers: string) => void; }) {
+  const [page, setPage] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [customInputs, setCustomInputs] = useState<Record<string, string>>({});
+  const [showCustom, setShowCustom] = useState<Record<string, boolean>>({});
+
+  const current = questions[page];
+  const total = questions.length;
+  const currentAnswer = answers[current.id];
+  const isLastPage = page === total - 1;
+  const allAnswered = questions.every((q) => answers[q.id]);
+
+  const pickOption = (qId: string, opt: string) => {
+    if (opt === "Other") {
+      setShowCustom((p) => ({ ...p, [qId]: true }));
+      setAnswers((p) => ({ ...p, [qId]: "" }));
+    } else {
+      setShowCustom((p) => ({ ...p, [qId]: false }));
+      setAnswers((p) => ({ ...p, [qId]: opt }));
+    }
+  };
+
+  const handleDone = () => {
+    const compiled = questions.map((q) => {
+      const ans = answers[q.id] || customInputs[q.id] || "";
+      return `${q.text} ${ans}`;
+    }).join(" ");
+    onSubmit(compiled);
+  };
+
+  return (
+    <div className="space-y-3">
+      {intro && <p className="text-[13px] text-neutral-300 px-1 leading-relaxed">{intro}</p>}
+      <div className="rounded-xl border border-neutral-800 overflow-hidden" style={{ background: "rgba(255,255,255,0.02)" }}>
+        <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800/60">
+          <span className="text-[11px] font-mono text-neutral-600 tracking-widest uppercase">{page + 1} / {total}</span>
+        </div>
+        <div className="px-3 py-3 space-y-2.5">
+          <p className="text-[13px] text-neutral-200 font-medium leading-snug">{current.text}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {current.options.map((opt) => {
+              const isSelected = currentAnswer === opt || (opt === "Other" && showCustom[current.id]);
+              return (
+                <button
+                  key={opt}
+                  onClick={() => pickOption(current.id, opt)}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all cursor-pointer"
+                  style={{
+                    background: isSelected ? "rgba(168,85,247,0.15)" : "rgba(255,255,255,0.03)",
+                    borderColor: isSelected ? "#a855f7" : "#2a2a2a",
+                    color: isSelected ? "#d8b4fe" : "#737373",
+                  }}
+                >{opt}</button>
+              );
+            })}
+          </div>
+          {showCustom[current.id] && (
+            <input
+              autoFocus type="text" placeholder="Describe your preference..." value={customInputs[current.id] ?? ""}
+              onChange={(e) => {
+                setCustomInputs((p) => ({ ...p, [current.id]: e.target.value }));
+                setAnswers((p) => ({ ...p, [current.id]: e.target.value }));
+              }}
+              className="w-full bg-transparent border border-neutral-700 focus:border-purple-500/60 rounded-lg px-3 py-2 text-[12px] text-neutral-200 outline-none mt-2"
+            />
+          )}
+        </div>
+        <div className="px-3 pb-3 flex justify-between items-center">
+          {!isLastPage ? (
+            <button onClick={() => setPage((p) => p + 1)} disabled={!currentAnswer} className="ml-auto px-3 py-1.5 rounded-lg text-[12px] font-semibold text-[#d8b4fe] bg-[#a855f726] border border-[#a855f740] disabled:opacity-30">Next</button>
+          ) : (
+            <button onClick={handleDone} disabled={!allAnswered} className="ml-auto px-3 py-1.5 rounded-lg text-[12px] font-semibold text-white disabled:opacity-30" style={{ background: allAnswered ? "linear-gradient(135deg, #a855f7, #ec4899)" : "rgba(168,85,247,0.1)" }}>Done</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ReactChatPanel({
   onFilesChange,
   initialPrompt,
   initialFiles,
+  onGenerationStateChange,
 }: {
   onFilesChange: (files: GeneratedReactFiles | null) => void;
   initialPrompt?: string;
   initialFiles?: GeneratedReactFiles | null;
+  onGenerationStateChange?: (isGenerating: boolean, steps: any[], architectData?: any) => void;
 }) {
   const [messages, setMessages] = useState<ReactMessage[]>(() => {
-    try {
-      const stored = sessionStorage.getItem("crawlcube_react_messages");
-      if (stored)
-        return JSON.parse(stored).map((m: any) => ({
-          ...m,
-          createdAt: new Date(m.createdAt),
-        }));
-    } catch {}
-
     if (initialFiles && initialPrompt) {
       return [
         {
@@ -74,18 +148,43 @@ export default function ReactChatPanel({
     ];
   });
 
+  // Client-side hydration of session storage to avoid SSR mismatches
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("crawlcube_react_messages");
+      if (stored) {
+        setMessages(JSON.parse(stored).map((m: any) => ({
+          ...m,
+          createdAt: new Date(m.createdAt),
+        })));
+      }
+    } catch {}
+  }, []);
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(() => {
-    if (typeof sessionStorage !== "undefined") {
+  const [selectedModel, setSelectedModel] = useState("anthropic/claude-3.5-sonnet");
+
+  useEffect(() => {
+    try {
       const stored = sessionStorage.getItem("crawlcube_react_model");
-      if (stored) return stored;
-    }
-    return "anthropic/claude-3.5-sonnet";
-  });
+      if (stored) setSelectedModel(stored);
+    } catch {}
+  }, []);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const briefRef = useRef<string>("");
   const hasAutoStarted = useRef(false);
 
+
+  useEffect(() => {
+    if (onGenerationStateChange && messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === "assistant") {
+         onGenerationStateChange(!!lastMsg.isGenerating, lastMsg.agentSteps || [], lastMsg.architectData);
+      }
+    }
+  }, [messages, onGenerationStateChange]);
+  
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -111,10 +210,7 @@ export default function ReactChatPanel({
     }
   }, [messages]);
 
-  const handleSend = async (
-    customPrompt?: string,
-    isAutoStart: boolean = false,
-  ) => {
+  const handleSend = async (customPrompt?: string, isAutoStart: boolean = false) => {
     const text = (customPrompt || input).trim();
     if (!text || loading) return;
 
@@ -125,35 +221,72 @@ export default function ReactChatPanel({
       createdAt: new Date(),
     };
     const aiMsgId = crypto.randomUUID();
-    const initAiMsg: ReactMessage = {
-      id: aiMsgId,
-      role: "assistant",
-      content: "",
-      isGenerating: true,
-      agentSteps: [],
-      createdAt: new Date(),
-    };
+
+    const lastSnapshot = [...messages].reverse().find((m) => m.snapshotFiles)?.snapshotFiles;
 
     if (!isAutoStart) {
-      setMessages((prev) => [...prev, userMsg, initAiMsg]);
+      setMessages((prev) => [...prev, userMsg]);
     } else {
-      setMessages([userMsg, initAiMsg]);
+      setMessages([userMsg]);
     }
 
     setInput("");
     setLoading(true);
 
     try {
-      // Find the last snapshot of files to pass as context
-      const lastSnapshot = [...messages]
-        .reverse()
-        .find((m) => m.snapshotFiles)?.snapshotFiles;
+      let routerAction = "build_now";
+      let resolvedPrompt = text;
+
+      if (!isAutoStart) {
+        const routerRes = await fetch("/api/chat-react", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: messages.concat(userMsg).map((m) => ({ role: m.role, content: m.content })),
+            brief: briefRef.current,
+            hasExistingWebsite: !!lastSnapshot,
+          }),
+        });
+
+        if (!routerRes.ok) throw new Error("Chat Router failed");
+        const routerData = await routerRes.json();
+
+        if (routerData.updatedBrief) briefRef.current = routerData.updatedBrief;
+
+        if (routerData.action === "chat") {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: aiMsgId,
+              role: "assistant",
+              content: routerData.message || "Let me ask some questions.",
+              questions: routerData.questions,
+              createdAt: new Date(),
+            },
+          ]);
+          setLoading(false);
+          return;
+        }
+
+        routerAction = routerData.action;
+        resolvedPrompt = routerData.prompt || text;
+      }
+
+      const initAiMsg: ReactMessage = {
+        id: aiMsgId,
+        role: "assistant",
+        content: "",
+        isGenerating: true,
+        agentSteps: [],
+        createdAt: new Date(),
+      };
+      setMessages((prev) => [...prev, initAiMsg]);
 
       const res = await fetch("/api/generate-react", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: text,
+          prompt: resolvedPrompt,
           model: selectedModel,
           existingFiles: lastSnapshot || undefined,
         }),
@@ -166,7 +299,6 @@ export default function ReactChatPanel({
       let done = false;
       let finalFiles: any = null;
       let finalTokens: any = null;
-      let generatedSiteName: string = "React App";
       let buffer = "";
 
       while (!done) {
@@ -188,20 +320,13 @@ export default function ReactChatPanel({
                       if (m.id === aiMsgId) {
                         const steps = m.agentSteps || [];
                         const existing = [...steps];
-                        const idx = existing.findIndex(
-                          (s) => s.id === data.step.id,
-                        );
-                        if (idx >= 0)
-                          existing[idx] = { ...existing[idx], ...data.step };
+                        const idx = existing.findIndex((s) => s.id === data.step.id);
+                        if (idx >= 0) existing[idx] = { ...existing[idx], ...data.step };
                         else existing.push(data.step);
-                        return { 
-                          ...m, 
-                          agentSteps: existing,
-                          architectData: data.architectData || m.architectData
-                        };
+                        return { ...m, agentSteps: existing, architectData: data.architectData || m.architectData };
                       }
                       return m;
-                    }),
+                    })
                   );
                 } else if (data.action === "generation-complete") {
                   finalFiles = data.files;
@@ -209,18 +334,14 @@ export default function ReactChatPanel({
                 } else if (data.action === "error") {
                   throw new Error(data.message);
                 }
-              } catch (e) {
-                // incomplete chunk or parse error, ignore
-              }
+              } catch (e) {}
             }
           }
         }
       }
 
-      if (!finalFiles)
-        throw new Error("Stream closed before files were generated.");
+      if (!finalFiles) throw new Error("Stream closed before files were generated.");
 
-      // Calculate next version
       const v = [...messages].filter((m) => m.snapshotFiles).length + 1;
 
       setMessages((prev) =>
@@ -231,46 +352,26 @@ export default function ReactChatPanel({
               content: "Generated React components based on your request.",
               snapshotFiles: finalFiles,
               snapshotVersion: v,
-              tokens: finalTokens
-                ? {
-                    input: finalTokens.inputTokens || 0,
-                    output: finalTokens.outputTokens || 0,
-                    total:
-                      (finalTokens.inputTokens || 0) +
-                      (finalTokens.outputTokens || 0),
-                    credits: finalTokens.creditsUsed || 0,
-                  }
-                : undefined,
+              tokens: finalTokens ? { input: finalTokens.inputTokens || 0, output: finalTokens.outputTokens || 0, total: (finalTokens.inputTokens || 0) + (finalTokens.outputTokens || 0), credits: finalTokens.creditsUsed || 0 } : undefined,
               model: selectedModel,
               isGenerating: false,
             };
           }
           return m;
-        }),
+        })
       );
 
-      sessionStorage.setItem(
-        "crawlcube_react_files",
-        JSON.stringify(finalFiles),
-      );
-      
-      // Update the parent immediately when the AI finishes generating NEW files.
-      // Doing this here rather than in a mass useEffect prevents overwriting
-      // user edits whenever the component mounts/restores state.
+      sessionStorage.setItem("crawlcube_react_files", JSON.stringify(finalFiles));
       onFilesChange(finalFiles);
-      
     } catch (err: any) {
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === aiMsgId
-            ? { ...m, content: `❌ Error: ${err.message}`, isGenerating: false }
-            : m,
-        ),
+        prev.map((m) => (m.id === aiMsgId ? { ...m, content: `❌ Error: ${err.message}`, isGenerating: false } : m))
       );
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleRestore = (files: GeneratedReactFiles) => {
     onFilesChange(files);
@@ -286,7 +387,7 @@ export default function ReactChatPanel({
     MODELS.find((m) => m.model === selectedModel) || MODELS[0];
 
   return (
-    <div className="w-[350px] shrink-0 border-r border-[#222] bg-[#0f0f0f] flex flex-col h-full overflow-hidden text-sm">
+    <div className="w-full md:w-[350px] shrink-0 md:border-r border-[#222] bg-[#0f0f0f] flex flex-col h-full overflow-hidden text-sm">
       {/* Header */}
       <div className="p-4 border-b border-[#222] shrink-0 bg-[#0a0a0a]">
         <div className="flex items-center gap-2 font-semibold text-white">
@@ -307,10 +408,16 @@ export default function ReactChatPanel({
             {m.role === "user" ? (
               <div className="bg-indigo-600/90 text-white px-4 py-2.5 rounded-2xl max-w-[90%] break-words">
                 {m.content}
+                {m.questions && m.questions.length > 0 && (
+                  <div className="mt-4"><QuestionCards intro="" questions={m.questions} onSubmit={(ans) => handleSend(ans)} /></div>
+                )}
               </div>
             ) : (
               <div className="w-full">
                 <p className="text-white/80 font-medium mb-3">{m.content}</p>
+                {m.questions && m.questions.length > 0 && (
+                  <div className="my-4"><QuestionCards intro="" questions={m.questions} onSubmit={(ans) => handleSend(ans)} /></div>
+                )}
 
                 {(m.isGenerating ||
                   (m.agentSteps && m.agentSteps.length > 0)) && (
