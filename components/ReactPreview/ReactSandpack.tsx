@@ -9,30 +9,76 @@ import {
   useSandpack,
 } from "@codesandbox/sandpack-react";
 import { atomDark } from "@codesandbox/sandpack-themes";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { GeneratedReactFiles } from "@/types/react-generation";
 
 import { Panel, Group, Separator } from "react-resizable-panels";
 
 interface ReactSandpackProps {
   files: GeneratedReactFiles;
-  onFilesChange?: (files: GeneratedReactFiles) => void;
   viewMode?: "code" | "preview" | "design";
   previewWidth?: "desktop" | "mobile";
+  /** Increment this to force a full Sandpack remount (e.g. on new AI generation). */
+  generationKey?: number;
+  /** Ref that will be populated with a function to get the current files from the editor. */
+  getFilesRef?: React.MutableRefObject<(() => GeneratedReactFiles) | null>;
+  /** Callback fired whenever the user edits code in the editor (used to wake up the Save button) */
+  onCodeEdit?: () => void;
 }
 
-export default function ReactSandpack({ files, onFilesChange, viewMode = "code", previewWidth = "desktop" }: ReactSandpackProps) {
+/**
+ * Inner component that registers a "get current files" function on the parent's ref.
+ * This allows the parent to read the latest editor content on demand (e.g. at save time)
+ * without any real-time sync or re-render feedback loops.
+ */
+function SandpackFilesGetter({ 
+  getFilesRef, 
+  onCodeEdit 
+}: { 
+  getFilesRef?: React.MutableRefObject<(() => GeneratedReactFiles) | null>;
+  onCodeEdit?: () => void;
+}) {
+  const { sandpack } = useSandpack();
+  const latestFilesRef = useRef(sandpack.files);
+  const isFirstRender = useRef(true);
+  
+  // Keep the ref constantly updated on every render
+  latestFilesRef.current = sandpack.files;
+
+  // Whenever sandpack.files actively changes (user typing), notify the parent
+  // so it can wake up the Save button. We skip the first render to avoid false positives.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (onCodeEdit) onCodeEdit();
+  }, [sandpack.files, onCodeEdit]);
+
+  useEffect(() => {
+    if (!getFilesRef) return;
+    getFilesRef.current = () => {
+      const currentFiles: GeneratedReactFiles = {};
+      // Read from the ref to guarantee we defeat any stale closures
+      for (const [path, fileObj] of Object.entries(latestFilesRef.current)) {
+        currentFiles[path] = (fileObj as any).code;
+      }
+      return currentFiles;
+    };
+    return () => { getFilesRef.current = null; };
+  }, [getFilesRef]);
+
+  return null;
+}
+
+export default function ReactSandpack({ files, viewMode = "code", previewWidth = "desktop", generationKey = 0, getFilesRef, onCodeEdit }: ReactSandpackProps) {
   const showCode = viewMode === "code";
   const isMobile = previewWidth === "mobile";
-
-  // Compute a stable snapshot key to force a clean Nodebox remount when a main file like App.jsx changes significantly
-  // This prevents the "Zombified" worker state
-  const snapshotKey = files["/App.js"]?.length || 0;
 
   return (
     <div className="flex-1 w-full h-full relative border-l border-white/5 overflow-hidden">
       <SandpackProvider
-        key={snapshotKey}
+        key={generationKey}
         template="react"
         theme={atomDark}
         files={files}
@@ -57,6 +103,7 @@ export default function ReactSandpack({ files, onFilesChange, viewMode = "code",
           },
         }}
       >
+      <SandpackFilesGetter getFilesRef={getFilesRef} onCodeEdit={onCodeEdit} />
       <style>{`
         .sp-wrapper { height: 100% !important; flex: 1; display: flex; flex-direction: column; }
         .sp-layout { height: 100% !important; flex: 1; display: flex; }

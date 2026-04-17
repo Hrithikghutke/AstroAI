@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, Monitor, Smartphone, Maximize2, Minimize2 } from "lucide-react";
@@ -29,6 +29,36 @@ function ReactBuilderContent() {
   const [saved, setSaved] = useState(false);
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "mobile">("desktop");
   const [fullscreen, setFullscreen] = useState(false);
+  // Counter that increments ONLY on new AI generations or DB restores.
+  // User edits from the Sandpack editor do NOT increment this.
+  const generationKeyRef = useRef(0);
+
+  // Ref that holds the latest editor content WITHOUT triggering re-renders.
+  // This breaks the feedback loop: edits stay in the ref, not in state,
+  // so SandpackProvider never receives updated files as a prop.
+  const getSandpackFilesRef = useRef<(() => GeneratedReactFiles) | null>(null);
+
+  // STABLE handler for when the AI generates new files.
+  // We MUST use useCallback here. Because ReactChatPanel has a useEffect
+  // dependent on this function, an inline function would trigger a reset
+  // of the files back to the original AI snapshot every time page.tsx re-rendered (e.g. during Save).
+  const handleChatFilesChange = useCallback((f: GeneratedReactFiles | null) => {
+    // Only increment generationKey if files actually changed identity, 
+    // to prevent unnecessary Sandpack remounts.
+    setFiles((prev) => {
+      if (prev !== f) {
+        generationKeyRef.current += 1;
+        setSaved(false);
+      }
+      return f;
+    });
+  }, []);
+
+  // Wakes up the Save button whenever the user types in the editor.
+  // Using useCallback so we don't trigger unnecessary child re-renders.
+  const handleCodeEdit = useCallback(() => {
+    setSaved(false);
+  }, []);
 
   useEffect(() => {
     // If continuing from DB
@@ -63,7 +93,18 @@ function ReactBuilderContent() {
   }, [continueId]);
 
   const handleSave = async () => {
-    if (!files || saving) return;
+    // Read the exact latest files from the Sandpack editor right now
+    const filesToSave = getSandpackFilesRef.current ? getSandpackFilesRef.current() : files;
+    if (!filesToSave || saving) return;
+    
+    // CRITICAL FIX: We MUST update the React state with the newly extracted files!
+    // If we don't, when `setSaving(true)` causes a re-render, Sandpack sees the old
+    // `files` prop and aggressively resets its internal editor back to the old code.
+    setFiles(filesToSave);
+    
+    // Save locally for reload persistence
+    sessionStorage.setItem("crawlcube_react_files", JSON.stringify(filesToSave));
+    
     setSaving(true);
     try {
       const res = await fetch("/api/generations/save", {
@@ -72,10 +113,10 @@ function ReactBuilderContent() {
         body: JSON.stringify(continueId ? {
           id: continueId,
           prompt: prompt,
-          reactFiles: files,
+          reactFiles: filesToSave,
         } : {
           prompt: prompt,
-          reactFiles: files,
+          reactFiles: filesToSave,
         }),
       });
       if (res.ok) setSaved(true);
@@ -107,10 +148,7 @@ function ReactBuilderContent() {
       <div className="flex flex-1 overflow-hidden">
          {/* LEFT SIDEBAR (ReactChatPanel) */}
          <ReactChatPanel 
-            onFilesChange={(f) => {
-               setFiles(f);
-               setSaved(false);
-            }} 
+            onFilesChange={handleChatFilesChange} 
             initialPrompt={prompt || undefined} 
             initialFiles={files} 
          />
@@ -165,7 +203,7 @@ function ReactBuilderContent() {
 
             {files ? (
                 <div className="flex-1 min-h-0 relative">
-                  <ReactSandpack files={files} viewMode={viewMode} previewWidth={previewWidth} />
+                  <ReactSandpack files={files} getFilesRef={getSandpackFilesRef} onCodeEdit={handleCodeEdit} viewMode={viewMode} previewWidth={previewWidth} generationKey={generationKeyRef.current} />
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-white/40">
@@ -206,7 +244,7 @@ function ReactBuilderContent() {
                   </div>
                 </div>
                 <div className="flex-1 min-h-0">
-                  <ReactSandpack files={files} viewMode="preview" previewWidth={previewWidth} />
+                  <ReactSandpack files={files} getFilesRef={getSandpackFilesRef} onCodeEdit={handleCodeEdit} viewMode="preview" previewWidth={previewWidth} generationKey={generationKeyRef.current} />
                 </div>
               </div>
             )}

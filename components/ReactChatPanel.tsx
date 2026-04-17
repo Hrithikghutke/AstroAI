@@ -88,10 +88,7 @@ export default function ReactChatPanel({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    if (messages.length > 0 && messages[messages.length - 1].snapshotFiles) {
-      onFilesChange(messages[messages.length - 1].snapshotFiles || null);
-    }
-  }, [messages, onFilesChange]);
+  }, [messages]);
 
   useEffect(() => {
     if (
@@ -256,6 +253,12 @@ export default function ReactChatPanel({
         "crawlcube_react_files",
         JSON.stringify(finalFiles),
       );
+      
+      // Update the parent immediately when the AI finishes generating NEW files.
+      // Doing this here rather than in a mass useEffect prevents overwriting
+      // user edits whenever the component mounts/restores state.
+      onFilesChange(finalFiles);
+      
     } catch (err: any) {
       setMessages((prev) =>
         prev.map((m) =>
