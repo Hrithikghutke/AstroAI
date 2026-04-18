@@ -45,6 +45,17 @@ function SandpackFilesGetter({
   // Keep the ref constantly updated on every render
   latestFilesRef.current = sandpack.files;
 
+  // Render-phase assignment guarantees the ref is never null while mounted
+  if (getFilesRef) {
+    getFilesRef.current = () => {
+      const currentFiles: GeneratedReactFiles = {};
+      for (const [path, fileObj] of Object.entries(latestFilesRef.current)) {
+        currentFiles[path] = (fileObj as any).code;
+      }
+      return currentFiles;
+    };
+  }
+
   // Whenever sandpack.files actively changes (user typing), notify the parent
   // so it can wake up the Save button. We skip the first render to avoid false positives.
   useEffect(() => {
@@ -54,19 +65,6 @@ function SandpackFilesGetter({
     }
     if (onCodeEdit) onCodeEdit();
   }, [sandpack.files, onCodeEdit]);
-
-  useEffect(() => {
-    if (!getFilesRef) return;
-    getFilesRef.current = () => {
-      const currentFiles: GeneratedReactFiles = {};
-      // Read from the ref to guarantee we defeat any stale closures
-      for (const [path, fileObj] of Object.entries(latestFilesRef.current)) {
-        currentFiles[path] = (fileObj as any).code;
-      }
-      return currentFiles;
-    };
-    return () => { getFilesRef.current = null; };
-  }, [getFilesRef]);
 
   return null;
 }
@@ -100,6 +98,7 @@ export default function ReactSandpack({ files, viewMode = "code", previewWidth =
             "framer-motion": "^11.0.0",
             "clsx": "^2.1.1",
             "tailwind-merge": "^2.3.0",
+            "react-intersection-observer": "^9.8.0",
           },
         }}
       >

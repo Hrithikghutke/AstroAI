@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     const EXTERNAL_PACKAGES = [
       "react", "react-dom", "react-dom/client",
       "react-router-dom", "lucide-react", "recharts",
-      "framer-motion", "clsx", "tailwind-merge"
+      "framer-motion", "clsx", "tailwind-merge", "react-intersection-observer"
     ];
 
     // 2. Build via esbuild
@@ -109,7 +109,8 @@ export async function POST(req: Request) {
         "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react,react-dom",
         "recharts": "https://esm.sh/recharts@2.12.2?external=react,react-dom",
         "clsx": "https://esm.sh/clsx@2.1.0",
-        "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1"
+        "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1",
+        "react-intersection-observer": "https://esm.sh/react-intersection-observer@9.8.1?external=react,react-dom"
       }
     };
 
@@ -132,6 +133,10 @@ export async function POST(req: Request) {
 
     if (cssBytes.length > 0 && !indexHtml.includes('href="/bundle.css"')) {
         indexHtml = indexHtml.replace('</head>', '  <link rel="stylesheet" href="/bundle.css">\n</head>');
+    }
+
+    if (!indexHtml.includes("font-smoothing")) {
+        indexHtml = indexHtml.replace('</head>', '  <style>body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }</style>\n</head>');
     }
 
     const encoder = new TextEncoder();

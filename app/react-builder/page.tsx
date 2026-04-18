@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, Monitor, Smartphone, Maximize2, Minimize2, Globe } from "lucide-react";
 import { exportAsReact, exportAsNextjs } from "@/utils/exportProject";
-import ReactGenerationProgress from "@/components/ReactGenerationProgress";
+import MainGenerationProgress from "@/components/MainGenerationProgress";
 import type { GeneratedReactFiles } from "@/types/react-generation";
 import ReactChatPanel from "@/components/ReactChatPanel";
 import Logo from "@/assets/logo.svg"
@@ -96,7 +96,7 @@ function ReactBuilderContent() {
   useEffect(() => {
     // If continuing from DB
     if (continueId) {
-      fetch(`/api/generations/${continueId}`)
+      fetch(`/api/generations/${continueId}?t=${Date.now()}`, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
             if (data?.generation?.reactFiles) {
@@ -129,11 +129,6 @@ function ReactBuilderContent() {
     // Read the exact latest files from the Sandpack editor right now
     const filesToSave = getSandpackFilesRef.current ? getSandpackFilesRef.current() : files;
     if (!filesToSave || saving) return;
-    
-    // CRITICAL FIX: We MUST update the React state with the newly extracted files!
-    // If we don't, when `setSaving(true)` causes a re-render, Sandpack sees the old
-    // `files` prop and aggressively resets its internal editor back to the old code.
-    setFiles(filesToSave);
     
     // Save locally for reload persistence
     sessionStorage.setItem("crawlcube_react_files", JSON.stringify(filesToSave));
@@ -294,9 +289,8 @@ function ReactBuilderContent() {
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-white/40">
                    {isGenerating ? (
-                      <div className="w-[80vw] max-w-md bg-[#151515] p-6 pb-8 text-left border border-indigo-500/30 rounded-2xl shadow-[0_0_40px_-15px_rgba(99,102,241,0.3)] mx-4 z-50">
-                         <h3 className="text-white font-medium mb-4 flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Syncing Project</h3>
-                         <ReactGenerationProgress steps={agentSteps} architectData={architectData} />
+                      <div className="max-w-[360px] w-[90vw] flex justify-center z-[100] mx-4 drop-shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+                         <MainGenerationProgress steps={agentSteps} architectData={architectData} />
                       </div>
                   ) : (
                     <>

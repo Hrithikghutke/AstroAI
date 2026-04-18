@@ -91,7 +91,7 @@ CRITICAL RULES:
 8. NAVBAR & ROUTING: If writing a Navbar, the links inside it MUST correspond exactly to the routing pages provided in the PROJECT ARCHITECTURE FILES map. Do not invent links to pages (e.g. /testimonials) that don't exist.
 9. PREVENT DUPLICATION: If you are writing a page or layout, DO NOT define global layout components like <Navbar /> or <Footer /> inline. Always import them as DEFAULT imports (e.g., \`import Navbar from './Navbar';\`).
 10. ICON PROP PASSING: If passing a Lucide icon to a child component, ALWAYS pass the instantiated JSX element (e.g., \`icon={<Home size={20} />}\`). Inside the receiving child component, render it directly as \`{icon}\`. DO NOT pass raw component references (\`icon={Home}\`) and try to render them as \`<Icon />\`, as this causes "got: object" crashes when mismatched.
-11. ALLOWED DEPENDENCIES: You are running in a strict Sandbox. You may ONLY import from the following installed packages: \`react\`, \`react-dom\`, \`react-router-dom\`, \`lucide-react\`, \`recharts\`, \`framer-motion\`, \`clsx\`, and \`tailwind-merge\`. DO NOT invent or import from any other npm packages (e.g. no axios, no react-spring), or the compiler will crash!
+11. ALLOWED DEPENDENCIES: You are running in a strict Sandbox. You may ONLY import from the following installed packages: \`react\`, \`react-dom\`, \`react-router-dom\`, \`lucide-react\`, \`recharts\`, \`framer-motion\`, \`clsx\`, \`tailwind-merge\`, and \`react-intersection-observer\`. DO NOT invent or import from any other npm packages (e.g. no axios, no react-spring), or the compiler will crash!
 
 PROJECT ARCHITECTURE FILES: ${filesListText}
 COMPONENT MANIFEST (Props/Exports for Context):

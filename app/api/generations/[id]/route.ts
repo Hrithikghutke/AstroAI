@@ -4,6 +4,8 @@ import { deleteGeneration } from "@/lib/firestore";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
